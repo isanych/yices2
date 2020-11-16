@@ -27,7 +27,7 @@
 
 #include "mcsat/solver.h"
 
-mcsat_solver_t *mcsat_new(context_t *ctx) {
+mcsat_solver_t *mcsat_new(const context_t *ctx) {
   return NULL;
 }
 
@@ -71,4 +71,8 @@ void mcsat_build_model(mcsat_solver_t* mcsat, model_t* model) {
 
 void mcsat_gc_mark(mcsat_solver_t* mcsat) {
 }
+
+void mcsat_stop_search(mcsat_solver_t* mcsat) {
+}
+
 

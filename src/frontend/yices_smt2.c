@@ -34,6 +34,31 @@
 #include <unistd.h>
 #include <inttypes.h>
 
+#if defined(MINGW)
+/*
+ * We call isatty(STDIN_FILENO) to check whether stdin is a terminal.
+ *
+ * On Windows/MINGW, isatty is called _isatty. The macro STDIN_FILENO
+ * appears to be defined in mingw/include/stdio.h. Not clear whether
+ * it exists in Windows?  There is a function isatty declared in io.h,
+ * but it is deprecated.
+ *
+ * NOTE: the windows function _isatty doesn't have the same behavior
+ * as isatty on Unix. It returns a non-zero value if the file
+ * descriptor is associated with a character device (which is true of
+ * terminals but of other files too).
+ */
+#include <io.h>
+#ifndef STDIN_FILENO
+#define STDIN_FILENO (_fileno(stdin))
+#endif
+#define isatty _isatty
+
+#else
+// Should work on all Unix variants
+#include <unistd.h>
+#endif
+
 #include "frontend/common/parameters.h"
 #include "frontend/smt2/smt2_commands.h"
 #include "frontend/smt2/smt2_lexer.h"
@@ -46,6 +71,10 @@
 #include "yices.h"
 #include "yices_exit_codes.h"
 
+/*
+ * yices_rev is set up at compile time in yices_version.c
+ */
+extern const char * const yices_rev;
 
 /*
  * Global objects:
@@ -54,8 +83,8 @@
  *   and multiple check_sat is enabled. Otherwise, the solver
  *   is configured to handle a set of declarations/assertions
  *   followed by a single call to (check_sat).
- * - interactive: if this flag is true, print a prompt before
- *   parsing commands. Also set the option :print-success to true.
+ * - interactive: set option :print-success to true.
+ *   and  print a prompt before parsing commands if stdin is a terminal.
  * - timeout: command-line option
  *
  * - filename = name of the input file (NULL means read stdin)
@@ -67,6 +96,7 @@ static tstack_t stack;
 static bool incremental;
 static bool interactive;
 static bool smt2_model_format;
+static bool bvdecimal;
 static bool show_stats;
 static int32_t verbosity;
 static uint32_t timeout;
@@ -81,6 +111,7 @@ static bool mcsat_nra_nlsat;
 static bool mcsat_nra_bound;
 static int32_t mcsat_nra_bound_min;
 static int32_t mcsat_nra_bound_max;
+static int32_t mcsat_bv_var_size;
 
 static pvector_t trace_tags;
 
@@ -98,6 +129,7 @@ typedef enum optid {
   incremental_opt,         // enable incremental mode
   interactive_opt,         // enable interactive mode
   smt2format_opt,          // use SMT-LIB2 format for models
+  bvdecimal_opt,           // use (_ bv<xxx> n) for bit-vector constants
   timeout_opt,             // give a timeout
   delegate_opt,            // use an external sat solver
   dimacs_opt,              // bitblast then export to DIMACS
@@ -107,6 +139,7 @@ typedef enum optid {
   mcsat_nra_bound_opt,     // search by increasing bound
   mcsat_nra_bound_min_opt, // set initial bound
   mcsat_nra_bound_max_opt, // set maximal bound
+  mcsat_bv_var_size_opt,   // set size of bitvector variables
   trace_opt,               // enable a trace tag
 } optid_t;
 
@@ -125,6 +158,7 @@ static option_desc_t options[NUM_OPTIONS] = {
   { "incremental", '\0', FLAG_OPTION, incremental_opt },
   { "interactive", '\0', FLAG_OPTION, interactive_opt },
   { "smt2-model-format", '\0', FLAG_OPTION, smt2format_opt },
+  { "bvconst-in-decimal", '\0', FLAG_OPTION, bvdecimal_opt },
   { "delegate", '\0', MANDATORY_STRING, delegate_opt },
   { "dimacs", '\0', MANDATORY_STRING, dimacs_opt },
   { "mcsat", '\0', FLAG_OPTION, mcsat_opt },
@@ -133,6 +167,7 @@ static option_desc_t options[NUM_OPTIONS] = {
   { "mcsat-nra-bound", '\0', FLAG_OPTION, mcsat_nra_bound_opt },
   { "mcsat-nra-bound-min", '\0', MANDATORY_INT, mcsat_nra_bound_min_opt },
   { "mcsat-nra-bound-max", '\0', MANDATORY_INT, mcsat_nra_bound_max_opt },
+  { "mcsat-bv-var-size", '\0', MANDATORY_INT, mcsat_bv_var_size_opt },
   { "trace", 't', MANDATORY_STRING, trace_opt },
 };
 
@@ -146,9 +181,10 @@ static void print_version(void) {
          "Linked with GMP %s\n"
 	 "Copyright Free Software Foundation, Inc.\n"
          "Build date: %s\n"
-         "Platform: %s (%s)\n",
+         "Platform: %s (%s)\n"
+         "Revision: %s\n",
          yices_version, gmp_version,
-         yices_build_date, yices_build_arch, yices_build_mode);
+         yices_build_date, yices_build_arch, yices_build_mode, yices_rev);
   fflush(stdout);
 }
 
@@ -158,7 +194,7 @@ static void print_help(const char *progname) {
   printf("Option summary:\n"
          "    --version, -V             Show version and exit\n"
          "    --help, -h                Print this message and exit\n"
-	 "    --verbosity=<level>       Set verbosity level (default = 0)\n"
+	       "    --verbosity=<level>       Set verbosity level (default = 0)\n"
          "             -v <level>\n"
          "    --timeout=<timeout>       Set a timeout in seconds (default = no timeout)\n"
          "           -t <timeout>\n"
@@ -166,6 +202,7 @@ static void print_help(const char *progname) {
          "    --incremental             Enable support for push/pop\n"
          "    --interactive             Run in interactive mode (ignored if a filename is given)\n"
          "    --smt2-model-format       Display models in the SMT-LIB 2 format (default = false)\n"
+	 "    --bvconst-in-decimal      Display bit-vector constants as decimal numbers (default = false)\n"
          "    --delegate=<satsolver>    Use an external SAT solver (can be cadical, cryptominisat, or y2sat)\n"
          "    --dimacs=<filename>       Bitblast and export to a file (in DIMACS format)\n"
          "    --mcsat                   Use the MCSat solver\n"
@@ -184,6 +221,7 @@ static void print_mcsat_help(const char *progname) {
          "    --mcsat-nra-bound         Search by increasing the bound on variable magnitude\n"
          "    --mcsat-nra-bound-min=<B> Set initial lower bound\n"
          "    --mcsat-nra-bound-max=<B> Set maximal bound for search\n"
+       	 "    --mcsat-bv-var-size=<B>   Set size of bit-vector variables in MCSAT search"
          "\n");
   fflush(stdout);
 }
@@ -236,6 +274,7 @@ static void parse_command_line(int argc, char *argv[]) {
   incremental = false;
   interactive = false;
   smt2_model_format = false;
+  bvdecimal = false;
   show_stats = false;
   verbosity = 0;
   timeout = 0;
@@ -248,6 +287,7 @@ static void parse_command_line(int argc, char *argv[]) {
   mcsat_nra_bound = false;
   mcsat_nra_bound_min = -1;
   mcsat_nra_bound_max = -1;
+  mcsat_bv_var_size = -1;
 
   init_pvector(&trace_tags, 5);
 
@@ -354,6 +394,10 @@ static void parse_command_line(int argc, char *argv[]) {
 	smt2_model_format = true;
 	break;
 
+      case bvdecimal_opt:
+	bvdecimal = true;
+	break;
+
       case mcsat_opt:
 	if (! yices_has_mcsat()) {
 	  goto no_mcsat;
@@ -408,6 +452,23 @@ static void parse_command_line(int argc, char *argv[]) {
           goto exit;
         }
         mcsat_nra_bound_max = v;
+        break;
+
+      case mcsat_bv_var_size_opt:
+#if HAVE_MCSAT
+        v = elem.i_value;
+        if (v < 0) {
+          fprintf(stderr, "%s: the size value must be non-negative\n", parser.command_name);
+          print_usage(parser.command_name);
+          code = YICES_EXIT_USAGE;
+          goto exit;
+        }
+        mcsat_bv_var_size = v;
+#else
+        fprintf(stderr, "mcsat is not supported: %s was not compiled with mcsat support\n", parser.command_name);
+        code = YICES_EXIT_USAGE;
+        goto exit;
+#endif
         break;
 
       case trace_opt:
@@ -502,6 +563,16 @@ static void setup_mcsat(void) {
     smt2_set_option(":yices-mcsat-nra-bound-max", aval_bound_max);
     q_clear(&q);
   }
+
+  if (mcsat_bv_var_size > 0) {
+    aval_t aval_bv_var_size;
+    rational_t q;
+    q_init(&q);
+    q_set32(&q, mcsat_bv_var_size);
+    aval_bv_var_size = attr_vtbl_rational(__smt2_globals.avtbl, &q);
+    smt2_set_option(":yices-mcsat-bv-var-size", aval_bv_var_size);
+    q_clear(&q);
+  }
 }
 
 
@@ -534,7 +605,6 @@ static void default_handler(int signum) {
   if (verbosity > 0) {
     write_signum(signum);
   }
-  // smt2_show_stats is safe to call here
   if (show_stats) {
     smt2_show_stats();
   }
@@ -610,10 +680,13 @@ static void force_utf8(void) {
 
 #endif
 
+
 int main(int argc, char *argv[]) {
   int32_t code;
   uint32_t i;
+  bool prompt;
 
+  prompt = false;
   parse_command_line(argc, argv);
   force_utf8();
 
@@ -626,6 +699,7 @@ int main(int argc, char *argv[]) {
   } else {
     // read from stdin
     init_smt2_stdin_lexer(&lexer);
+    prompt = interactive && isatty(STDIN_FILENO);
   }
 
   init_handlers();
@@ -633,13 +707,18 @@ int main(int argc, char *argv[]) {
   yices_init();
   init_smt2(!incremental, timeout, interactive);
   if (smt2_model_format) smt2_force_smt2_model_format();
-  if (delegate != NULL) smt2_set_delegate(delegate);
-  if (dimacsfile != NULL) smt2_export_to_dimacs(dimacsfile);
+  if (bvdecimal) smt2_force_bvdecimal_format();
+  if (dimacsfile != NULL && delegate == NULL) smt2_export_to_dimacs(dimacsfile);
+  if (delegate != NULL) {
+    smt2_set_delegate(delegate);
+    if (dimacsfile != NULL) smt2_set_dimacs_file(dimacsfile);
+  }
+
   init_smt2_tstack(&stack);
   init_parser(&parser, &lexer, &stack);
 
   init_parameter_name_table();
-  
+
   if (verbosity > 0) {
     smt2_set_verbosity(verbosity);
   }
@@ -652,7 +731,7 @@ int main(int argc, char *argv[]) {
   setup_mcsat();
 
   while (smt2_active()) {
-    if (interactive) {
+    if (prompt) {
       // prompt
       fputs("yices> ", stdout);
       fflush(stdout);
