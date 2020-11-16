@@ -27,6 +27,8 @@
 
 #include "yices_exit_codes.h"
 
+#undef malloc
+#undef realloc
 
 /*
  * Callback function: give a chance to do something when

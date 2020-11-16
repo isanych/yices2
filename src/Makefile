@@ -592,6 +592,7 @@ ifeq ($(THREAD_SAFE),1)
   PTHREAD= -pthread
 endif
 
+CPPFLAGS += -Dmalloc=safe_malloc -Drealloc=safe_realloc
 
 #
 # OS-dependent compilation flags + which dynamic libraries to build
