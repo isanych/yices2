@@ -22,7 +22,7 @@
 typedef enum state_s {
   c0, c1, c3, c4, c5, c6, c6a, c8, c9, c9a, c9b,
   c10, c10a, c10b, c11, c11a, c11b, c11d, c11f, c12, c12b,
-  c13, c14, c15, c16, c16a, c16b, c16c, c16d,
+  c13, c14, c15, c16, c16a, c16b, c16c, c16d, c17, c17a, c17b, c17c,
   a0, a1, v0,
   s0, s1, s2, s3, s4, s5, s6, s7, s8, s10,
   t0, t1, t2, t2a, t2b, t2d, t2e, 
@@ -68,6 +68,7 @@ enum actions {
   get_proof_next_goto_r0,
   get_unsat_assumptions_next_goto_r0,
   get_unsat_core_next_goto_r0,
+  get_unsat_model_interpolant_next_goto_r0,
   get_value_next_goto_c12,
   pop_next_goto_c3,
   push_next_goto_c3,
@@ -76,11 +77,12 @@ enum actions {
   set_option_next_goto_c6,
   reset_next_goto_r0,
   reset_assertions_next_goto_r0,
+  check_sat_assuming_model_next_goto_c17,
 
   // arguments to the commands
   numeral_next_goto_r0,
   keyword_next_goto_r0,
-  symbol_next_goto_r0,  
+  symbol_next_goto_r0,
   keyword_next_goto_c6a,
   next_return,
   push_r0_goto_a0,
@@ -110,6 +112,12 @@ enum actions {
   not_next_goto_c16c,
   symbol_next_goto_c16d,
 
+  next_goto_c17a,
+  symbol_next_goto_c17a,
+  next_goto_c17b,
+  next_push_c17c_goto_t0,
+  push_c17c_goto_t0,
+
   // attribute values + s-expressions
   numeral_next_return,
   decimal_next_return,
@@ -122,7 +130,7 @@ enum actions {
   keyword_next_return,
 
   // sorts
-  sort_sumbol_next_return,
+  sort_symbol_next_return,
   next_goto_s1,
   next_goto_s2,
   next_goto_s5,
@@ -138,10 +146,10 @@ enum actions {
   // terms
   term_symbol_next_return,
   next_goto_t1,
-  next_goto_t2,           // (let 
+  next_goto_t2,           // (let
   forall_next_goto_t3,    // (forall
   exists_next_goto_t3,    // (exists
-  next_push_t4a_goto_t0,  // (! 
+  next_push_t4a_goto_t0,  // (!
   next_goto_t5,           // (as
   next_goto_t6,           // ((
   next_goto_t7,           // (_
@@ -150,17 +158,18 @@ enum actions {
   symbol_next_push_t8a_goto_t0,
 
   // (let ...
-  next_goto_t2a,
+  bind_next_goto_t2a,
   next_goto_t2b,
   symbol_next_push_t2d_goto_t0,
   next_goto_t2e,
-  next_push_r0_goto_t0,
+  close_next_push_r0_goto_t0,
 
   // (exists ... and (forall ...
   next_goto_t3a,
   next_goto_t3b,
   symbol_next_push_t3d_goto_s0,
   next_goto_t3e,
+  next_push_r0_goto_t0,
 
   // (! <term> ...
   check_keyword_then_branch,
@@ -193,11 +202,11 @@ enum actions {
   // ((_ ...
   symbol_next_goto_t6i,
   numeral_next_goto_t6j,
-  
+
   // (_ ...
   symbol_next_goto_t7a,
   numeral_next_goto_t7b,
-  
+
   // after <term> in a function application
   push_t8a_goto_t0,
 
@@ -239,6 +248,7 @@ static triple_t triples[] = {
   { c1, SMT2_TK_GET_PROOF, "get_proof_next_goto_r0" },
   { c1, SMT2_TK_GET_UNSAT_ASSUMPTIONS, "get_unsat_assumptions_next_goto_r0" },
   { c1, SMT2_TK_GET_UNSAT_CORE, "get_unsat_core_next_goto_r0" },
+  { c1, SMT2_TK_GET_UNSAT_MODEL_INTERPOLANT, "get_unsat_model_interpolant_next_goto_r0" },
   { c1, SMT2_TK_GET_VALUE, "get_value_next_goto_c12" },
   { c1, SMT2_TK_POP, "pop_next_goto_c3" },
   { c1, SMT2_TK_PUSH, "push_next_goto_c3" },
@@ -247,7 +257,8 @@ static triple_t triples[] = {
   { c1, SMT2_TK_SET_OPTION, "set_option_next_goto_c6" },
   { c1, SMT2_TK_RESET, "reset_next_goto_r0" },
   { c1, SMT2_TK_RESET_ASSERTIONS, "reset_assertions_next_goto_r0" },
-  { c1, DEFAULT_TOKEN, "error_command_expected" },
+  { c1, SMT2_TK_CHECK_SAT_ASSUMING_MODEL, "check_sat_assuming_model_next_goto_c17" },
+  { c1, DEFAULT_TOKEN, "error_command_expected" },  
 
   { c3, SMT2_TK_NUMERAL, "numeral_next_goto_r0" },
   { c3, DEFAULT_TOKEN, "error_numeral_expected" },
@@ -360,6 +371,18 @@ static triple_t triples[] = {
   { c16d, SMT2_TK_RP, "next_goto_c16a" },
   { c16d, DEFAULT_TOKEN, "error_rp_expected" },
 
+  { c17, SMT2_TK_LP, "next_goto_c17a" },
+  { c17, DEFAULT_TOKEN, "error_lp_expected" },
+
+  { c17a, SMT2_TK_SYMBOL, "symbol_next_goto_c17a" },
+  { c17a, SMT2_TK_RP, "next_goto_c17b" },
+
+  { c17b, SMT2_TK_LP, "next_push_c17c_goto_t0" },
+  { c17b, DEFAULT_TOKEN, "error_lp_expected" },
+
+  { c17c, SMT2_TK_RP, "next_goto_r0" },
+  { c17c, DEFAULT_TOKEN, "push_c17c_goto_t0" },
+
   { a0, SMT2_TK_NUMERAL, "numeral_next_return" },
   { a0, SMT2_TK_DECIMAL, "decimal_next_return" },
   { a0, SMT2_TK_HEXADECIMAL, "hexadecimal_next_return" },
@@ -460,7 +483,7 @@ static triple_t triples[] = {
   { t1, SMT2_TK_ECHO, "symbol_next_push_t8a_goto_t0" },
   { t1, SMT2_TK_RESET, "symbol_next_push_t8a_goto_t0" },
 
-  { t2, SMT2_TK_LP, "next_goto_t2a" },
+  { t2, SMT2_TK_LP, "bind_next_goto_t2a" },
   { t2, DEFAULT_TOKEN, "error_lp_expected" },
 
   { t2a, SMT2_TK_LP, "next_goto_t2b" },
@@ -477,7 +500,7 @@ static triple_t triples[] = {
   { t2d, DEFAULT_TOKEN, "error_rp_expected" },
 
   { t2e, SMT2_TK_LP, "next_goto_t2b" },
-  { t2e, SMT2_TK_RP, "next_push_r0_goto_t0" },
+  { t2e, SMT2_TK_RP, "close_next_push_r0_goto_t0" },
 
   { t3, SMT2_TK_LP, "next_goto_t3a" },
   { t3, DEFAULT_TOKEN, "error_lp_expected" },

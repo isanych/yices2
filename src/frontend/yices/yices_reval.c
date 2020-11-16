@@ -93,6 +93,7 @@
 #include "solvers/bv/bvsolver.h"
 #include "solvers/bv/dimacs_printer.h"
 #include "solvers/funs/fun_solver.h"
+#include "solvers/quant/quant_solver.h"
 #include "solvers/simplex/simplex.h"
 #include "terms/rationals.h"
 #include "utils/command_line.h"
@@ -191,7 +192,7 @@ static param_t parameters;
 
 
 /*
- * Flag to indicate we are in exists/forall mode.
+ * Flag to indicate whether we are in exists/forall mode.
  */
 static bool efmode;
 
@@ -711,7 +712,7 @@ static const char signum_msg[24] = "\nInterrupted by signal ";
 static char signum_buffer[100];
 
 /*
- * Write signal number of file 2 (assumed to be stderr): we can't use
+ * Write signal number on file 2 (assumed to be stderr): we can't use
  * fprintf because it's not safe in a signal handler.
  */
 static void write_signum(int signum) {
@@ -1403,6 +1404,74 @@ static void show_param(yices_param_t p, uint32_t n) {
     show_pos32_param(param2string[p], ef_client_globals.ef_parameters.max_iters, n);
     break;
 
+  case PARAM_EF_MAX_LEMMAS_PER_ROUND:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.max_numlearnt_per_round, n);
+    break;
+
+  case PARAM_EMATCH_EN:
+    show_bool_param(param2string[p], ef_client_globals.ef_parameters.ematching, n);
+    break;
+
+  case PARAM_EMATCH_INST_PER_ROUND:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_inst_per_round, n);
+    break;
+
+  case PARAM_EMATCH_INST_PER_SEARCH:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_inst_per_search, n);
+    break;
+
+  case PARAM_EMATCH_INST_TOTAL:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_inst_total, n);
+    break;
+
+  case PARAM_EMATCH_ROUNDS_PER_SEARCH:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_rounds_per_search, n);
+    break;
+
+  case PARAM_EMATCH_SEARCH_TOTAL:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_search_total, n);
+    break;
+
+  case PARAM_EMATCH_TRIAL_FDEPTH:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_exec_max_fdepth, n);
+    break;
+
+  case PARAM_EMATCH_TRIAL_VDEPTH:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_exec_max_vdepth, n);
+    break;
+
+  case PARAM_EMATCH_TRIAL_FAPPS:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_exec_max_fapps, n);
+    break;
+
+  case PARAM_EMATCH_TRIAL_MATCHES:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_exec_max_matches, n);
+    break;
+
+  case PARAM_EMATCH_CNSTR_EPSILON:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_cnstr_epsilon, n);
+    break;
+
+  case PARAM_EMATCH_CNSTR_ALPHA:
+    show_float_param(param2string[p], ef_client_globals.ef_parameters.ematch_cnstr_alpha, n);
+    break;
+
+  case PARAM_EMATCH_TERM_EPSILON:
+    show_pos32_param(param2string[p], ef_client_globals.ef_parameters.ematch_term_epsilon, n);
+    break;
+
+  case PARAM_EMATCH_TERM_ALPHA:
+    show_float_param(param2string[p], ef_client_globals.ef_parameters.ematch_term_alpha, n);
+    break;
+
+  case PARAM_EMATCH_CNSTR_MODE:
+    show_string_param(param2string[p], ematchmode2string[ef_client_globals.ef_parameters.ematch_cnstr_mode], n);
+    break;
+
+  case PARAM_EMATCH_TERM_MODE:
+    show_string_param(param2string[p], ematchmode2string[ef_client_globals.ef_parameters.ematch_term_mode], n);
+    break;
+
   case PARAM_UNKNOWN:
   default:
     freport_bug(stderr,"invalid parameter id in 'show_param'");
@@ -1841,6 +1910,125 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     }
     break;
 
+  case PARAM_EF_MAX_LEMMAS_PER_ROUND:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.max_numlearnt_per_round = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_EN:
+    if (param_val_to_bool(param, val, &tt, &reason)) {
+      ef_client_globals.ef_parameters.ematching = tt;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_INST_PER_ROUND:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_inst_per_round = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_INST_PER_SEARCH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_inst_per_search = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_INST_TOTAL:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_inst_total = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_ROUNDS_PER_SEARCH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_rounds_per_search = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_SEARCH_TOTAL:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_search_total = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_FDEPTH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_exec_max_fdepth = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_VDEPTH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_exec_max_vdepth = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_FAPPS:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_exec_max_fapps = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_MATCHES:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_exec_max_matches = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_CNSTR_EPSILON:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_cnstr_epsilon = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_CNSTR_ALPHA:
+    if (param_val_to_ratio(param, val, &x, &reason)) {
+      ef_client_globals.ef_parameters.ematch_cnstr_alpha = x;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TERM_EPSILON:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_term_epsilon = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TERM_ALPHA:
+    if (param_val_to_ratio(param, val, &x, &reason)) {
+      ef_client_globals.ef_parameters.ematch_term_alpha = x;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_CNSTR_MODE:
+    if (param_val_to_ematchmode(param, val, (iterate_kind_t *)&n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_cnstr_mode = n;
+      print_ok();
+    }
+    break;
+
+  case PARAM_EMATCH_TERM_MODE:
+    if (param_val_to_ematchmode(param, val, (iterate_kind_t *)&n, &reason)) {
+      ef_client_globals.ef_parameters.ematch_term_mode = n;
+      print_ok();
+    }
+    break;
+
   case PARAM_UNKNOWN:
   default:
     report_invalid_param(param);
@@ -1931,6 +2119,13 @@ static void show_funsolver_stats(fun_solver_stats_t *stat) {
   printf(" extensionality axioms   : %"PRIu32"\n", stat->num_extensionality_axiom);
 }
 
+static void show_quantsolver_stats(quant_solver_stats_t *stat) {
+  printf("Quantifiers\n");
+  printf(" quantifiers             : %"PRIu32"\n", stat->num_quantifiers);
+  printf(" patterns                : %"PRIu32"\n", stat->num_patterns);
+  printf(" instances               : %"PRIu32"\n", stat->num_instances);
+}
+
 static void show_simplex_stats(simplex_stats_t *stat) {
   printf("Simplex\n");
   printf(" init. variables         : %"PRIu32"\n", stat->num_init_vars);
@@ -1995,6 +2190,7 @@ static void yices_showstats_cmd(void) {
   egraph_t *egraph;
   simplex_solver_t *simplex;
   fun_solver_t *fsolver;
+  quant_solver_t *qsolver;
   double run_time;
   double mem_used;
 
@@ -2016,8 +2212,12 @@ static void yices_showstats_cmd(void) {
       printf(" egraph terms            : %"PRIu32"\n", egraph->terms.nterms);
       printf(" egraph eq_quota         : %"PRIu32"\n", egraph->aux_eq_quota);
       if (context_has_fun_solver(context)) {
-	fsolver = context->fun_solver;
-	show_funsolver_stats(&fsolver->stats);
+        fsolver = context->fun_solver;
+        show_funsolver_stats(&fsolver->stats);
+      }
+      if (context_has_quant_solver(context)) {
+        qsolver = context->quant_solver;
+        show_quantsolver_stats(&qsolver->stats);
       }
     }
 
@@ -3028,7 +3228,7 @@ static void print_ef_status(void) {
  */
 static void yices_efsolve_cmd(void) {
   if (efmode) {
-    ef_solve(&ef_client_globals, assertions.top, assertions.data, &parameters, logic_code, arch, tracer);
+    ef_solve(&ef_client_globals, assertions.top, assertions.data, &parameters, logic_code, arch, tracer, NULL);
     if (ef_client_globals.efcode != EF_NO_ERROR) {
       // error in preprocessing
       print_ef_analyze_code(ef_client_globals.efcode);
@@ -3115,7 +3315,7 @@ static void export_ef_problem(const char *s) {
   ivector_t all_ef;
   int code;
 
-  build_ef_problem(&ef_client_globals, assertions.top, assertions.data);
+  build_ef_problem(&ef_client_globals, assertions.top, assertions.data, NULL, &parameters);
   if (ef_client_globals.efcode != EF_NO_ERROR) {
     print_ef_analyze_code(ef_client_globals.efcode);
   } else {

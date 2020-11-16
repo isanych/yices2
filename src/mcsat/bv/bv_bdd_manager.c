@@ -386,7 +386,7 @@ void bv_bdd_manager_ensure_term_data(bv_bdd_manager_t* bddm, term_t t, uint32_t 
       case BV_EQ_ATOM:
       case BV_GE_ATOM:
       case BV_SGE_ATOM: {
-        // Boolean atoms, 2 children are bitvectors
+        // Boolean atoms, children are bitvectors
         assert(bitsize == 1);
         composite_term_t* atom_comp = composite_term_desc(terms, t);
         for (uint32_t i = 0; i < atom_comp->arity; ++ i) {
@@ -1155,3 +1155,10 @@ bool bv_bdd_manager_is_model(bv_bdd_manager_t* bddm, term_t x, bdd_t bdd, const 
   return bdds_is_model(bddm->cudd, x_bdds, (BDD*) bdd.bdd[0], x_value);
 }
 
+void bv_bdd_manager_mark_terms(bv_bdd_manager_t* bddm) {
+  uint32_t i;
+  for (i = 0; i < bddm->term_list.size; ++ i) {
+    term_t t = bddm->term_list.data[i];
+    term_table_set_gc_mark(bddm->ctx->terms, index_of(t));
+  }
+}

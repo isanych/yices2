@@ -127,7 +127,8 @@
 #include "api/search_parameters.h"
 #include "api/smt_logic_codes.h"
 #include "context/context_types.h"
-#include "exists_forall/ef_problem.h"
+#include "solvers/quant/ef_problem.h"
+#include "exists_forall/ef_values.h"
 #include "io/tracer.h"
 
 #include "yices_types.h"
@@ -154,12 +155,6 @@
  *   the forall context)
  * - code = result of the last assertion (negative code is an error)
  */
-typedef enum ef_gen_option {
-  EF_NOGEN_OPTION,        // option 1 above
-  EF_GEN_BY_SUBST_OPTION, // option 2 above
-  EF_GEN_BY_PROJ_OPTION,  // model-based projection (cheap quantifier elimination)
-  EF_GEN_AUTO_OPTION,     // select between PROJ or SUBST depending on variables
-} ef_gen_option_t;
 
 
 /*
@@ -209,14 +204,20 @@ typedef struct ef_solver_s {
   ef_gen_option_t option;    // generalization mode
   uint32_t max_samples;      // bound on pre-sampling: 0 means no pre-sampling
   uint32_t max_iters;        // bound on outer iterations
+  uint32_t max_numlearnt_per_round;    // bound on inner iterations
+  bool ematching;            // use ematching or not
+
+  uint32_t num_models;       // total number of exists models
   uint32_t iters;            // number of outer iterations
+  uint32_t numiters;         // total number of counterexample iterations
+  uint32_t numlearnt;        // total number of inner iterations
   uint32_t scan_idx;         // first universal constraint to check
 
   // Exists and forall contexts + exists model
   context_t *exists_context;
   context_t *forall_context;
   model_t *exists_model;
-  term_t *evalue;
+  ivector_t evalue;
   term_t *uvalue;
 
   // Support for implicant construction and projection
@@ -232,6 +233,10 @@ typedef struct ef_solver_s {
 
   // For verbose output (default = NULL)
   tracer_t *trace;
+
+  // Support for mbqi
+  ef_table_t value_table;
+  ivector_t new_vars;
 } ef_solver_t;
 
 
@@ -275,7 +280,8 @@ extern void ef_solver_set_trace(ef_solver_t *solver, tracer_t *trace);
  * Also solver->iters stores the number of iterations required.
  */
 extern void ef_solver_check(ef_solver_t *solver, const param_t *parameters,
-			    ef_gen_option_t gen_mode, uint32_t max_samples, uint32_t max_iters);
+			    ef_gen_option_t gen_mode, uint32_t max_samples, uint32_t max_iters, uint32_t max_numlearnt,
+			    bool ematching);
 
 
 /*

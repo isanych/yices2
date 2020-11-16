@@ -125,10 +125,12 @@ core_src_c := \
 	context/pseudo_subst.c \
 	context/shared_terms.c \
 	context/symmetry_breaking.c \
+	context/quant_context_utils.c \
+	context/quant_context.c \
 	exists_forall/ef_client.c \
 	exists_forall/ef_analyze.c \
-	exists_forall/ef_parameters.c \
-	exists_forall/ef_problem.c \
+	exists_forall/ef_values.c \
+	exists_forall/ef_skolemize.c \
 	exists_forall/efsolver.c \
 	frontend/smt2/attribute_values.c \
 	frontend/yices/yices_lexer.c \
@@ -198,7 +200,9 @@ core_src_c := \
 	solvers/floyd_warshall/dl_vartable.c \
 	solvers/floyd_warshall/idl_floyd_warshall.c \
 	solvers/floyd_warshall/rdl_floyd_warshall.c \
+	solvers/funs/fun_level.c \
 	solvers/funs/fun_solver.c \
+	solvers/funs/stratification.c \
 	solvers/simplex/arith_atomtable.c \
 	solvers/simplex/arith_vartable.c \
 	solvers/simplex/diophantine_systems.c \
@@ -207,6 +211,20 @@ core_src_c := \
 	solvers/simplex/matrices.c \
 	solvers/simplex/offset_equalities.c \
 	solvers/simplex/simplex.c \
+	solvers/quant/quant_parameters.c \
+	solvers/quant/ef_parameters.c \
+	solvers/quant/ef_problem.c \
+	solvers/quant/quant_pattern.c \
+	solvers/quant/quant_cnstr.c \
+	solvers/quant/cnstr_learner.c \
+	solvers/quant/term_learner.c \
+	solvers/quant/ematch_instr.c \
+	solvers/quant/ematch_instr_stack.c \
+	solvers/quant/ematch_instance.c \
+	solvers/quant/ematch_compile.c \
+	solvers/quant/ematch_execute.c \
+	solvers/quant/quant_ematching.c \
+	solvers/quant/quant_solver.c \
 	terms/balanced_arith_buffers.c \
 	terms/bit_expr.c \
 	terms/bit_term_conversion.c \
@@ -282,6 +300,7 @@ core_src_c := \
 	utils/int_vectors.c \
 	utils/mark_vectors.c \
 	utils/memalloc.c \
+	utils/object_stack.c \
 	utils/object_stores.c \
 	utils/pair_hash_map.c \
 	utils/pair_hash_map2.c \
@@ -313,7 +332,8 @@ core_src_c := \
 	utils/uint_array_sort2.c \
 	utils/uint_rbtrees.c \
 	utils/use_vectors.c \
-	utils/vector_hash_map.c
+	utils/vector_hash_map.c \
+	utils/uint_learner.c
 
 #
 # Optional: mcsat solver
@@ -793,6 +813,10 @@ ifeq ($(YICES_MODE),gcov)
 CFLAGS := $(CFLAGS) -fprofile-arcs -ftest-coverage -g -O0
 CPPFLAGS := $(CPPFLAGS) -DNDEBUG
 else
+ifeq ($(YICES_MODE),sanitize)
+CFLAGS := $(CFLAGS) -O3 -g -fsanitize=address,undefined -fno-omit-frame-pointer
+CPPFLAGS := $(CPPFLAGS) -DNDEBUG
+else
 ifeq ($(findstring $(YICES_MODE),valgrind quantify purify),$(YICES_MODE))
 CFLAGS := $(CFLAGS) -O3 -g
 CPPFLAGS := $(CPPFLAGS) -DNDEBUG
@@ -816,7 +840,7 @@ endif
 endif
 endif
 endif
-
+endif
 
 #
 # Object files to include in the dynamic libraries

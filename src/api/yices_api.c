@@ -143,7 +143,7 @@ yices_globals_t __yices_globals = {
 };
 
 
-  
+
 /*
  * SYNCHRONIZING ACCESS TO GLOBAL TABLE.
  */
@@ -295,22 +295,29 @@ static yices_lock_t model_list_lock;
 
 
 /*
- * Context configuration and parameter descriptors
- * are stored in one list.
+ * Context configurations
  */
 typedef struct {
   dl_list_t header;
   ctx_config_t config;
 } ctx_config_elem_t;
 
+static dl_list_t config_list;
+#ifdef THREAD_SAFE
+static yices_lock_t config_list_lock;
+#endif
+
+/*
+ * Solver parameter descriptors
+ */
 typedef struct {
   dl_list_t header;
   param_t param;
 } param_structure_elem_t;
 
-static dl_list_t generic_list;
+static dl_list_t parameter_list;
 #ifdef THREAD_SAFE
-static yices_lock_t generic_list_lock;
+static yices_lock_t parameter_list_lock;
 #endif
 
 
@@ -322,7 +329,8 @@ static inline void init_list_locks(void){
   create_yices_lock(&bvlogic_buffer_list_lock);
   create_yices_lock(&context_list_lock);
   create_yices_lock(&model_list_lock);
-  create_yices_lock(&generic_list_lock);
+  create_yices_lock(&config_list_lock);
+  create_yices_lock(&parameter_list_lock);
 #endif
 }
 
@@ -334,7 +342,8 @@ static inline void delete_list_locks(void){
   destroy_yices_lock(&bvlogic_buffer_list_lock);
   destroy_yices_lock(&context_list_lock);
   destroy_yices_lock(&model_list_lock);
-  destroy_yices_lock(&generic_list_lock);
+  destroy_yices_lock(&config_list_lock);
+  destroy_yices_lock(&parameter_list_lock);
 #endif
 }
 
@@ -347,7 +356,8 @@ static inline void get_list_locks(void){
   get_yices_lock(&bvlogic_buffer_list_lock);
   get_yices_lock(&context_list_lock);
   get_yices_lock(&model_list_lock);
-  get_yices_lock(&generic_list_lock);
+  get_yices_lock(&config_list_lock);
+  get_yices_lock(&parameter_list_lock);
 #endif
 }
 
@@ -360,7 +370,8 @@ static inline void release_list_locks(void){
   release_yices_lock(&bvlogic_buffer_list_lock);
   release_yices_lock(&context_list_lock);
   release_yices_lock(&model_list_lock);
-  release_yices_lock(&generic_list_lock);
+  release_yices_lock(&config_list_lock);
+  release_yices_lock(&parameter_list_lock);
 #endif
 }
 
@@ -753,6 +764,7 @@ static inline void _o_free_model(model_t *m) {
   list_remove(elem);
   safe_free(elem);
 }
+
 static inline void free_model(model_t *m) {
   MT_PROTECT_VOID(model_list_lock, _o_free_model(m));
 }
@@ -794,6 +806,13 @@ static inline dl_list_t *header_of_param_structure(param_t *p) {
 }
 
 /*
+ * Config from a header l
+ */
+static inline ctx_config_t *config_of_header(dl_list_t *l) {
+  return (ctx_config_t *) (((char *) l) + offsetof(ctx_config_elem_t, config));
+}
+
+/*
  * Allocate a structure and insert it into the generic
  * WARNING: the record is not initialized
  */
@@ -801,24 +820,24 @@ static inline ctx_config_t *_o_alloc_config_structure(void) {
   ctx_config_elem_t *new_elem;
 
   new_elem = (ctx_config_elem_t *) safe_malloc(sizeof(ctx_config_elem_t));
-  list_insert_next(&generic_list, &new_elem->header);
+  list_insert_next(&config_list, &new_elem->header);
   return &new_elem->config;
 }
 
 static ctx_config_t *alloc_config_structure(void) {
-  MT_PROTECT(ctx_config_t *, generic_list_lock, _o_alloc_config_structure());
+  MT_PROTECT(ctx_config_t *, config_list_lock, _o_alloc_config_structure());
 }
 
 static inline param_t *_o_alloc_param_structure(void) {
   param_structure_elem_t *new_elem;
 
   new_elem = (param_structure_elem_t *) safe_malloc(sizeof(param_structure_elem_t));
-  list_insert_next(&generic_list, &new_elem->header);
+  list_insert_next(&parameter_list, &new_elem->header);
   return &new_elem->param;
 }
 
 static param_t *alloc_param_structure(void) {
-  MT_PROTECT(param_t *, generic_list_lock,  _o_alloc_param_structure());
+  MT_PROTECT(param_t *, parameter_list_lock,  _o_alloc_param_structure());
 }
 
 /*
@@ -833,7 +852,7 @@ static inline void _o_free_config_structure(ctx_config_t *c) {
 }
 
 static void free_config_structure(ctx_config_t *c) {
-  MT_PROTECT_VOID(generic_list_lock, _o_free_config_structure(c));
+  MT_PROTECT_VOID(config_list_lock, _o_free_config_structure(c));
 }
 
 static inline void _o_free_param_structure(param_t *p) {
@@ -845,24 +864,40 @@ static inline void _o_free_param_structure(param_t *p) {
 }
 
 static void free_param_structure(param_t *p) {
-  MT_PROTECT_VOID(generic_list_lock, _o_free_param_structure(p));
+  MT_PROTECT_VOID(parameter_list_lock, _o_free_param_structure(p));
 }
 
 
 /*
- * Empty the generic list
+ * Empty the list of configs
  */
-static void free_generic_list(void) {
+static void free_config_list(void) {
   dl_list_t *elem, *aux;
 
-  elem = generic_list.next;
-  while (elem != &generic_list) {
+  elem = config_list.next;
+  while (elem != &config_list) {
+    aux = elem->next;
+    delete_config(config_of_header(elem));
+    safe_free(elem);
+    elem = aux;
+  }
+  clear_list(&config_list);
+}
+
+
+/*
+ * Empty the list of parameter descriptors
+ */
+static void free_parameter_list(void) {
+  dl_list_t *elem, *aux;
+
+  elem = parameter_list.next;
+  while (elem != &parameter_list) {
     aux = elem->next;
     safe_free(elem);
     elem = aux;
   }
-
-  clear_list(&generic_list);
+  clear_list(&parameter_list);
 }
 
 
@@ -962,10 +997,10 @@ static void delete_fvars(void) {
  * Initialize the table of global objects
  */
 static void init_globals(yices_globals_t *glob) {
-  type_table_t *types = (type_table_t *)safe_malloc(sizeof(type_table_t));
-  term_table_t *terms = (term_table_t *)safe_malloc(sizeof(term_table_t));
-  term_manager_t *manager = (term_manager_t *)safe_malloc(sizeof(term_manager_t));
-  pprod_table_t *pprods = (pprod_table_t *)safe_malloc(sizeof(pprod_table_t));
+  type_table_t *types = (type_table_t *) safe_malloc(sizeof(type_table_t));
+  term_table_t *terms = (term_table_t *) safe_malloc(sizeof(term_table_t));
+  term_manager_t *manager = (term_manager_t *) safe_malloc(sizeof(term_manager_t));
+  pprod_table_t *pprods = (pprod_table_t *) safe_malloc(sizeof(pprod_table_t));
 
   memset(types, 0, sizeof(type_table_t));
   memset(terms, 0, sizeof(term_table_t));
@@ -1047,7 +1082,8 @@ EXPORTED void yices_init(void) {
   // other dynamic object lists
   clear_list(&context_list);
   clear_list(&model_list);
-  clear_list(&generic_list);
+  clear_list(&config_list);
+  clear_list(&parameter_list);
 
   // registries for garbage collection
   root_terms = NULL;
@@ -1087,7 +1123,8 @@ EXPORTED void yices_exit(void) {
 
   free_context_list();
   free_model_list();
-  free_generic_list();
+  free_config_list();
+  free_parameter_list();
 
   delete_list_locks();
 
@@ -1101,13 +1138,24 @@ EXPORTED void yices_exit(void) {
 }
 
 
-
 /*
  * Full reset: delete everything
  */
 EXPORTED void yices_reset(void) {
   yices_exit();
   yices_init();
+}
+
+
+/*
+ * Enable more rewrite rules in the term manager
+ */
+static void _o_enable_bvite_offset(void) {
+  __yices_globals.manager->simplify_bvite_offset = true;
+}
+
+void yices_enable_bvite_offset(void) {
+  MT_PROTECT_VOID(__yices_globals.lock, _o_enable_bvite_offset());
 }
 
 
@@ -7885,6 +7933,7 @@ EXPORTED ctx_config_t *yices_new_config(void) {
  * Delete
  */
 EXPORTED void yices_free_config(ctx_config_t *config) {
+  delete_config(config);
   free_config_structure(config);
 }
 
@@ -8279,7 +8328,25 @@ context_t *_o_yices_new_context(const ctx_config_t *config) {
     }
   }
 
-  return _o_yices_create_context(logic, arch, mode, iflag, qflag);
+  context_t* ctx = _o_yices_create_context(logic, arch, mode, iflag, qflag);
+
+  if (config != NULL && config->trace_tags != NULL) {
+    // Make new tracer
+    tracer_t *trace = (tracer_t *) safe_malloc(sizeof(tracer_t));
+    init_trace(trace);
+    set_trace_file(trace, stderr);
+    // Copy over the trace tag to the tracer
+    char *saveptr = NULL;
+    char *tag = strtok_r(config->trace_tags, ",", &saveptr);
+    while (tag != NULL) {
+      pvector_push(&trace->trace_tags, tag);
+      tag = strtok_r(NULL, ",", &saveptr);
+    }
+    // Set it to the context
+    context_set_trace(ctx, trace);
+  }
+
+  return ctx;
 }
 
 
@@ -8440,6 +8507,7 @@ static const error_code_t intern_code2error[NUM_INTERNALIZATION_ERRORS] = {
   CTX_FORMULA_NOT_IDL,
   CTX_FORMULA_NOT_RDL,
   CTX_NONLINEAR_ARITH_NOT_SUPPORTED,
+  DIVISION_BY_ZERO,
   CTX_TOO_MANY_ARITH_VARS,
   CTX_TOO_MANY_ARITH_ATOMS,
   CTX_ARITH_SOLVER_EXCEPTION,
@@ -8982,6 +9050,194 @@ EXPORTED smt_status_t yices_check_context_with_assumptions(context_t *ctx, const
   return stat;
 }
 
+EXPORTED smt_status_t yices_check_context_with_interpolation(interpolation_context_t *ctx, const param_t *params, int32_t build_model) {
+
+  int32_t ret = 0;
+  model_t *model = NULL;
+  smt_status_t result = STATUS_UNKNOWN;
+  ivector_t model_vars, interpolants;
+
+  // Push A and B so we can revert
+  ret = yices_push(ctx->ctx_A);
+  if (ret) {
+    return STATUS_ERROR;
+  }
+  ret = yices_push(ctx->ctx_B);
+  if (ret) {
+    yices_pop(ctx->ctx_A);
+    return STATUS_ERROR;
+  }
+
+  // Search: find models of B and refute with B
+  // Collect all the model interpolants
+  init_ivector(&model_vars, 0);
+  init_ivector(&interpolants, 0);
+  while (true) {
+
+    // Check if the current B is satisfiable
+    result = yices_check_context(ctx->ctx_B, params);
+
+    // UNSAT, interrupts and errors, we're done
+    if (result != STATUS_SAT) {
+      break;
+    }
+
+    // B is satisfiable, refute
+    model = yices_get_model(ctx->ctx_B, 1);
+    if (model == NULL) {
+      result = STATUS_ERROR;
+      break;
+    }
+
+    // Get the variables of the model
+    model_get_relevant_vars(model, &model_vars);
+
+    // Check if A can be satisfied by the model of B
+    result = yices_check_context_with_model(ctx->ctx_A, params, model, model_vars.size, model_vars.data);
+
+    // SAT, interrupts and errors, we're done
+    if (result != STATUS_UNSAT) {
+      break;
+    }
+
+    // UNSAT, get the interpolant
+    term_t model_interpolant = yices_get_model_interpolant(ctx->ctx_A);
+    if (model_interpolant == NULL_TERM) {
+      result = STATUS_ERROR;
+      break;
+    }
+    ivector_push(&interpolants, model_interpolant);
+
+    // Add the inteprolant to B
+    yices_assert_formula(ctx->ctx_B, model_interpolant);
+
+    // Reset the model
+    yices_free_model(model);
+    model = NULL;
+  }
+
+  if (result == STATUS_UNSAT) {
+    // Construct the interpolant if UNSAT
+    ctx->interpolant = yices_and(interpolants.size, interpolants.data);
+  } else if (result == STATUS_SAT && build_model) {
+    // Construct the model if SAT and asked
+    ctx->model = yices_get_model(ctx->ctx_A, 1);
+  }
+
+  // Pop both contexts
+  if (result != STATUS_ERROR) {
+    ret = yices_pop(ctx->ctx_B);
+    if (ret) {
+      result = STATUS_ERROR;
+    } else {
+      ret = yices_pop(ctx->ctx_A);
+      if (ret) {
+        result = STATUS_ERROR;
+      }
+    }
+  }
+
+  // Free temp variables
+  if (model != NULL) {
+    yices_free_model(model);
+  }
+  delete_ivector(&interpolants);
+  delete_ivector(&model_vars);
+
+  return result;
+}
+
+
+/*
+ * Check context with model
+ * - n = number of model assumptions
+ * - a[0] ... a[n-1] = n assumptions.
+ */
+EXPORTED smt_status_t yices_check_context_with_model(context_t *ctx, const param_t *params,
+    model_t* mdl, uint32_t n, const term_t t[]) {
+
+  param_t default_params;
+  smt_status_t stat;
+  uint32_t i;
+
+  // cleanup
+  switch (context_status(ctx)) {
+  case STATUS_UNKNOWN:
+  case STATUS_SAT:
+    if (! context_supports_multichecks(ctx)) {
+      error_report_t *error = get_yices_error();
+      error->code = CTX_OPERATION_NOT_SUPPORTED;
+      return STATUS_ERROR;
+    }
+    if (! context_has_mcsat(ctx)) {
+      error_report_t *error = get_yices_error();
+      error->code = CTX_OPERATION_NOT_SUPPORTED;
+      return STATUS_ERROR;
+    }
+    context_clear(ctx);
+    break;
+
+  case STATUS_IDLE:
+    break;
+
+  case STATUS_UNSAT:
+    if (!context_supports_multichecks(ctx)) {
+      error_report_t *error = get_yices_error();
+      error->code = CTX_OPERATION_NOT_SUPPORTED;
+      return STATUS_ERROR;
+    }
+    if (!context_has_mcsat(ctx)) {
+      error_report_t *error = get_yices_error();
+      error->code = CTX_OPERATION_NOT_SUPPORTED;
+      return STATUS_ERROR;
+    }
+    context_clear_unsat(ctx);
+    if (context_status(ctx) == STATUS_UNSAT) {
+      return STATUS_UNSAT;
+    }
+    break;
+
+  case STATUS_SEARCHING:
+  case STATUS_INTERRUPTED: {
+    error_report_t *error = get_yices_error();
+    error->code = CTX_INVALID_OPERATION;
+    return STATUS_ERROR;
+  }
+  case STATUS_ERROR:
+  default: {
+    error_report_t *error = get_yices_error();
+    error->code = INTERNAL_EXCEPTION;
+    return STATUS_ERROR;
+  }
+  }
+
+  assert(context_status(ctx) == STATUS_IDLE);
+
+  // Make sure only variables are allowed
+  for (i = 0; i < n; ++ i) {
+    bool is_variable = term_is_var_or_uninterpreted(ctx->terms, t[i]);
+    if (!is_variable) {
+      error_report_t *error = get_yices_error();
+      error->code = MCSAT_ERROR_NAMED_TERMS_NOT_SUPPORTED;
+      return STATUS_ERROR;
+    }
+  }
+
+  // set parameters
+  if (params == NULL) {
+    yices_default_params_for_context(ctx, &default_params);
+    params = &default_params;
+  }
+
+  // call check
+  stat = check_context_with_model(ctx, params, mdl, n, t);
+  if (stat == STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
+    context_cleanup(ctx);
+  }
+
+  return stat;
+}
+
 
 /*
  * Interrupt the search:
@@ -9018,6 +9274,13 @@ EXPORTED int32_t yices_get_unsat_core(context_t *ctx, term_vector_t *v) {
   yices_reset_term_vector(v);
   context_build_unsat_core(ctx, (ivector_t *) v);
   return 0;
+}
+
+/*
+ * Construct a model interpolant core.
+ */
+EXPORTED term_t yices_get_model_interpolant(context_t *ctx) {
+  return context_get_unsat_model_interpolant(ctx);
 }
 
 
@@ -9138,7 +9401,7 @@ int32_t _o_yices_pp_model(FILE *f, model_t *mdl, uint32_t width, uint32_t height
   area.height = height;
   area.offset = offset;
   area.stretch = false;
-  area.truncate = true;
+  area.truncate = false;
 
   init_default_yices_pp(&printer, f, &area);
   model_pp_full(&printer, mdl);
@@ -9191,7 +9454,7 @@ char *_o_yices_model_to_string(model_t *mdl, uint32_t width, uint32_t height, ui
   area.height = height;
   area.offset = offset;
   area.stretch = false;
-  area.truncate = true;
+  area.truncate = false;
 
   init_default_yices_pp(&printer, NULL, &area);
   model_pp_full(&printer, mdl);
@@ -9563,7 +9826,7 @@ static smt_status_t yices_do_check_formulas(const term_t f[], uint32_t n, const 
   yices_obtain_mutex();
   init_context(&context, __yices_globals.terms, logic, CTX_MODE_ONECHECK, arch, qflag);
   context_set_default_options(&context, logic, arch, iflag, qflag);
-  code = assert_formulas(&context, n, f);
+  code = _o_assert_formulas(&context, n, f);
   yices_release_mutex();
 
   if (code < 0) {
@@ -9712,7 +9975,7 @@ static int32_t yices_do_export_to_dimacs(const term_t f[], uint32_t n, const cha
   yices_obtain_mutex();
   init_context(&context, __yices_globals.terms, QF_BV, CTX_MODE_ONECHECK, arch, qflag);
   context_set_default_options(&context, QF_BV, arch, iflag, qflag);
-  code = assert_formulas(&context, n, f);
+  code = _o_assert_formulas(&context, n, f);
   yices_release_mutex();
 
   if (code < 0) {
@@ -10927,7 +11190,7 @@ term_t _o_yices_get_value_as_term(model_t *mdl, term_t t) {
   }
 
   vtbl = model_get_vtbl(mdl);
-  a = convert_value_to_term(__yices_globals.terms, vtbl, v);
+  a = convert_value_to_term(__yices_globals.manager, __yices_globals.terms, vtbl, v);
   if (a < 0) {
     set_error_code(EVAL_CONVERSION_FAILED);
     return NULL_TERM;
@@ -11038,7 +11301,7 @@ int32_t _o_yices_term_array_value(model_t *mdl, uint32_t n, const term_t a[], te
     return -1;
   }
 
-  count = convert_value_array(__yices_globals.terms, model_get_vtbl(mdl), n, b);
+  count = convert_value_array(__yices_globals.manager, __yices_globals.terms, model_get_vtbl(mdl), n, b);
   if (count < n) {
     set_error_code(EVAL_CONVERSION_FAILED);
     return -1;

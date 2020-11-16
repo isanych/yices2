@@ -87,7 +87,7 @@ extern void context_pop(context_t *ctx);
 /*
  * Options for the simplex solver. If the context already contains
  * a simplex solver, then these options are set in this solver.
- * Otherwise,, they will be set at the time the simplex solver is 
+ * Otherwise, they will be set at the time the simplex solver is
  * constructed and added to the simplex solver.
  */
 extern void enable_splx_eager_lemmas(context_t *ctx);
@@ -132,6 +132,20 @@ extern int32_t assert_formula(context_t *ctx, term_t f);
  * same return code as above.
  */
 extern int32_t assert_formulas(context_t *ctx, uint32_t n, const term_t *f);
+
+
+/*
+ * Assert all formulas f[0] ... f[n-1] during quantifier instantiation
+ * The context status must be SEARCHING.
+ *
+ * Return code:
+ * - TRIVIALLY_UNSAT means that an inconsistency is detected
+ *   (in that case the context status is set to UNSAT)
+ * - CTX_NO_ERROR means no internalization error and status not
+ *   determined
+ * - otherwise, the code is negative to report an error.
+ */
+extern int32_t quant_assert_formulas(context_t *ctx, uint32_t n, const term_t *f);
 
 
 /*
@@ -194,6 +208,22 @@ extern smt_status_t check_context(context_t *ctx, const param_t *parameters);
  */
 extern smt_status_t check_context_with_assumptions(context_t *ctx, const param_t *parameters, uint32_t n, const literal_t *a);
 
+/*
+ * Check satisfiability under model: check whether the assertions stored in ctx
+ * conjoined with the assignment that the model gives to t is satisfiable.
+ *
+ * - params is an optional structure to store heuristic parameters
+ * - if params is NULL, default parameter settings are used.
+ * - model = model to assume
+ * - t = variables to use from the model (size = n)
+ *
+ * return status: either STATUS_UNSAT, STATUS_SAT, STATUS_UNKNOWN,
+ * STATUS_INTERRUPTED
+ *
+ * If status is STATUS_UNSAT then the context and model are inconsistent
+ */
+extern smt_status_t check_context_with_model(context_t *ctx, const param_t *params, model_t* mdl, uint32_t n, const term_t t[]);
+
 
 /*
  * Build a model: the context's status must be STATUS_SAT or STATUS_UNKNOWN
@@ -205,6 +235,20 @@ extern smt_status_t check_context_with_assumptions(context_t *ctx, const param_t
  */
 extern void context_build_model(model_t *model, context_t *ctx);
 
+/*
+ * Build a model for the current context (including all satellite solvers)
+ * - the context status must be SAT (or UNKNOWN)
+ * - if model->has_alias is true, we store the term substitution
+ *   defined by ctx->intern_tbl into the model
+ * - cleanup of satellite models needed using clean_solver_models()
+ */
+extern void build_model(model_t *model, context_t *ctx);
+
+/*
+ * Cleanup solver models
+ */
+extern void clean_solver_models(context_t *ctx);
+
 
 /*
  * Build an unsat core: the context's status must be STATUS_UNSAT
@@ -215,6 +259,11 @@ extern void context_build_model(model_t *model, context_t *ctx);
  */
 extern void context_build_unsat_core(context_t *ctx, ivector_t *v);
 
+
+/*
+ * Get the model interpolant: the context's status must be STATUS_USAT
+ */
+extern term_t context_get_unsat_model_interpolant(context_t *ctx);
 
 /*
  * Interrupt the search
@@ -408,6 +457,7 @@ extern bval_t context_bool_term_value(context_t *ctx, term_t t);
  * next call to term_table_gc).
  */
 extern void context_gc_mark(context_t *ctx);
+
 
 
 #endif /* __CONTEXT_H */

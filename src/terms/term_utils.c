@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "term_printer.h"
+#include "io/term_printer.h"
 
 static void print_finite_domain(FILE *f, term_table_t *tbl, finite_domain_t *d) {
   uint32_t i, n;
@@ -112,9 +112,7 @@ static void collect_finite_domain(term_table_t *tbl, int_hset_t *cache, ivector_
       }
     } else {
       // t must be a constant, not already in v
-      assert(term_kind(tbl, t) == ARITH_CONSTANT ||
-             term_kind(tbl, t) == BV64_CONSTANT ||
-             term_kind(tbl, t) == BV_CONSTANT);
+      assert(is_const_term(tbl, t));
       ivector_push(v, t);
     }
   }
@@ -1196,7 +1194,6 @@ bool arith_term_is_nonneg(term_table_t *tbl, term_t t, bool check_ite) {
     return polynomial_is_nonneg(poly_term_desc(tbl, t));
 
   case ARITH_ABS:
-  case ARITH_MOD:
     return true;
 
   case ARITH_FLOOR:
@@ -1555,6 +1552,24 @@ bool bvterm_is_zero(term_table_t *tbl, term_t t) {
   case BV_CONSTANT:
     n = (term_bitsize(tbl, t) + 31) >> 5; // number of words
     return bvconst_is_zero(bvconst_term_desc(tbl, t)->data, n);
+
+  default:
+    return false;
+  }
+}
+
+bool bvterm_is_one(term_table_t *tbl, term_t t) {
+  uint32_t n;
+
+  assert(is_bitvector_term(tbl, t));
+
+  switch (term_kind(tbl, t)) {
+  case BV64_CONSTANT:
+    return bvconst64_term_desc(tbl, t)->value == 1;
+
+  case BV_CONSTANT:
+    n = (term_bitsize(tbl, t) + 31) >> 5; // number of words
+    return bvconst_is_one(bvconst_term_desc(tbl, t)->data, n);
 
   default:
     return false;

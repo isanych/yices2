@@ -22,6 +22,7 @@
 #include "mcsat/tracing.h"
 
 #include "utils/int_hash_map.h"
+#include "libpoly_utils.h"
 
 void nra_plugin_get_constraint_variables(nra_plugin_t* nra, term_t constraint, int_mset_t* vars_out) {
 
@@ -35,24 +36,13 @@ void nra_plugin_get_constraint_variables(nra_plugin_t* nra, term_t constraint, i
   case ARITH_GE_ATOM:
     nra_plugin_get_term_variables(nra, arith_atom_arg(terms, atom), vars_out);
     break;
+  case EQ_TERM:
   case ARITH_BINEQ_ATOM:
     nra_plugin_get_term_variables(nra, composite_term_arg(terms, atom, 0), vars_out);
     nra_plugin_get_term_variables(nra, composite_term_arg(terms, atom, 1), vars_out);
     break;
   case ARITH_ROOT_ATOM:
     nra_plugin_get_term_variables(nra, arith_root_atom_desc(terms, atom)->p, vars_out);
-    break;
-  case ARITH_RDIV:
-    nra_plugin_get_term_variables(nra, arith_rdiv_term_desc(terms, atom)->arg[0], vars_out);
-    nra_plugin_get_term_variables(nra, arith_rdiv_term_desc(terms, atom)->arg[1], vars_out);
-    break;
-  case ARITH_IDIV:
-    nra_plugin_get_term_variables(nra, arith_idiv_term_desc(terms, atom)->arg[0], vars_out);
-    nra_plugin_get_term_variables(nra, arith_idiv_term_desc(terms, atom)->arg[1], vars_out);
-    break;
-  case ARITH_MOD:
-    nra_plugin_get_term_variables(nra, arith_mod_term_desc(terms, atom)->arg[0], vars_out);
-    nra_plugin_get_term_variables(nra, arith_mod_term_desc(terms, atom)->arg[1], vars_out);
     break;
   default:
     // We're fine, just a variable, arithmetic term to eval, or a foreign term
@@ -154,6 +144,11 @@ void nra_plugin_set_unit_info(nra_plugin_t* nra, variable_t constraint, variable
   }
 }
 
+bool nra_plugin_has_unit_info(const nra_plugin_t* nra, variable_t constraint) {
+  int_hmap_pair_t* find = int_hmap_find(&((nra_plugin_t*)nra)->constraint_unit_info, constraint);
+  return find != NULL;
+}
+
 constraint_unit_info_t nra_plugin_get_unit_info(nra_plugin_t* nra, variable_t constraint) {
   int_hmap_pair_t* find = int_hmap_find(&nra->constraint_unit_info, constraint);
   if (find == NULL)  {
@@ -253,4 +248,12 @@ void nra_plugin_report_int_conflict(nra_plugin_t* nra, trail_token_t* prop, vari
   prop->conflict(prop);
   nra->conflict_variable_int = variable;
   (*nra->stats.conflicts_int) ++;
+}
+
+void nra_plugin_report_assumption_conflict(nra_plugin_t* nra, trail_token_t* prop, variable_t variable, const mcsat_value_t* value) {
+  prop->conflict(prop);
+  nra->conflict_variable_assumption = variable;
+  assert(value->type == VALUE_LIBPOLY);
+  lp_value_assign(&nra->conflict_variable_value, &value->lp_value);
+  (*nra->stats.conflicts_assumption) ++;
 }

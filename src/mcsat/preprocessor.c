@@ -251,24 +251,30 @@ term_t mk_composite(preprocessor_t* pre, term_kind_t kind, uint32_t n, term_t* c
  */
 static inline
 term_t preprocessor_purify(preprocessor_t* pre, term_t t, ivector_t* out) {
+
   term_table_t* terms = pre->terms;
-  // We don't purify variables
-  term_kind_t t_kind = term_kind(terms, t);
-  switch (t_kind) {
-  case UNINTERPRETED_TERM:
-    // Variables are already pure
-    return t;
-  case CONSTANT_TERM:
-  case ARITH_CONSTANT:
-  case BV64_CONSTANT:
-  case BV_CONSTANT:
-    // Constants are also pure
-    return t;
-  case APP_TERM:
-    // Uninterpreted functions are also already purified
-    return t;
-  default:
-    break;
+
+  // Negated terms must be purified
+  if (is_pos_term(t)) {
+    // We don't purify variables
+    term_kind_t t_kind = term_kind(terms, t);
+    switch (t_kind) {
+    case UNINTERPRETED_TERM:
+      // Variables are already pure
+      return t;
+    case CONSTANT_TERM:
+      return t;
+    case ARITH_CONSTANT:
+    case BV64_CONSTANT:
+    case BV_CONSTANT:
+      // Constants are also pure (except for false)
+      return t;
+    case APP_TERM:
+      // Uninterpreted functions are also already purified
+      return t;
+    default:
+      break;
+    }
   }
 
   // Everything else gets purified. Check if in the cache
@@ -411,6 +417,7 @@ term_t preprocessor_apply(preprocessor_t* pre, term_t t, ivector_t* out, bool is
     case UNINTERPRETED_TYPE:
     case FUNCTION_TYPE:
     case BITVECTOR_TYPE:
+    case SCALAR_TYPE:
       break;
     default:
       longjmp(*pre->exception, MCSAT_EXCEPTION_UNSUPPORTED_THEORY);
@@ -541,13 +548,13 @@ term_t preprocessor_apply(preprocessor_t* pre, term_t t, ivector_t* out, bool is
         }
       }
 
-     if (eq_solve_var != NULL_TERM) {
-       // Check again to make sure we don't have something like x = x + 1
-       if (preprocessor_get(pre, eq_solve_var) != NULL_TERM) {
-         // Do it again
-         children_done = false;
-       }
-     }
+      if (eq_solve_var != NULL_TERM) {
+        // Check again to make sure we don't have something like x = x + 1
+        if (preprocessor_get(pre, eq_solve_var) != NULL_TERM) {
+          // Do it again
+          children_done = false;
+        }
+      }
 
       if (children_done) {
         if (eq_solve_var != NULL_TERM) {
@@ -571,6 +578,20 @@ term_t preprocessor_apply(preprocessor_t* pre, term_t t, ivector_t* out, bool is
       break;
     }
 
+    case ARITH_ABS:
+    {
+      term_t arg = arith_abs_arg(terms, current);
+      term_t arg_pre = preprocessor_get(pre, arg);
+      if (arg_pre == NULL_TERM) {
+        ivector_push(pre_stack, arg);
+      } else {
+        type_t arg_pre_type = term_type(pre->terms, arg_pre);
+        term_t arg_pre_is_positive = mk_arith_term_geq0(&pre->tm, arg_pre);
+        term_t arg_negative = yices_neg(arg_pre);
+        current_pre = mk_ite(&pre->tm, arg_pre_is_positive, arg_pre, arg_negative, arg_pre_type);
+      }
+      break;
+    }
     case BV_SDIV:
     {
       composite_term_t* desc = get_composite(terms, current_kind, current);
@@ -1069,6 +1090,11 @@ void preprocessor_build_model(preprocessor_t* pre, model_t* model) {
       mcsat_trace_printf(pre->tracer, "\neq_var = ");
       trace_term_ln(pre->tracer, pre->terms, eq_var);
       mcsat_trace_printf(pre->tracer, "\n");
+    }
+    // Some equalities are solved, but then reasserted in the solver
+    // these already have a model
+    if (model_find_term_value(model, eq_var) != null_value) {
+      continue;
     }
     // Some equalities are marked, but not solved. These we skip as they
     // are already set in the model

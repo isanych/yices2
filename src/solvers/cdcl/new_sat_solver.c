@@ -6148,7 +6148,8 @@ static void process_lit_equiv(sat_solver_t *solver, literal_t l1, literal_t l2) 
   } else {
     // subst[l2] := l1
     set_lit_subst(solver, l2, l1);
-    if (lit_rank(solver, l2) > lit_rank(solver, l1)) {
+    // in preprocess mode, rank[l1] and rank[l2] are not initialized.
+    if (!solver->preprocess && lit_rank(solver, l2) > lit_rank(solver, l1)) {
       swap_lit_ranks(solver, l1, l2);
     }
     if (solver->verbosity >= 6) {
@@ -7114,7 +7115,7 @@ static void pp_process_subst_pure(sat_solver_t *solver) {
   n = v->size;
   for (i=0; i<n; i++) {
     l = full_lit_subst(solver, v->data[i]);
-    if (false && lit_is_unassigned(solver, l) && solver->occ[not(l)] == 0) {
+    if (lit_is_unassigned(solver, l) && solver->occ[not(l)] == 0) {
       pp_push_pure_literal(solver, l);
     }
   }
@@ -7144,7 +7145,7 @@ static bool pp_scc_simplification(sat_solver_t *solver) {
 
   v = &solver->subst_vars;
   n = v->size;
-  if (n > 0 || solver->stats.pp_scc_calls == 1) {
+  if (n > 0) {
     n0 = n;
     if (solver->verbosity >= 3) {
       fprintf(stderr, "c  scc %"PRIu32" variable substitutions\n", n);

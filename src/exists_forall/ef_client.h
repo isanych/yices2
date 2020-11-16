@@ -29,9 +29,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "solvers/quant/ef_parameters.h"
 #include "exists_forall/ef_analyze.h"
 #include "exists_forall/efsolver.h"
-#include "exists_forall/ef_parameters.h"
 
 /*
  * These are essentially the old ef globals found in yices_reval and smt2_command.
@@ -61,7 +61,7 @@ extern void delete_ef_client(ef_client_t *ef_client);
  * - do nothing if efprob exists already
  * - store the internalization code in the global efcode flag
  */
-extern void build_ef_problem(ef_client_t *efc, uint32_t n, term_t *assertions);
+extern void build_ef_problem(ef_client_t *efc, uint32_t n, term_t *assertions, ptr_hmap_t *patterns, param_t *parameters);
 
 /*
  * Call the exists/forall solver on an array of assertions.
@@ -77,7 +77,7 @@ extern void build_ef_problem(ef_client_t *efc, uint32_t n, term_t *assertions);
  * architecture compatible with this logic.
  */
 extern void ef_solve(ef_client_t *efc, uint32_t m, term_t *assertions, param_t *parameters,
-		     smt_logic_t logic_code, context_arch_t arch, tracer_t *tracer);
+		     smt_logic_t logic_code, context_arch_t arch, tracer_t *tracer, ptr_hmap_t *patterns);
 
 
 /*

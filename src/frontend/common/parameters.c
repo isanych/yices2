@@ -29,7 +29,7 @@
 
 /*
  * Parameter names: using the Yices conventions
- * - for the smt2 front end, you prefix these names with ':yices:'
+ * - for the smt2 front end, you prefix these names with ':yices-'
  */
 static const char * const param_names[NUM_PARAMETERS] = {
   "arith-elim",
@@ -53,7 +53,24 @@ static const char * const param_names[NUM_PARAMETERS] = {
   "ef-flatten-ite",
   "ef-gen-mode",
   "ef-max-iters",
+  "ef-max-lemmas-per-round",
   "ef-max-samples",
+  "ematch-cnstr-alpha",
+  "ematch-cnstr-epsilon",
+  "ematch-cnstr-mode",
+  "ematch-en",
+  "ematch-inst-per-round",
+  "ematch-inst-per-search",
+  "ematch-inst-total",
+  "ematch-rounds-per-search",
+  "ematch-search-total",
+  "ematch-term-alpha",
+  "ematch-term-epsilon",
+  "ematch-term-mode",
+  "ematch-trial-fapps",
+  "ematch-trial-fdepth",
+  "ematch-trial-matches",
+  "ematch-trial-vdepth",
   "fast-restarts",
   "flatten",
   "icheck",
@@ -109,7 +126,24 @@ static const yices_param_t param_code[NUM_PARAMETERS] = {
   PARAM_EF_FLATTEN_ITE,
   PARAM_EF_GEN_MODE,
   PARAM_EF_MAX_ITERS,
+  PARAM_EF_MAX_LEMMAS_PER_ROUND,
   PARAM_EF_MAX_SAMPLES,
+  PARAM_EMATCH_CNSTR_ALPHA,
+  PARAM_EMATCH_CNSTR_EPSILON,
+  PARAM_EMATCH_CNSTR_MODE,
+  PARAM_EMATCH_EN,
+  PARAM_EMATCH_INST_PER_ROUND,
+  PARAM_EMATCH_INST_PER_SEARCH,
+  PARAM_EMATCH_INST_TOTAL,
+  PARAM_EMATCH_ROUNDS_PER_SEARCH,
+  PARAM_EMATCH_SEARCH_TOTAL,
+  PARAM_EMATCH_TERM_ALPHA,
+  PARAM_EMATCH_TERM_EPSILON,
+  PARAM_EMATCH_TERM_MODE,
+  PARAM_EMATCH_TRIAL_FAPPS,
+  PARAM_EMATCH_TRIAL_FDEPTH,
+  PARAM_EMATCH_TRIAL_MATCHES,
+  PARAM_EMATCH_TRIAL_VDEPTH,
   PARAM_FAST_RESTARTS,
   PARAM_FLATTEN,
   PARAM_ICHECK,
@@ -189,6 +223,25 @@ static const ef_gen_option_t ef_gen_code[NUM_EF_GEN_MODES] = {
 };
 
 
+
+/*
+ * Names of the ematch modes for the quant solver
+ */
+#define NUM_EMATCH_MODES 3
+
+static const char * const ematch_modes[NUM_EMATCH_MODES] = {
+  "all",
+  "epsilongreedy",
+  "random",
+};
+
+static const iterate_kind_t ematch_mode_code[NUM_EMATCH_MODES] = {
+  ITERATE_ALL,
+  ITERATE_EPSILONGREEDY,
+  ITERATE_RANDOM,
+};
+
+
 /*
  * Tables for converting parameter id to parameter name
  * and branching code to branching name. One more table
@@ -197,6 +250,7 @@ static const ef_gen_option_t ef_gen_code[NUM_EF_GEN_MODES] = {
 const char *param2string[NUM_PARAMETERS];
 const char *branching2string[NUM_BRANCHING_MODES];
 const char *efgen2string[NUM_EF_GEN_MODES];
+const char *ematchmode2string[NUM_EMATCH_MODES];
 
 
 /*
@@ -224,6 +278,12 @@ void init_parameter_name_table(void) {
     name = ef_gen_modes[i];
     j = ef_gen_code[i];
     efgen2string[j] = name;
+  }
+
+  for (i=0; i<NUM_EMATCH_MODES; i++) {
+    name = ematch_modes[i];
+    j = ematch_mode_code[i];
+    ematchmode2string[j] = name;
   }
 }
 
@@ -411,3 +471,24 @@ bool param_val_to_genmode(const char *name, const param_val_t *v, ef_gen_option_
   return false;
 }
 
+
+/*
+ * EMATCH mode
+ * - allowed modes are "all" or "random" or "epsilongreedy"
+ * - we use a general implementation so that we can add more modes later
+ */
+bool param_val_to_ematchmode(const char *name, const param_val_t *v, iterate_kind_t *value, char **reason) {
+  int32_t i;
+
+  if (v->tag == PARAM_VAL_SYMBOL) {
+    i = binary_search_string(v->val.symbol, ematch_modes, NUM_EMATCH_MODES);
+    if (i >= 0) {
+      assert(i < NUM_EMATCH_MODES);
+      *value = ematch_mode_code[i];
+      return true;
+    }
+  }
+  *reason = "must be one of 'all' 'random' 'epsilongreedy'";
+
+  return false;
+}

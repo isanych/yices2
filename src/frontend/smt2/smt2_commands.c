@@ -68,6 +68,7 @@
 #include "solvers/floyd_warshall/idl_floyd_warshall.h"
 #include "solvers/floyd_warshall/rdl_floyd_warshall.h"
 #include "solvers/funs/fun_solver.h"
+#include "solvers/quant/quant_solver.h"
 #include "solvers/simplex/simplex.h"
 #include "utils/cputime.h"
 #include "utils/memsize.h"
@@ -264,12 +265,10 @@ static void do_export(context_t *ctx, const char *s) {
 /*
  * Force bitblasting then export
  * - s = filename
- * - ctx's status must be IDLE when this is called
  */
 static void bitblast_then_export(context_t *ctx, const char *s) {
   smt_status_t stat;
 
-  assert(context_status(ctx) == STATUS_IDLE);
   stat = precheck_context(ctx);
   switch (stat) {
   case STATUS_UNKNOWN:
@@ -474,6 +473,39 @@ static void reset_smt2_name_stack(smt2_name_stack_t *s) {
 }
 
 
+
+/*
+ * PATTERN MAP
+ */
+
+/*
+ * Initialize; nothing allocated yet
+ */
+static void init_smt2_pattern_map(ptr_hmap_t *m) {
+  init_ptr_hmap(m, 0);
+}
+
+/*
+ * Deletion
+ */
+static void delete_smt2_pattern_map(ptr_hmap_t *m) {
+  ptr_hmap_pair_t *p;
+
+  for (p = ptr_hmap_first_record(m);
+       p != NULL;
+       p = ptr_hmap_next_record(m, p)) {
+    ivector_t* list_vector = p->val;
+    if (list_vector != NULL) {
+      delete_ivector(list_vector);
+      safe_free(list_vector);
+    }
+  }
+  delete_ptr_hmap(m);
+}
+
+
+
+
 /*
  * PUSH/POP STACK
  */
@@ -591,6 +623,43 @@ static void reset_smt2_stack(smt2_stack_t *s) {
  */
 
 /*
+ * Check sat with model assumptions and (TODO) build the interpolant
+ */
+static smt_status_t check_with_model(context_t *ctx, const param_t *params, uint32_t n, const term_t vars[], const term_t values[]) {
+  uint32_t i;
+  term_t x;
+  value_t x_value;
+  ivector_t assumptions;
+  smt_status_t status;
+
+  model_t mdl;
+  evaluator_t mdl_evaluator;
+
+  // Init model and evaluation
+  init_model(&mdl, ctx->terms, true);
+  init_evaluator(&mdl_evaluator, &mdl);
+
+  // Copy over to model
+  init_ivector(&assumptions, n);
+  for (i = 0; i < n; ++ i) {
+    x = vars[i];
+    x_value = eval_in_model(&mdl_evaluator, values[i]);
+    model_map_term(&mdl, x, x_value);
+    ivector_push(&assumptions, x);
+  }
+
+  // Solve
+  status = check_context_with_model(ctx, params, &mdl, n, assumptions.data);
+
+  // Remove temps
+  delete_ivector(&assumptions);
+  delete_evaluator(&mdl_evaluator);
+  delete_model(&mdl);
+
+  return status;
+}
+
+/*
  * Check sat with assumptions and build an unsat core
  */
 static smt_status_t check_with_assumptions(context_t *ctx, const param_t *params, uint32_t n, const term_t a[], ivector_t *core) {
@@ -603,6 +672,27 @@ static smt_status_t check_with_assumptions(context_t *ctx, const param_t *params
   if (context_status(ctx) == STATUS_UNSAT) {
     ivector_reset(core);
     return STATUS_UNSAT;
+  }
+
+  // If MCSAT use the model solving command
+  if (ctx->mcsat) {
+    // Copy over to model
+    model_t mdl;
+    init_model(&mdl, ctx->terms, true);
+    init_ivector(&assumptions, n);
+    for (i = 0; i < n; ++ i) {
+      term_t x = unsigned_term(a[i]);
+      value_t val = is_pos_term(a[i]) ? vtbl_mk_bool(&mdl.vtbl, true) : vtbl_mk_bool(&mdl.vtbl, false);
+      model_map_term(&mdl, x, val);
+      ivector_push(&assumptions, x);
+    }
+    // Solve
+    status = yices_check_context_with_model(ctx, params, &mdl, n, assumptions.data);
+    // Remove temps
+    delete_ivector(&assumptions);
+    delete_model(&mdl);
+
+    return status;
   }
 
   // convert a[0] ... a[n-1] to assumptions
@@ -641,6 +731,7 @@ static void init_cmd_stats(smt2_cmd_stats_t *stats) {
   stats->num_assert = 0;
   stats->num_check_sat = 0;
   stats->num_check_sat_assuming = 0;
+  stats->num_check_sat_assuming_model = 0;
   stats->num_push = 0;
   stats->num_pop = 0;
   stats->num_get_value = 0;
@@ -891,7 +982,7 @@ static void print_yices_error(bool full) {
     print_out("maximal polynomial degree exceeded");
     break;
   case DIVISION_BY_ZERO:
-    print_out("division by zero");
+    unsupported_construct("division by zero");
     break;
   case POS_INT_REQUIRED:
     print_out("integer argument must be positive");
@@ -1027,6 +1118,9 @@ static void print_yices_error(bool full) {
   case MCSAT_ERROR_UNSUPPORTED_THEORY:
     print_out("mcsat: unsupported theory");
     break;
+  case MCSAT_ERROR_NAMED_TERMS_NOT_SUPPORTED:
+    print_out("mcsat: checking with assumptions only supports variables as assumptions");
+    break;
 
   case OUTPUT_ERROR:
     print_out(" IO error");
@@ -1044,11 +1138,12 @@ static void print_yices_error(bool full) {
 
 
 /*
- * Print an internalization error code
+ * Print an internalization error code: force exit
  */
 static void print_internalization_error(int32_t code) {
   yices_internalization_error(code);
   print_yices_error(true);
+  done = true;
 }
 
 /*
@@ -1057,6 +1152,7 @@ static void print_internalization_error(int32_t code) {
 static void print_ef_analyze_error(ef_code_t code) {
   assert(code != EF_NO_ERROR);
   print_error("%s", efcode2error[code]);
+  done = true;
 }
 
 
@@ -1106,6 +1202,9 @@ static const char * const exception_string[NUM_SMT2_EXCEPTIONS] = {
   "error in bitvector operation",       // TSTACK_BVLOGIC_ERROR
   "incompatible sort in definition",    // TSTACK_TYPE_ERROR_IN_DEFTERM
   "invalid term",                       // TSTACK_STRINGS_ARE_NOT_TERMS
+  "variables and values not matching",  // TSTACK_VARIABLES_VALUES_NOT_MATCHING
+  "a constant value required",          // TSTACK_NOT_A_CONSTANT,
+  "a variable required",                // TSTACK_NOT_A_VARIABLE
   NULL,                                 // TSTACK_YICES_ERROR
   "missing symbol in :named attribute", // SMT2_MISSING_NAME
   "no pattern given",                   // SMT2_MISSING_PATTERN
@@ -1241,6 +1340,7 @@ static const char * const opcode_string[NUM_SMT2_OPCODES] = {
   "get-proof",            // SMT2_GET_PROOF
   "get-unsat-assumptions",  // SMT2_GET_UNSAT_ASSUMPTIONS
   "get-unsat-core",       // SMT2_GET_UNSAT_CORE
+  "get-unsat-model-interpolant", // SMT2_GET_UNSAT_MODEL_INTERPOLANT
   "get-value",            // SMT2_GET_VALUE
   "get-option",           // SMT2_GET_OPTION
   "get-info",             // SMT2_GET_INFO
@@ -1252,6 +1352,7 @@ static const char * const opcode_string[NUM_SMT2_OPCODES] = {
   "assert",               // SMT2_ASSERT,
   "check-sat",            // SMT2_CHECK_SAT,
   "check-sat-assuming",   // SMT2_CHECK_SAT_ASSUMING,
+  "check-sat-assuming-model" // SMT2_CHECK_SAT_ASSUMING_MODEL
   "declare-sort",         // SMT2_DECLARE_SORT
   "define-sort",          // SMT2_DEFINE_SORT
   "declare-fun",          // SMT2_DECLARE_FUN
@@ -1363,6 +1464,9 @@ void smt2_tstack_error(tstack_t *tstack, int32_t exception) {
   case TSTACK_NOT_A_SYMBOL:
   case TSTACK_NOT_A_RATIONAL:
   case TSTACK_NOT_A_TYPE:
+  case TSTACK_NOT_A_CONSTANT:
+  case TSTACK_NOT_A_VARIABLE:
+  case TSTACK_VARIABLES_VALUES_NOT_MATCHING:
   case TSTACK_ARITH_ERROR:
   case TSTACK_DIVIDE_BY_ZERO:
   case TSTACK_NON_CONSTANT_DIVISOR:
@@ -1408,8 +1512,8 @@ void smt2_tstack_error(tstack_t *tstack, int32_t exception) {
   }
 
   close_error();
+  done = true;
 }
-
 
 
 /*
@@ -1478,6 +1582,7 @@ static void report_ef_status(smt2_globals_t *g, ef_client_t *efc) {
   case EF_STATUS_INTERRUPTED:
     trace_printf(g->tracer, 3, "(exist/forall solver: %"PRIu32" iterations)\n", efsolver->iters);
     print_out("%s\n", ef_status2string[stat]);
+    flush_out();
     break;
 
   case EF_STATUS_SUBST_ERROR:
@@ -1585,6 +1690,20 @@ static void show_funsolver_stats(int fd, print_buffer_t *b, fun_solver_t *solver
   print_string_and_uint32(fd, b, " :array-extensionality-axioms ", fun_solver_num_extensionality_axioms(solver));
 }
 
+static void show_quantsolver_stats(int fd, print_buffer_t *b, quant_solver_t *solver) {
+  print_string_and_uint32(fd, b, " :ematch-quantifiers ", quant_solver_num_quantifiers(solver));
+  print_string_and_uint32(fd, b, " :ematch-patterns ", quant_solver_num_patterns(solver));
+  print_string_and_uint32(fd, b, " :ematch-instances ", quant_solver_num_instances(solver));
+  print_string_and_uint32(fd, b, " :ematch-rounds ", solver->stats.num_rounds);
+  print_string_and_uint32(fd, b, " :ematch-searches ", solver->stats.num_search);
+  print_string_and_uint32(fd, b, " :ematch-trial-fdepth ", solver->em.exec.fdepth);
+  print_string_and_uint32(fd, b, " :ematch-trial-vdepth ", solver->em.exec.vdepth);
+  print_string_and_uint32(fd, b, " :ematch-cnstr-epsilon ", solver->cnstr_learner.learner.epsilon);
+  print_string_and_float(fd, b, " :ematch-cnstr-alpha ", solver->cnstr_learner.learner.alpha);
+  print_string_and_uint32(fd, b, " :ematch-term-epsilon ", solver->term_learner.learner.epsilon);
+  print_string_and_float(fd, b, " :ematch-term-alpha ", solver->term_learner.learner.alpha);
+}
+
 static void show_simplex_stats(int fd, print_buffer_t *b, simplex_solver_t *solver) {
   simplex_collect_statistics(solver);
   print_string_and_uint32(fd, b, " :simplex-init-vars ", simplex_num_init_vars(solver));
@@ -1650,6 +1769,10 @@ static void show_ctx_stats(int fd, print_buffer_t *b, context_t *ctx) {
     show_funsolver_stats(fd, b, ctx->fun_solver);
   }
 
+  if (context_has_quant_solver(ctx)) {
+    show_quantsolver_stats(fd, b, ctx->quant_solver);
+  }
+
   if (context_has_arith_solver(ctx)) {
     if (context_has_simplex_solver(ctx)) {
       show_simplex_stats(fd, b, ctx->arith_solver);
@@ -1670,6 +1793,16 @@ static void show_ctx_stats(int fd, print_buffer_t *b, context_t *ctx) {
   }
 }
 
+/*
+ *
+ */
+static void show_ef_stats(int fd, print_buffer_t *b, ef_client_t *efc) {
+  print_string_and_uint32(fd, b, " :quantifiers ", efc->efprob->num_cnstr);
+  print_string_and_uint32(fd, b, " :mbqi-models ", efc->efsolver->num_models);
+  print_string_and_uint32(fd, b, " :mbqi-cex ", efc->efsolver->numiters);
+  print_string_and_uint32(fd, b, " :mbqi-instances ", efc->efsolver->numlearnt);
+}
+
 
 /*
  * Global state
@@ -1677,19 +1810,31 @@ static void show_ctx_stats(int fd, print_buffer_t *b, context_t *ctx) {
 static void show_statistics(smt2_globals_t *g) {
   print_buffer_t buffer;
   double time, mem;
+  context_t *ctx;
 
   time = get_cpu_time();
   mem = mem_size() / (1024*1024);
 
-  print_string_and_uint32(g->out_fd, &buffer, "(:num-terms ", yices_num_terms());
+  print_char_and_newline(g->out_fd, &buffer, '(');
+  print_string_and_uint32(g->out_fd, &buffer, " :num-terms ", yices_num_terms());
   print_string_and_uint32(g->out_fd, &buffer, " :num-types ", yices_num_types());
   print_string_and_float(g->out_fd, &buffer, " :total-run-time ", time);
   if (mem > 0) {
     print_string_and_float(g->out_fd, &buffer, " :mem-usage ", mem);
   }
-  if (g->ctx != NULL) {
-    show_ctx_stats(g->out_fd, &buffer, g->ctx);
+  if (g->efmode && g->ef_client.efsolver != NULL) {
+    ctx = g->ef_client.efsolver->exists_context;
+    if (ctx != NULL) {
+      show_ctx_stats(g->out_fd, &buffer, ctx);
+    }
+    show_ef_stats(g->out_fd, &buffer, &g->ef_client);
+  } else {
+    ctx = g->ctx;
+    if (ctx != NULL) {
+      show_ctx_stats(g->out_fd, &buffer, ctx);
+    }
   }
+
   print_char_and_newline(g->out_fd, &buffer, ')');
   flush_out();
 }
@@ -2141,6 +2286,17 @@ static void set_unsat_assumption_option(smt2_globals_t *g, const char *name, ava
   }
 }
 
+static void set_unsat_model_interpolants_option(smt2_globals_t *g, const char *name, aval_t value) {
+  bool flag;
+
+  if (aval_is_boolean(g->avtbl, value, &flag)) {
+    g->produce_unsat_model_interpolants = flag;
+    report_success();
+  } else {
+    print_error("option %s requires a Boolean value", name);
+  }
+}
+
 
 /*
  * OUTPUT OF INFO AND OPTIONS
@@ -2205,6 +2361,7 @@ static void print_float_value(double value) {
 
 static void print_terms_value(smt2_globals_t *g, const ivector_t* order) {
   smt2_pp_t printer;
+
   init_pretty_printer(&printer, g);
   pp_open_block(&printer.pp, PP_OPEN_VPAR); // open '('
   if (order != NULL) {
@@ -2385,7 +2542,7 @@ static assumptions_and_core_t *collect_named_assumptions(uint32_t n, const signe
  */
 
 /*
- * Check whether we can set the context in One-check mode
+ * Check whether we can set the context in one-check mode
  * - we can if g->benchmark is true
  *   and g->produce_unsat_cores and g->produce_unsat_assumptions
  *   are both false.
@@ -2488,7 +2645,9 @@ static void timeout_handler(void *data) {
   assert(data == &__smt2_globals);
 
   g = data;
-  if (g->ctx != NULL && context_status(g->ctx) == STATUS_SEARCHING) {
+  if (g->efmode && g->ef_client.efsolver != NULL && g->ef_client.efsolver->status == EF_STATUS_SEARCHING) {
+    ef_solver_stop_search(g->ef_client.efsolver);
+  } else if (g->ctx != NULL && context_status(g->ctx) == STATUS_SEARCHING) {
     context_stop_search(g->ctx);
   }
 }
@@ -2581,6 +2740,56 @@ static smt_status_t check_sat_with_assumptions(smt2_globals_t *g, const param_t 
 
   return stat;
 }
+
+/*
+ * Check with model assumptions:
+ * - params = search parameters
+ * - n = size of model
+ * - vars = the variables
+ * - values = the values
+ */
+static smt_status_t check_sat_with_model(smt2_globals_t *g, const param_t *params, uint32_t n, const term_t vars[], const term_t values[]) {
+  smt_status_t stat;
+
+  if (g->timeout == 0) {
+    // no timeout
+    stat = check_with_model(g->ctx, params, n, vars, values);
+    g->check_with_model_status = stat;
+    return stat;
+  }
+
+  /*
+   * We call init_timeout only now because the internal timeout
+   * consumes resources even if it's never used.
+   */
+  if (! g->timeout_initialized) {
+    init_timeout();
+    g->timeout_initialized = true;
+  }
+  g->interrupted = false;
+  start_timeout(g->timeout, timeout_handler, g);
+  stat = check_with_model(g->ctx, params, n, vars, values);
+  clear_timeout();
+
+  /*
+   * Attempt to cleanly recover from interrupt
+   */
+  if (stat == STATUS_INTERRUPTED) {
+    trace_printf(g->tracer, 2, "(check-sat-assuming-model: interrupted)\n");
+    g->interrupted = true;
+    if (context_get_mode(g->ctx) == CTX_MODE_INTERACTIVE) {
+      context_cleanup(g->ctx);
+      assert(context_status(g->ctx) == STATUS_IDLE);
+    }
+    // we don't want to report "interrupted" that's not SMT2 compliant
+    stat = STATUS_UNKNOWN;
+  }
+
+  g->check_with_model_status = stat;
+
+  return stat;
+}
+
 
 
 
@@ -2790,6 +2999,11 @@ static bool has_uf(term_t *a, uint32_t n) {
  */
 static void add_delayed_assertion(smt2_globals_t *g, term_t t) {
   if (t != true_term) {
+#if 0
+    printf("adding assertion: ");
+    yices_pp_term(stdout, t, 120, 1, 0);
+#endif
+
     ivector_push(&g->assertions, t);
     if (t == false_term) {
       g->trivially_unsat = true;
@@ -2836,6 +3050,7 @@ static void check_delayed_assertions(smt2_globals_t *g) {
       code = export_delayed_assertions(g->ctx, g->assertions.size, g->assertions.data, g->dimacs_file);
       if (code < 0) {
 	print_yices_error(true);
+	done = true;
 	return;
       }
 
@@ -2847,6 +3062,7 @@ static void check_delayed_assertions(smt2_globals_t *g) {
       if (code < 0) {
 	// error during assertion processing
 	print_yices_error(true);
+	done = true;
 	return;
       }
 
@@ -2898,13 +3114,18 @@ static void show_delayed_assertions(smt2_globals_t *g) {
   uint32_t i, n;
 
   if (g->benchmark_mode) {
+    fprintf(g->out, "--- All terms ---\n");
+    pp_term_table(g->out, __yices_globals.terms);
+    fprintf(g->out, "\n");
+
+    fprintf(g->out, "--- Assertions --\n");
     v = g->assertions.data;
     n = g->assertions.size;
 
     init_pretty_printer(&printer, g);
     for (i=0; i<n; i++) {
-      pp_term_full(&printer->pp, __yices_globals.terms, v[i]);
-      flush_smt2_pp(&printer, true);
+      pp_term(&printer.pp, __yices_globals.terms, v[i]);
+      flush_smt2_pp(&printer);
     }
     delete_smt2_pp(&printer, true);
   }
@@ -2974,6 +3195,7 @@ static void delayed_assertions_unsat_core(smt2_globals_t *g) {
     if (code < 0) {
       // error during assertion processing
       print_yices_error(true);
+      done = true;
       return;
     }
     init_search_parameters(g);
@@ -2987,6 +3209,7 @@ static void delayed_assertions_unsat_core(smt2_globals_t *g) {
     if (status == STATUS_ERROR) {
       free_assumptions(g->unsat_core);
       g->unsat_core = NULL;
+      done = true;
     }
   }
 }
@@ -3015,6 +3238,7 @@ static void check_delayed_assertions_assuming(smt2_globals_t *g, uint32_t n, sig
       if (code < 0) {
         // error during assertion processing
         print_yices_error(true);
+	done = true;
         return;
       }
       init_search_parameters(g);
@@ -3028,8 +3252,39 @@ static void check_delayed_assertions_assuming(smt2_globals_t *g, uint32_t n, sig
         // cleanup
         free_assumptions(assumptions);
         g->unsat_assumptions = NULL;
+	done = true;
       }
     }
+  }
+}
+
+/*
+ * Check sat with model assumptions
+ */
+static void check_delayed_assertions_assuming_model(smt2_globals_t *g, uint32_t n, const term_t vars[], const term_t values[]) {
+  int32_t code;
+  smt_status_t status;
+
+  g->frozen = true;
+  if (g->trivially_unsat) {
+    // list of unsat assumption is empty
+    report_status(g, STATUS_UNSAT);
+    g->check_with_model_status = STATUS_UNSAT;
+  } else {
+    init_smt2_context(g);
+    code = yices_assert_formulas(g->ctx, g->assertions.size, g->assertions.data);
+    if (code < 0) {
+      // error during assertion processing
+      print_yices_error(true);
+      done = true;
+      return;
+    }
+    init_search_parameters(g);
+    if (g->random_seed != 0) {
+      g->parameters.random_seed = g->random_seed;
+    }
+    status = check_sat_with_model(g, &g->parameters, n, vars, values);
+    report_status(g, status);
   }
 }
 
@@ -3047,9 +3302,19 @@ static void efsolve_cmd(smt2_globals_t *g) {
 
   if (g->efmode) {
     efc = &g->ef_client;
+    if (g->timeout != 0) {
+      if (! g->timeout_initialized) {
+        init_timeout();
+        g->timeout_initialized = true;
+      }
+      g->interrupted = false;
+      start_timeout(g->timeout, timeout_handler, g);
+    }
+
     ef_solve(efc, g->assertions.size, g->assertions.data, &g->parameters,
-             qf_fragment(g->logic_code), ef_arch_for_logic(g->logic_code),
-             g->tracer);
+	     qf_fragment(g->logic_code), ef_arch_for_logic(g->logic_code),
+             g->tracer, &g->term_patterns);
+    if (g-> timeout != 0) clear_timeout();
 
     if (efc->efcode != EF_NO_ERROR) {
       // error in preprocessing
@@ -3093,6 +3358,9 @@ static void cleanup_context(smt2_globals_t *g) {
     free_assumptions(g->unsat_assumptions);
     g->unsat_assumptions  = NULL;
   }
+  if (g->check_with_model_status != STATUS_UNSAT) {
+    g->check_with_model_status = STATUS_IDLE;
+  }
 
   switch (context_status(g->ctx)) {
   case STATUS_UNKNOWN:
@@ -3120,6 +3388,22 @@ static void cleanup_context(smt2_globals_t *g) {
   }
 }
 
+#if 0
+static void show_assertion(smt2_globals_t *g, term_t t) {
+  smt2_pp_t printer;
+
+  fprintf(g->out, "--- All terms ---\n");
+  pp_term_table(g->out, __yices_globals.terms);
+  fprintf(g->out, "\n");
+
+  fprintf(g->out, "\nadd_assertion\n");
+  init_pretty_printer(&printer, g);
+  pp_term_full(&printer.pp, __yices_globals.terms, t);
+  flush_smt2_pp(&printer);
+  delete_smt2_pp(&printer, true);
+}
+#endif
+
 /*
  * Assert t in g->ctx
  * - t is known to be a Boolean term here
@@ -3129,6 +3413,8 @@ static void add_assertion(smt2_globals_t *g, term_t t) {
   int32_t code;
 
   assert(g->ctx != NULL && context_supports_pushpop(g->ctx));
+
+  //  show_assertion(g, t);
 
   switch (context_status(g->ctx)) {
   case STATUS_IDLE:
@@ -3256,8 +3542,7 @@ static void ctx_unsat_core(smt2_globals_t *g) {
 
 
 /*
- * Check with assumptions:
- * - not supported by the mcsat solver
+ * Check with assumptions
  */
 static void ctx_check_sat_assuming(smt2_globals_t *g, uint32_t n, signed_symbol_t *a) {
   assumptions_and_core_t *assumptions;
@@ -3281,6 +3566,7 @@ static void ctx_check_sat_assuming(smt2_globals_t *g, uint32_t n, signed_symbol_
       if (status == STATUS_ERROR) {
         free_assumptions(assumptions);
         g->unsat_assumptions = NULL;
+        done = true;
       }
       break;
 
@@ -3298,6 +3584,39 @@ static void ctx_check_sat_assuming(smt2_globals_t *g, uint32_t n, signed_symbol_
       bad_status_bug(g->err);
       break;
     }
+  }
+
+  flush_out();
+}
+
+/*
+ * Check with assumptions
+ */
+static void ctx_check_sat_assuming_model(smt2_globals_t *g, uint32_t n, const term_t vars[], const term_t values[]) {
+  smt_status_t status;
+
+  cleanup_context(g);
+
+  switch (context_status(g->ctx)) {
+  case STATUS_IDLE:
+    if (g->random_seed != 0) {
+      g->parameters.random_seed = g->random_seed;
+    }
+    status = check_sat_with_model(g, &g->parameters, n, vars, values);
+    report_status(g, status);
+    break;
+
+  case STATUS_UNSAT:
+    show_status(STATUS_UNSAT);
+    break;
+
+  case STATUS_UNKNOWN:
+  case STATUS_SAT:
+  case STATUS_SEARCHING:
+  case STATUS_INTERRUPTED:
+  default:
+    bad_status_bug(g->err);
+    break;
   }
 
   flush_out();
@@ -3464,15 +3783,16 @@ static model_t *get_ef_model(smt2_globals_t *g) {
  * - printer = pretty printer object
  * - vtbl = value table where v is stored
  * - token_queue = whatever was parsed
+ * - tau = type of the term to print
  * - i = index of the SMT2 expression for t in token_queue
  */
-static void print_term_value(smt2_pp_t *printer, value_table_t *vtbl, etk_queue_t *token_queue, value_t v, int32_t i) {
+static void print_term_value(smt2_pp_t *printer, value_table_t *vtbl, etk_queue_t *token_queue, value_t v, type_t tau, int32_t i) {
   pp_open_block(&printer->pp, PP_OPEN_PAR);
   pp_smt2_expr(&printer->pp, token_queue, i);
   if (__smt2_globals.clean_model_format) {
     smt2_pp_object(printer, vtbl, v);
   } else {
-    smt2_pp_smt2_object(printer, vtbl, v);
+    smt2_pp_smt2_object(printer, vtbl, v, tau);
   }
   pp_close_block(&printer->pp, true);
 }
@@ -3482,10 +3802,11 @@ static void print_term_value(smt2_pp_t *printer, value_table_t *vtbl, etk_queue_
  * Print a list of pairs terms/values
  * - the list of terms an array of n expression indices expr[0..n-1]
  *   where expr[i] is an valid start index in token_queue
- * - the corresponding values as in v[0 ... n-1]
+ * - the corresponding values are in v[0 ... n-1]
+ * - the corresponding types are in tau[0 ... n-1]
  */
 static void print_term_value_list(smt2_pp_t *printer, value_table_t *vtbl, etk_queue_t *token_queue,
-                                  int32_t *expr, value_t *v, uint32_t n) {
+                                  int32_t *expr, value_t *v, type_t *tau, uint32_t n) {
   uint32_t i;
   value_t x, u;
 
@@ -3495,7 +3816,7 @@ static void print_term_value_list(smt2_pp_t *printer, value_table_t *vtbl, etk_q
   for (i=0; i<n; i++) {
     x = v[i];
     if (x < 0) x = u;
-    print_term_value(printer, vtbl, token_queue, x, expr[i]);
+    print_term_value(printer, vtbl, token_queue, x, tau[i], expr[i]);
   }
   pp_close_block(&printer->pp, true); // close ')'
 }
@@ -3527,6 +3848,27 @@ static void evaluate_term_values(model_t *mdl, term_t *t, uint32_t n, ivector_t 
   }
   delete_evaluator(&evaluator);
 }
+
+/*
+ * Collect the types of every term in array t[]
+ * - n = number of terms in this arrray
+ * - add the types in order to vector v
+ */
+static void collect_term_types(term_t *t, uint32_t n, ivector_t *v) {
+  term_table_t *terms;
+  uint32_t i;
+  type_t tau;
+
+  terms = __yices_globals.terms;
+
+  ivector_reset(v);
+  resize_ivector(v, n);
+  for (i=0; i<n; i++) {
+    tau = term_type(terms, t[i]);
+    ivector_push(v, tau);
+  }
+}
+
 
 
 /*
@@ -3710,6 +4052,8 @@ static bval_t obj2bval(value_table_t *vtbl, value_t v) {
  * assertions are trivially satisfiable, no context is
  * constructed, but we have a model.
  *
+ * This is also used to print assignments when we use the ef-solver.
+ *
  * We print whatever default values get assigned to the
  * boolean terms in the model.
  */
@@ -3798,6 +4142,22 @@ static void show_assignment(smt2_globals_t *g) {
       break;
     }
   }
+}
+
+
+/*
+ * Show assignment in exists/forall mode
+ */
+static void show_ef_assignment(smt2_globals_t *g) {
+  model_t *mdl;
+  smt2_pp_t printer;
+
+  mdl = get_ef_model(g);
+  if (mdl == NULL) return;
+
+  init_pretty_printer(&printer, g);
+  print_model_assignment(&printer, &g->named_bools, mdl);
+  delete_smt2_pp(&printer, true);
 }
 
 
@@ -3902,6 +4262,62 @@ static void show_unsat_assumptions(smt2_globals_t *g) {
   }
 }
 
+/*
+ * Print the the model interpolant if any
+ */
+static void show_unsat_model_interpolant(smt2_globals_t *g) {
+  smt2_pp_t printer;
+
+  if (!g->produce_unsat_model_interpolants) {
+    print_error("not supported: :produce-unsat-model-interpolants is false");
+  } else if (g->ctx == NULL) {
+    if (g->check_with_model_status == STATUS_UNSAT) {
+      smt2_echo("false");
+    } else {
+      print_error("Call (check-sat-assuming-model) first");
+    }
+  } else {
+    // Could be that we called check-sat after
+    smt_status_t ctx_status = context_status(g->ctx);
+    switch (ctx_status) {
+    case STATUS_SAT:
+    case STATUS_UNSAT:
+      g->check_with_model_status = ctx_status;
+      break;
+    default:
+      break;
+    }
+    smt_status_t status = g->check_with_model_status;
+    switch (status) {
+    case STATUS_UNKNOWN:
+    case STATUS_SAT:
+	  print_error("No unsat interpolant. The context is satisfiable");
+	  break;
+
+    case STATUS_UNSAT: {
+      term_t unsat_model_interpolant = context_get_unsat_model_interpolant(g->ctx);
+	  if (unsat_model_interpolant == NULL_TERM) {
+	    print_error("Call (check-sat-assuming-model) first");
+	  } else {
+	    init_pretty_printer(&printer, g);
+	    pp_term_full(&printer.pp, __yices_globals.terms, unsat_model_interpolant);
+	    delete_smt2_pp(&printer, true);
+	  }
+	  break;
+    }
+    case STATUS_IDLE:
+    case STATUS_SEARCHING:
+    case STATUS_INTERRUPTED:
+      print_error("No unsat interpolant. The context is not unsatisfiable");
+      break;
+
+    default:
+      print_out("BUG: unexpected status in get-unsat-model-interpolant");
+	  freport_bug(__smt2_globals.err, "BUG: unexpected status in get-unsat-model-interpolant");
+	  break;
+    }
+  }
+}
 
 
 /*
@@ -4142,6 +4558,7 @@ static void init_smt2_globals(smt2_globals_t *g) {
   g->produce_proofs = false;
   g->produce_unsat_cores = false;
   g->produce_unsat_assumptions = false;
+  g->produce_unsat_model_interpolants = false;
   g->produce_models = false;
   g->produce_assignments = false;
   g->random_seed = 0;  // 0 means any seed is good
@@ -4174,6 +4591,7 @@ static void init_smt2_globals(smt2_globals_t *g) {
   init_etk_queue(&g->token_queue);
   init_ivector(&g->token_slices, 0);
   init_ivector(&g->val_vector, 0);
+  init_ivector(&g->type_vector, 0);
 
   // print area for get-value
   //  g->pp_area.width = 120;
@@ -4189,6 +4607,8 @@ static void init_smt2_globals(smt2_globals_t *g) {
   g->trivially_unsat = false;
   g->trivially_sat = false;
   g->frozen = false;
+
+  init_smt2_pattern_map(&g->term_patterns);
 }
 
 
@@ -4220,6 +4640,8 @@ static void delete_smt2_globals(smt2_globals_t *g) {
   delete_ivector(&g->assertions);
   delete_ivector(&g->var_order);
 
+  delete_smt2_pattern_map(&g->term_patterns);
+
   delete_smt2_stack(&g->stack);
   delete_smt2_name_stack(&g->term_names);
   delete_smt2_name_stack(&g->type_names);
@@ -4242,6 +4664,7 @@ static void delete_smt2_globals(smt2_globals_t *g) {
   delete_etk_queue(&g->token_queue);
   delete_ivector(&g->token_slices);
   delete_ivector(&g->val_vector);
+  delete_ivector(&g->type_vector);
 
   close_output_file(g);
   close_error_file(g);
@@ -4431,7 +4854,11 @@ void smt2_get_assignment(void) {
   tprint_calls("get-assignment", __smt2_globals.stats.num_get_assignment);
 
   if (check_logic()) {
-    show_assignment(&__smt2_globals);
+    if (__smt2_globals.efmode) {
+      show_ef_assignment(&__smt2_globals);
+    } else {
+      show_assignment(&__smt2_globals);
+    }
   }
 }
 
@@ -4479,7 +4906,11 @@ void smt2_get_unsat_core(void) {
   tprint_calls("get-unsat-core", __smt2_globals.stats.num_get_unsat_core);
 
   if (check_logic()) {
-    show_unsat_core(&__smt2_globals);
+    if (__smt2_globals.efmode) {
+      print_error("get-unsat-core is not supported in logic %s", __smt2_globals.logic_name);
+    } else {
+      show_unsat_core(&__smt2_globals);
+    }
   }
 }
 
@@ -4493,7 +4924,34 @@ void smt2_get_unsat_assumptions(void) {
   tprint_calls("get-unsat-assumptions", __smt2_globals.stats.num_get_unsat_assumptions);
 
   if (check_logic()) {
-    show_unsat_assumptions(&__smt2_globals);
+    if (__smt2_globals.efmode) {
+      print_error("get-unsat-assumptions is not supported in logic %s", __smt2_globals.logic_name);
+    } else {
+      show_unsat_assumptions(&__smt2_globals);
+    }
+  }
+}
+
+/* Check whether MCSAT solver is going to be used. */
+static bool mcsat_enabled(smt2_globals_t *g) {
+  return g->mcsat || arch_for_logic(g->logic_code) == CTX_ARCH_MCSAT;
+}
+
+/*
+ * Get the interpolant for the model: formula implied by the assertions that
+ * evaluates to false.
+ */
+void smt2_get_unsat_model_interpolant(void) {
+  __smt2_globals.stats.num_get_unsat_model_interpolant ++;
+  __smt2_globals.stats.num_commands ++;
+  tprint_calls("get-unsat-model-interpolant", __smt2_globals.stats.num_get_unsat_model_interpolant);
+
+  if (check_logic()) {
+    if (!mcsat_enabled(&__smt2_globals)) {
+      print_error("get-unsat-model-interpolant is only supported in MCSAT");
+    } else {
+      show_unsat_model_interpolant(&__smt2_globals);
+    }
   }
 }
 
@@ -4511,6 +4969,7 @@ void smt2_get_value(term_t *a, uint32_t n) {
   etk_queue_t *queue;
   ivector_t *slices;
   ivector_t *values;
+  ivector_t *types;
   model_t *mdl;
 
   __smt2_globals.stats.num_get_value ++;
@@ -4518,13 +4977,20 @@ void smt2_get_value(term_t *a, uint32_t n) {
   tprint_calls("get-value", __smt2_globals.stats.num_get_value);
 
   if (check_logic()) {
-    // make sure we have a model
-    mdl = get_model(&__smt2_globals);
+    if (__smt2_globals.efmode) {
+      mdl = get_ef_model(&__smt2_globals);
+    } else {
+      mdl = get_model(&__smt2_globals);
+    }
     if (mdl == NULL) return;
 
     // evaluate all terms: store the values in values->data[0 ... n-1]
     values = &__smt2_globals.val_vector;
     evaluate_term_values(mdl, a, n, values);
+
+    // collect their types in types->data[0 ... n-1]
+    types = &__smt2_globals.type_vector;
+    collect_term_types(a, n, types);
 
     queue = &__smt2_globals.token_queue;
     slices = &__smt2_globals.token_slices;
@@ -4534,7 +5000,7 @@ void smt2_get_value(term_t *a, uint32_t n) {
     assert(slices->size == n);
 
     init_pretty_printer(&printer, &__smt2_globals);
-    print_term_value_list(&printer, &mdl->vtbl, queue, slices->data, values->data, n);
+    print_term_value_list(&printer, &mdl->vtbl, queue, slices->data, values->data, types->data, n);
     delete_smt2_pp(&printer, true);
     vtbl_empty_queue(&mdl->vtbl); // cleanup the internal queue
     ivector_reset(slices);
@@ -4773,6 +5239,74 @@ static bool yices_get_option(smt2_globals_t *g, yices_param_t p) {
     print_uint32_value(g->ef_client.ef_parameters.max_iters);
     break;
 
+  case PARAM_EF_MAX_LEMMAS_PER_ROUND:
+    print_uint32_value(g->ef_client.ef_parameters.max_numlearnt_per_round);
+    break;
+
+  case PARAM_EMATCH_EN:
+    print_boolean_value(g->ef_client.ef_parameters.ematching);
+    break;
+
+  case PARAM_EMATCH_INST_PER_ROUND:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_inst_per_round);
+    break;
+
+  case PARAM_EMATCH_INST_PER_SEARCH:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_inst_per_search);
+    break;
+
+  case PARAM_EMATCH_INST_TOTAL:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_inst_total);
+    break;
+
+  case PARAM_EMATCH_ROUNDS_PER_SEARCH:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_rounds_per_search);
+    break;
+
+  case PARAM_EMATCH_SEARCH_TOTAL:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_search_total);
+    break;
+
+  case PARAM_EMATCH_TRIAL_FDEPTH:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_exec_max_fdepth);
+    break;
+
+  case PARAM_EMATCH_TRIAL_VDEPTH:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_exec_max_vdepth);
+    break;
+
+  case PARAM_EMATCH_TRIAL_FAPPS:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_exec_max_fapps);
+    break;
+
+  case PARAM_EMATCH_TRIAL_MATCHES:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_exec_max_matches);
+    break;
+
+  case PARAM_EMATCH_CNSTR_MODE:
+    print_string_value(ematchmode2string[g->ef_client.ef_parameters.ematch_cnstr_mode]);
+    break;
+
+  case PARAM_EMATCH_CNSTR_EPSILON:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_cnstr_epsilon);
+    break;
+
+  case PARAM_EMATCH_CNSTR_ALPHA:
+    print_float_value(g->ef_client.ef_parameters.ematch_cnstr_alpha);
+    break;
+
+  case PARAM_EMATCH_TERM_EPSILON:
+    print_uint32_value(g->ef_client.ef_parameters.ematch_term_epsilon);
+    break;
+
+  case PARAM_EMATCH_TERM_ALPHA:
+    print_float_value(g->ef_client.ef_parameters.ematch_term_alpha);
+    break;
+
+  case PARAM_EMATCH_TERM_MODE:
+    print_string_value(ematchmode2string[g->ef_client.ef_parameters.ematch_term_mode]);
+    break;
+
   case PARAM_MCSAT_NRA_BOUND:
     print_boolean_value(g->mcsat_options.nra_bound);
     break;
@@ -4796,7 +5330,7 @@ static bool yices_get_option(smt2_globals_t *g, yices_param_t p) {
   case PARAM_MCSAT_VAR_ORDER:
     print_terms_value(g,g->mcsat_options.var_order);
     break;
-    
+
   case PARAM_UNKNOWN:
   default:
     freport_bug(g->err,"invalid parameter id in 'yices_get_option'");
@@ -4871,6 +5405,10 @@ void smt2_get_option(const char *name) {
   case SMT2_KW_PRODUCE_UNSAT_CORES:
     print_boolean_value(g->produce_unsat_cores);
     break;
+
+  case SMT2_KW_PRODUCE_UNSAT_MODEL_INTERPOLANTS:
+	print_boolean_value(g->produce_unsat_model_interpolants);
+	break;
 
   case SMT2_KW_EXPAND_DEFINITIONS:
   case SMT2_KW_INTERACTIVE_MODE:
@@ -5408,6 +5946,108 @@ static void yices_set_option(smt2_globals_t *g, const char *param, const param_v
     }
     break;
 
+  case PARAM_EF_MAX_LEMMAS_PER_ROUND:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.max_numlearnt_per_round = n;
+    }
+    break;
+
+  case PARAM_EMATCH_EN:
+    if (param_val_to_bool(param, val, &tt, &reason)) {
+      g->ef_client.ef_parameters.ematching = tt;
+    }
+    break;
+
+  case PARAM_EMATCH_INST_PER_ROUND:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_inst_per_round = n;
+    }
+    break;
+
+  case PARAM_EMATCH_INST_PER_SEARCH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_inst_per_search = n;
+    }
+    break;
+
+  case PARAM_EMATCH_INST_TOTAL:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_inst_total = n;
+    }
+    break;
+
+  case PARAM_EMATCH_ROUNDS_PER_SEARCH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_rounds_per_search = n;
+    }
+    break;
+
+  case PARAM_EMATCH_SEARCH_TOTAL:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_search_total = n;
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_FDEPTH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_exec_max_fdepth = n;
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_VDEPTH:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_exec_max_vdepth = n;
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_FAPPS:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_exec_max_fapps = n;
+    }
+    break;
+
+  case PARAM_EMATCH_TRIAL_MATCHES:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_exec_max_matches = n;
+    }
+    break;
+
+  case PARAM_EMATCH_CNSTR_EPSILON:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_cnstr_epsilon = n;
+    }
+    break;
+
+  case PARAM_EMATCH_CNSTR_ALPHA:
+    if (param_val_to_ratio(param, val, &x, &reason)) {
+      g->ef_client.ef_parameters.ematch_cnstr_alpha = x;
+    }
+    break;
+
+  case PARAM_EMATCH_TERM_EPSILON:
+    if (param_val_to_pos32(param, val, &n, &reason)) {
+      g->ef_client.ef_parameters.ematch_term_epsilon = n;
+    }
+    break;
+
+  case PARAM_EMATCH_TERM_ALPHA:
+    if (param_val_to_ratio(param, val, &x, &reason)) {
+      g->ef_client.ef_parameters.ematch_term_alpha = x;
+    }
+    break;
+
+  case PARAM_EMATCH_CNSTR_MODE:
+    if (param_val_to_ematchmode(param, val, (iterate_kind_t *)&n, &reason)) {
+      g->ef_client.ef_parameters.ematch_cnstr_mode = n;
+    }
+    break;
+
+  case PARAM_EMATCH_TERM_MODE:
+    if (param_val_to_ematchmode(param, val, (iterate_kind_t *)&n, &reason)) {
+      g->ef_client.ef_parameters.ematch_term_mode = n;
+    }
+    break;
+
   case PARAM_MCSAT_NRA_MGCD:
     if (param_val_to_bool(param, val, &tt, &reason)) {
       g->mcsat_options.nra_mgcd = tt;
@@ -5467,7 +6107,7 @@ static void yices_set_option(smt2_globals_t *g, const char *param, const param_v
       }
     }
     break;
-    
+
   case PARAM_MCSAT_VAR_ORDER:
     if (param_val_to_terms(param, val, &terms, &reason)) {
       g->mcsat_options.var_order = terms;
@@ -5576,6 +6216,13 @@ void smt2_set_option(const char *name, aval_t value) {
     // optional: if true,  get-unsat-cores can be used
     if (option_can_be_set(name)) {
       set_unsat_core_option(g, name, value);
+    }
+    break;
+
+  case SMT2_KW_PRODUCE_UNSAT_MODEL_INTERPOLANTS:
+    // optional: if true, get-unsat-model-interpolant can be used
+    if (option_can_be_set(name)) {
+      set_unsat_model_interpolants_option(g, name, value);
     }
     break;
 
@@ -5693,7 +6340,7 @@ void smt2_set_logic(const char *name) {
 
   // if mcsat was requested, check whether the logic is supported by the MCSAT solver
   if (__smt2_globals.mcsat && !logic_is_supported_by_mcsat(code)) {
-    print_error("logic %s is not supported by the mscat solver", name);
+    print_error("logic %s is not supported by the mcsat solver", name);
     return;
   }
 
@@ -5891,13 +6538,14 @@ void smt2_assert(term_t t, bool special) {
           print_error("assertions are not allowed after (check-sat) in non-incremental mode");
         } else {
           /*
-           * if produce unsat core is set and t is special,
+	   * Otherwise, if produce unsat core is set and t is special,
            * we just skip it. The term is stored in the named_asserts table
            * and will be treated as an assumption when check-sat is called.
            */
           if (!special || !g->produce_unsat_cores) {
             add_delayed_assertion(g, t);
           } else {
+	    assert(!g->efmode);
             trace_printf(g->tracer, 20, "(skipping named assertion)\n");
           }
           report_success();
@@ -6018,7 +6666,7 @@ void smt2_check_sat(void) {
       } else if (__smt2_globals.produce_unsat_cores) {
         delayed_assertions_unsat_core(&__smt2_globals);
       } else {
-	// show_delayed_assertions(&__smt2_globals);
+	//	show_delayed_assertions(&__smt2_globals);
 #ifndef THREAD_SAFE
         check_delayed_assertions(&__smt2_globals);
 #else
@@ -6042,16 +6690,6 @@ void smt2_check_sat(void) {
   }
 }
 
-
-/*
- * Check whether the logic requires mcsat or the mcsat flag is set.
- * In either case, check_sat_assuming is not supported.
- */
-static bool mcsat_is_required(smt2_globals_t *g) {
-  assert(g->logic_code != SMT_UNKNOWN);
-  return g->mcsat || arch_for_logic(g->logic_code) == CTX_ARCH_MCSAT;
-}
-
 /*
  * Check sat with assumptions:
  * - n = number of assumptions
@@ -6065,8 +6703,8 @@ void smt2_check_sat_assuming(uint32_t n, signed_symbol_t *a) {
   tprint_calls("check-sat-assuming", __smt2_globals.stats.num_check_sat_assuming);
 
   if (check_logic()) {
-    if (mcsat_is_required(&__smt2_globals)) {
-      print_error("check-sat-assuming is not supported in logic %s", __smt2_globals.logic_name);
+    if (__smt2_globals.produce_unsat_cores) {
+      print_error("check-sat-assuming is not supported when :produce-unsat-cores is true");
     } else if (__smt2_globals.benchmark_mode) {
       if (__smt2_globals.efmode) {
         print_error("the exists/forall solver does not support check-sat with assumptions");
@@ -6080,6 +6718,34 @@ void smt2_check_sat_assuming(uint32_t n, signed_symbol_t *a) {
     }
   }
 }
+
+/*
+ * Check sat with model as assumptions:
+ * - n = number of assumptions
+ * - vars = array of variables
+ * - values = array of values
+ */
+void smt2_check_sat_assuming_model(uint32_t n, const term_t vars[], const term_t values[]) {
+  __smt2_globals.stats.num_check_sat_assuming_model ++;
+  __smt2_globals.stats.num_commands ++;
+  tprint_calls("check-sat-assuming-model", __smt2_globals.stats.num_check_sat_assuming_model);
+
+  if (check_logic()) {
+    if (!mcsat_enabled(&__smt2_globals)) {
+      print_error("check-sat-assuming-model is only supported in MCSAT");
+    } else if (__smt2_globals.benchmark_mode) {
+      if (__smt2_globals.efmode) {
+        print_error("the exists/forall solver does not support check-sat with assumptions");
+      } else if (__smt2_globals.frozen) {
+        print_error("multiple calls to (check-sat) are not allowed in non-incremental mode");
+      } else {
+        check_delayed_assertions_assuming_model(&__smt2_globals, n, vars, values);
+      }
+    } else {
+      ctx_check_sat_assuming_model(&__smt2_globals, n, vars, values);
+    }
+  }}
+
 
 /*
  * Declare a new sort:
@@ -6107,6 +6773,7 @@ void smt2_declare_sort(const char *name, uint32_t arity) {
       macro = yices_type_constructor(name, arity);
       if (macro < 0) {
         print_yices_error(true);
+	done = true;
       } else {
         save_macro_name(&__smt2_globals, name);
         report_success();
@@ -6140,6 +6807,7 @@ void smt2_define_sort(const char *name, uint32_t n, type_t *var, type_t body) {
       macro = yices_type_macro(name, n, var, body);
       if (macro < 0) {
         print_yices_error(true);
+	done = true;
       } else {
         save_macro_name(&__smt2_globals, name);
         report_success();
@@ -6210,6 +6878,7 @@ void smt2_define_fun(const char *name, uint32_t n, term_t *var, term_t body, typ
     if (! yices_check_term_type(body, tau)) {
       // ? print a better error message?
       print_yices_error(true);
+      done = true;
       return;
     }
 
@@ -6234,6 +6903,7 @@ void smt2_define_fun(const char *name, uint32_t n, term_t *var, term_t body, typ
       t = yices_lambda(n, var, t);
       if (t < 0) {
         print_yices_error(true);
+	done = true;
         return;
       }
     }
@@ -6378,7 +7048,6 @@ void smt2_reset_all(void) {
   timeout = __smt2_globals.timeout;
   print_success = __smt2_globals.print_success;
   verbosity = __smt2_globals.verbosity;
-  
 
   delete_smt2_globals(&__smt2_globals);
   delete_attr_vtbl(&avtbl); // must be done last
@@ -6435,7 +7104,29 @@ void smt2_add_name(int32_t op, term_t t, const char *name) {
  * - for a quantified term, op is either MK_EXISTS or MK_FORALL
  */
 void smt2_add_pattern(int32_t op, term_t t, term_t *p, uint32_t n) {
-  // TBD
+  ptr_hmap_pair_t *r;
+  term_t x;
+
+  r = ptr_hmap_get(&__smt2_globals.term_patterns, t);
+  if (r->val == NULL) {
+    r->val = safe_malloc(sizeof(ivector_t));
+    init_ivector(r->val, 0);
+  }
+
+#if 0
+  printf("adding pattern:\n");
+  printf("  term: ");
+  yices_pp_term(stdout, t, 120, 1, 0);
+  printf("  pattern: ");
+  yices_pp_term_array(stdout, n, p, 120, 1, 0, 1);
+#endif
+
+  if (n == 1) {
+    x = p[0];
+  } else {
+    x = yices_tuple(n, p);
+  }
+  ivector_push(r->val, x);
 }
 
 /*

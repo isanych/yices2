@@ -195,6 +195,9 @@ static void alloc_tstack(tstack_t *stack, uint32_t nops) {
   stack->sbuffer = NULL;
   stack->sbuffer_size = 0;
 
+  stack->name_buffer = NULL;
+  stack->name_buffer_size = 0;
+
   init_bvconstant(&stack->bvconst_buffer);
 
   stack->abuffer = NULL;
@@ -837,6 +840,29 @@ void extend_sbuffer(tstack_t *stack, uint32_t n) {
 }
 
 
+/*
+ * Make the name buffer large enough for n names
+ */
+void extend_name_buffer(tstack_t *stack, uint32_t n) {
+  uint32_t new_size;
+
+  assert(stack->name_buffer_size < n);
+
+  new_size = stack->name_buffer_size + 1;
+  new_size += new_size;
+  if (new_size < n) new_size = n;
+
+  if (new_size > MAX_NAME_BUFFER_SIZE) {
+    out_of_memory();
+  }
+
+  stack->name_buffer = (char **) safe_realloc(stack->name_buffer, new_size * sizeof(char *));
+  stack->name_buffer_size = new_size;
+}
+
+
+
+
 
 
 /*********************
@@ -1339,6 +1365,7 @@ static bool check_duplicate_string(tagged_string_t *a, int32_t n, char *s) {
  * Check whether all names in a scalar-type definition are distinct
  * - names are in f[0] .. f[n-1]
  * - all are symbols
+ * - n is positive
  */
 static void check_distinct_scalar_names(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   uint32_t i;
@@ -1358,16 +1385,21 @@ static void check_distinct_scalar_names(tstack_t *stack, stack_elem_t *f, uint32
  * Check whether all names in a list of variable bindings are distinct
  * - names are in f[0] .. f[n-1]
  * - all are bindings
+ *
+ * NOTE: the declaration check[n] causes the memory sanitizer to report a
+ * runtime error if n is 0.
  */
 void check_distinct_binding_names(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  uint32_t i;
-  tagged_string_t check[n];
+  if (n > 0) {
+    uint32_t i;
+    tagged_string_t check[n];
 
-  // check for duplicate strings in the sequence
-  for (i=0; i<n; i++) {
-    assert(f[i].tag == TAG_BINDING);
-    if (check_duplicate_string(check, i, f[i].val.binding.symbol)) {
-      raise_exception(stack, f+i, TSTACK_DUPLICATE_VAR_NAME);
+    // check for duplicate strings in the sequence
+    for (i=0; i<n; i++) {
+      assert(f[i].tag == TAG_BINDING);
+      if (check_duplicate_string(check, i, f[i].val.binding.symbol)) {
+	raise_exception(stack, f+i, TSTACK_DUPLICATE_VAR_NAME);
+      }
     }
   }
 }
@@ -1375,21 +1407,24 @@ void check_distinct_binding_names(tstack_t *stack, stack_elem_t *f, uint32_t n) 
 
 /*
  * Same thing for type-variable bindings
+ *
+ * NOTE: the declaration check[n] causes the memory sanitizer to report a
+ * runtime error if n is 0.
  */
 void check_distinct_type_binding_names(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  uint32_t i;
-  tagged_string_t check[n];
+  if (n > 0) {
+    uint32_t i;
+    tagged_string_t check[n];
 
-  // check for duplicate strings in the sequence
-  for (i=0; i<n; i++) {
-    assert(f[i].tag == TAG_TYPE_BINDING);
-    if (check_duplicate_string(check, i, f[i].val.type_binding.symbol)) {
-      raise_exception(stack, f+i, TSTACK_DUPLICATE_TYPE_VAR_NAME);
+    // check for duplicate strings in the sequence
+    for (i=0; i<n; i++) {
+      assert(f[i].tag == TAG_TYPE_BINDING);
+      if (check_duplicate_string(check, i, f[i].val.type_binding.symbol)) {
+	raise_exception(stack, f+i, TSTACK_DUPLICATE_TYPE_VAR_NAME);
+      }
     }
   }
 }
-
-
 
 
 /*
@@ -1543,7 +1578,7 @@ rational_t *get_divisor(tstack_t *stack, stack_elem_t *den) {
  * Variant: Check whether e stores a non-zero rational constant
  * If so, store the value in result.
  */
-static bool elem_is_nz_constant(stack_elem_t *e, rational_t *result) {
+bool elem_is_nz_constant(stack_elem_t *e, rational_t *result) {
   rational_t *d;
   term_t t;
   bool ok;
@@ -2961,23 +2996,52 @@ static void eval_define_term(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 
 
 /*
- * [bind <string> <term>]
+ * [bind <string> <term>  .... <string> <term>]
  */
+// bind is parallel: we process a block of pairs <name, term>
+// the result of bind is a list of bindings object
+// they are pushed on the stack and will be removed when we
+// pop out of the enclosing let.
+
 static void check_bind(tstack_t *stack, stack_elem_t *f, uint32_t n) {
+  uint32_t i;
+
   check_op(stack, BIND);
-  check_size(stack, n == 2);
-  check_tag(stack, f, TAG_SYMBOL);
+  check_size(stack, n >= 2);
+  check_size(stack, (n & 0x1) == 0);
+  for (i=0; i<n; i+=2) {
+    check_tag(stack, f+i, TAG_SYMBOL);
+  }
 }
 
 static void eval_bind(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t t;
+  term_t *values;
+  char **names;
   char *name;
+  term_t t;
+  uint32_t i, j, nb;
 
-  name = f[0].val.string;
-  t = get_term(stack, f+1);
-  _o_yices_set_term_name(t, name);
+  nb = n/2;
+  assert(nb > 0);
+
+  values = get_aux_buffer(stack, nb);
+  names = get_name_buffer(stack, nb);
+  j = 0;
+  for (i=0; i<nb; i++) {
+    name = f[j].val.string;
+    j ++;
+    t = get_term(stack, f+j);
+    j ++;
+    _o_yices_set_term_name(t, name);
+    names[i] = name;
+    values[i] = t;
+  }
   tstack_pop_frame(stack);
-  set_binding_result(stack, t, name);
+
+  // push back the bindings
+  for (i=0; i<nb; i++) {
+    set_binding_result(stack, values[i], names[i]);
+  }
 }
 
 
@@ -3031,7 +3095,7 @@ static void eval_declare_type_var(tstack_t *stack, stack_elem_t *f, uint32_t n) 
 
 
 /*
- * [let <binding> ... <binding> <term>]
+ * [let [do-bind <binding> ... <binding> <term>]
  */
 static void check_let(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   check_op(stack, LET);
@@ -3730,30 +3794,7 @@ static void check_mk_division(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   check_size(stack, n == 2);
 }
 
-#if 0
-// THIS VERSION ONLY ALLOWS DIVISION BY NON-ZERO CONSTANTS
-static void eval_mk_division(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  rational_t *divisor;
-  rba_buffer_t *b;
-
-  divisor = get_divisor(stack, f+1);
-
-  if (f->tag == TAG_RATIONAL) {
-    q_div(& f->val.rational, divisor);
-    copy_result_and_pop_frame(stack, f);
-
-  } else {
-    b = tstack_get_abuffer(stack);
-
-    add_elem(stack, b, f);
-    rba_buffer_div_const(b, divisor);
-    tstack_pop_frame(stack);
-    set_arith_result(stack, b);
-  }
-}
-#endif
-
-// GENERIC VERSION: THE DIVIDER CAN BE ZERO OF NON-CONSTANT
+// GENERIC VERSION: THE DIVIDER CAN BE ZERO OR NON-CONSTANT
 static void eval_mk_division(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   rba_buffer_t *b;
   rational_t divider;
@@ -5476,7 +5517,7 @@ static const uint8_t assoc[NUM_BASE_OPCODES] = {
   0, // BIND
   0, // DECLARE_VAR
   0, // DECLARE_TYPE_VAR
-  1, // LET
+  0, // LET
   0, // MK_BV_TYPE
   0, // MK_SCALAR_TYPE
   0, // MK_TUPLE_TYPE
@@ -5802,6 +5843,16 @@ void delete_tstack(tstack_t *stack) {
   safe_free(stack->aux_buffer);
   stack->aux_buffer = NULL;
 
+  if (stack->sbuffer != NULL) {
+    safe_free(stack->sbuffer);
+    stack->sbuffer = NULL;
+  }
+
+  if (stack->name_buffer != NULL) {
+    safe_free(stack->name_buffer);
+    stack->name_buffer = NULL;
+  }
+
   delete_bvconstant(&stack->bvconst_buffer);
 
   if (stack->abuffer != NULL) {
@@ -5824,6 +5875,33 @@ void delete_tstack(tstack_t *stack) {
     stack->bvlbuffer = NULL;
   }
 }
+
+
+/*
+ * Reset all the internal buffers
+ */
+void tstack_reset_buffers(tstack_t *stack) {
+  if (stack->abuffer != NULL) {
+    yices_free_arith_buffer(stack->abuffer);
+    stack->abuffer = NULL;
+  }
+
+  if (stack->bva64buffer != NULL) {
+    yices_free_bvarith64_buffer(stack->bva64buffer);
+    stack->bva64buffer = NULL;
+  }
+
+  if (stack->bvabuffer != NULL) {
+    yices_free_bvarith_buffer(stack->bvabuffer);
+    stack->bvabuffer = NULL;
+  }
+
+  if (stack->bvlbuffer != NULL) {
+    yices_free_bvlogic_buffer(stack->bvlbuffer);
+    stack->bvlbuffer = NULL;
+  }
+}
+
 
 
 /*

@@ -467,7 +467,6 @@ static void solve(smt_core_t *core, const param_t *params, uint32_t n, const lit
 
 /*
  * Initialize the search parameters based on params.
- * If params is NULL, we use default values.
  */
 static void context_set_search_parameters(context_t *ctx, const param_t *params) {
   smt_core_t *core;
@@ -475,10 +474,6 @@ static void context_set_search_parameters(context_t *ctx, const param_t *params)
   simplex_solver_t *simplex;
   fun_solver_t *fsolver;
   uint32_t quota;
-
-  if (params == NULL) {
-    params = get_default_params();
-  }
 
   /*
    * Set core parameters
@@ -554,7 +549,7 @@ static void context_set_search_parameters(context_t *ctx, const param_t *params)
 }
 
 static smt_status_t _o_call_mcsat_solver(context_t *ctx, const param_t *params) {
-  mcsat_solve(ctx->mcsat, params);
+  mcsat_solve(ctx->mcsat, params, NULL, 0, NULL);
   return mcsat_status(ctx->mcsat);
 }
 
@@ -565,10 +560,15 @@ static smt_status_t call_mcsat_solver(context_t *ctx, const param_t *params) {
 /*
  * Initialize search parameters then call solve
  * - if ctx->status is not IDLE, return the status.
+ * - if params is NULL, we use default values.
  */
 smt_status_t check_context(context_t *ctx, const param_t *params) {
   smt_core_t *core;
   smt_status_t stat;
+
+  if (params == NULL) {
+    params = get_default_params();
+  }
 
   if (ctx->mcsat != NULL) {
     return call_mcsat_solver(ctx, params);
@@ -595,12 +595,13 @@ smt_status_t check_context_with_assumptions(context_t *ctx, const param_t *param
   smt_core_t *core;
   smt_status_t stat;
 
-  assert(ctx->mcsat == NULL); // MC-SAT doesn't support assumptions yet
-
   core = ctx->core;
   stat = smt_status(core);
   if (stat == STATUS_IDLE) {
     // clean state
+    if (params == NULL) {
+      params = get_default_params();
+    }
     context_set_search_parameters(ctx, params);
     solve(core, params, n, a);
     stat = smt_status(core);
@@ -609,6 +610,25 @@ smt_status_t check_context_with_assumptions(context_t *ctx, const param_t *param
   return stat;
 }
 
+/*
+ * Check with given model
+ * - if mcsat status is not IDLE, return the status.
+ */
+smt_status_t check_context_with_model(context_t *ctx, const param_t *params, model_t* mdl, uint32_t n, const term_t t[]) {
+  assert(ctx->mcsat != NULL);
+  smt_status_t stat;
+
+  stat = mcsat_status(ctx->mcsat);
+  if (stat == STATUS_IDLE) {
+    mcsat_solve(ctx->mcsat, params, mdl, n, t);
+    stat = mcsat_status(ctx->mcsat);
+    if (n > 0 && stat == STATUS_UNSAT && context_supports_multichecks(ctx)) {
+      context_clear(ctx);
+    }
+  }
+
+  return stat;
+}
 
 
 /*
@@ -1022,12 +1042,13 @@ static void build_term_value(context_t *ctx, model_t *model, term_t t) {
 
 
 /*
- * Build a model for the current context
+ * Build a model for the current context (including all satellite solvers)
  * - the context status must be SAT (or UNKNOWN)
  * - if model->has_alias is true, we store the term substitution
  *   defined by ctx->intern_tbl into the model
+ * - cleanup of satellite models needed using clean_solver_models()
  */
-void context_build_model(model_t *model, context_t *ctx) {
+void build_model(model_t *model, context_t *ctx) {
   term_table_t *terms;
   uint32_t i, n;
   term_t t;
@@ -1066,14 +1087,17 @@ void context_build_model(model_t *model, context_t *ctx) {
     if (good_term_idx(terms, i)) {
       t = pos_occ(i);
       if (term_kind(terms, t) == UNINTERPRETED_TERM) {
-	build_term_value(ctx, model, t);
+        build_term_value(ctx, model, t);
       }
     }
   }
+}
 
-  /*
-   * Cleanup
-   */
+
+/*
+ * Cleanup solver models
+ */
+void clean_solver_models(context_t *ctx) {
   if (context_has_arith_solver(ctx)) {
     ctx->arith.free_model(ctx->arith_solver);
   }
@@ -1083,7 +1107,22 @@ void context_build_model(model_t *model, context_t *ctx) {
   if (context_has_egraph(ctx)) {
     egraph_free_model(ctx->egraph);
   }
+}
 
+
+
+/*
+ * Build a model for the current context
+ * - the context status must be SAT (or UNKNOWN)
+ * - if model->has_alias is true, we store the term substitution
+ *   defined by ctx->intern_tbl into the model
+ */
+void context_build_model(model_t *model, context_t *ctx) {
+  // Build solver models and term values
+  build_model(model, ctx);
+
+  // Cleanup
+  clean_solver_models(ctx);
 }
 
 
@@ -1156,3 +1195,9 @@ void context_build_unsat_core(context_t *ctx, ivector_t *v) {
     v->data[i] = t;
   }
 }
+
+extern term_t context_get_unsat_model_interpolant(context_t *ctx) {
+  assert(ctx->mcsat != NULL);
+  return mcsat_get_unsat_model_interpolant(ctx->mcsat);
+}
+

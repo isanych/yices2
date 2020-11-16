@@ -652,6 +652,10 @@ static inline bool context_has_fun_solver(context_t *ctx) {
   return ctx->fun_solver != NULL;
 }
 
+static inline bool context_has_quant_solver(context_t *ctx) {
+  return ctx->quant_solver != NULL;
+}
+
 static inline bool context_has_mcsat(context_t *ctx) {
   return ctx->mcsat != NULL;
 }
@@ -687,6 +691,14 @@ static inline bool context_supports_cleaninterrupt(context_t *ctx) {
  */
 static inline context_mode_t context_get_mode(context_t *ctx) {
   return ctx->mode;
+}
+
+
+/*
+ * Read the enable quant flag
+ */
+static inline bool context_quant_enabled(context_t *ctx) {
+  return ctx->en_quant;
 }
 
 

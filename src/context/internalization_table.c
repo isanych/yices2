@@ -63,7 +63,7 @@
 
 #include "context/internalization_table.h"
 #include "utils/memalloc.h"
-
+#include "context/internalization_codes.h"
 
 /*
  * Initialization:
@@ -80,6 +80,8 @@ void init_intern_tbl(intern_tbl_t *tbl, uint32_t n, term_table_t *terms) {
 
   tbl->cache = NULL;
   tbl->queue = NULL;
+
+  init_int_hmap(&tbl->reverse_map, 0);
 }
 
 
@@ -102,6 +104,8 @@ void delete_intern_tbl(intern_tbl_t *tbl) {
     safe_free(tbl->queue);
     tbl->queue = NULL;
   }
+
+  delete_int_hmap(&tbl->reverse_map);
 }
 
 
@@ -120,6 +124,8 @@ void reset_intern_tbl(intern_tbl_t *tbl) {
   if (tbl->queue != NULL) {
     int_queue_reset(tbl->queue);
   }
+
+  int_hmap_reset(&tbl->reverse_map);
 }
 
 
@@ -398,6 +404,17 @@ void intern_tbl_map_root(intern_tbl_t *tbl, term_t r, int32_t x) {
   // add the mapping
   ai32_write(&tbl->map, index_of(r), (INT32_MIN|x));
 
+  // add reverse mapping
+  int_hmap_pair_t *ip;
+  ip = int_hmap_get(&tbl->reverse_map, x);
+  if (ip->val < 0) {
+    ip->val = r;
+#if 0
+    printf("  mapping: ");
+    print_intern_reverse(stdout, tbl, x);
+#endif
+  }
+
   assert(intern_tbl_map_of_root(tbl, r) == x &&
          intern_tbl_is_root(tbl, r) && !intern_tbl_root_is_free(tbl, r));
 }
@@ -414,7 +431,35 @@ void intern_tbl_remap_root(intern_tbl_t *tbl, term_t r, int32_t x) {
 
   ai32_write(&tbl->map, index_of(r), (INT32_MIN|x));
 
+  // add reverse mapping
+  int_hmap_pair_t *ip;
+  ip = int_hmap_get(&tbl->reverse_map, x);
+  ip->val = r;
+
   assert(intern_tbl_map_of_root(tbl, r) == x);
+}
+
+
+/*
+ * Return the term mapped to occurrence x (if any)
+ */
+term_t intern_tbl_reverse_map(intern_tbl_t *tbl, occ_t x) {
+  term_t r;
+  bool negate;
+  int_hmap_pair_t *ip;
+
+  negate = is_neg_occ(x);
+  if (negate) {
+    x = opposite_occ(x);
+  }
+
+  ip = int_hmap_find(&tbl->reverse_map, occ2code(x));
+  if (ip != NULL) {
+    r = ip->val;
+    return negate ? opposite_term(r) : r;
+  }
+
+  return NULL_TERM;
 }
 
 
@@ -703,6 +748,32 @@ bool intern_tbl_valid_const_subst(intern_tbl_t *tbl, term_t r1, term_t r2) {
   return ok;
 }
 
+
+/*
+ * Check whether the substitution [r1 := r2] is sound
+ * - r1 must be a root
+ * - r2 must be frozen
+ * - returns true if r1 is a free root and r2's type is a subtype of r1's class type
+ *
+ * E.g., if r1 has integer type and r2 has real type then the substitution is not
+ * sound.
+ */
+bool intern_tbl_sound_subst(intern_tbl_t *tbl, term_t r1, term_t r2) {
+  type_t tau1, tau2;
+  bool ok;
+
+  assert(is_pos_term(r1) && intern_tbl_is_root(tbl, r1) && intern_tbl_is_root(tbl, r2));
+
+  ok = false;
+
+  if (intern_tbl_root_is_free(tbl, r1)) {
+    tau1 = intern_tbl_type_of_root(tbl, r1);
+    tau2 = intern_tbl_type_of_root(tbl, r2);
+    ok = is_subtype(tbl->types, tau2, tau1);
+  }
+
+  return ok;
+}
 
 
 /*

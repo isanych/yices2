@@ -1,8 +1,19 @@
 /*
- * The Yices SMT Solver. Copyright 2015 SRI International.
+ * This file is part of the Yices SMT Solver.
+ * Copyright (C) 2019 SRI International.
  *
- * This program may only be used subject to the noncommercial end user
- * license agreement which is downloadable along with this program.
+ * Yices is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Yices is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Yices.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #if defined(CYGWIN) || defined(MINGW)
@@ -1354,11 +1365,12 @@ bool can_explain_conflict(bv_subexplainer_t* this, const ivector_t* conflict, va
   bv_csttrail_t* csttrail     = &exp->csttrail;
   const variable_db_t* var_db = this->ctx->var_db;
   term_table_t* terms         = this->ctx->terms;
-  term_t conflict_var_term    = csttrail->conflict_var_term;
     
   // Resetting the cache & co.
   bv_evaluator_csttrail_reset(csttrail, conflict_var, 1); // 1 is the level of optimisation fit for this explainer
   int_hmap_reset(&exp->cache);
+
+  term_t conflict_var_term    = csttrail->conflict_var_term;
 
   // We go through the conflict core
   for (uint32_t i = 0; i < conflict->size; ++ i) {

@@ -637,6 +637,8 @@ void bv_evaluator_csttrail_construct(bv_csttrail_t* csttrail, plugin_context_t* 
   csttrail->ctx = ctx;
   csttrail->wlm = wlm;
   csttrail->eval = eval;
+  csttrail->conflict_var = variable_null;
+  csttrail->conflict_var_term = NULL_TERM;
   init_int_hset(&csttrail->free_var, 0);
   init_int_hmap2(&csttrail->fv_cache, 0);
 }
@@ -776,6 +778,7 @@ uint32_t bv_evaluator_not_free_up_to(bv_csttrail_t* csttrail, term_t u) {
   case BV_CONSTANT:
   case BV64_CONSTANT:
     assert(false); // Already treated above
+    break;
   case EQ_TERM:
   case OR_TERM:
   case XOR_TERM:

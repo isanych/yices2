@@ -82,6 +82,17 @@ extern void egraph_attach_funsolver(egraph_t *egraph,
                                     th_egraph_interface_t *eg,
                                     fun_egraph_interface_t *fun_eg);
 
+/*
+ * Attach a quant subsolver
+ * - solver = pointer to the subsolver object
+ * - ctrl, eg, quant_eg  = interface descriptors
+ */
+void egraph_attach_quantsolver(egraph_t *egraph,
+                               void *solver,
+                               th_ctrl_interface_t *ctrl,
+                               th_egraph_interface_t *eg,
+                               quant_egraph_interface_t *quant_eg);
+
 
 /*
  * Get the egraph control and smt interface descriptors
@@ -666,5 +677,31 @@ static inline uint32_t egraph_num_interface_eqs(egraph_t *egraph) {
 }
 
 
+
+
+/***********************
+ *  EMATCHING HELPERS  *
+ **********************/
+
+/*
+ * Find (and store) the function depth of composite cmp
+ */
+extern int32_t composite_depth(egraph_t *egraph, composite_t *cmp);
+
+/*
+ * Find (and store) the function depth of eterm t
+ */
+extern int32_t eterm_depth(egraph_t *egraph, eterm_t t);
+
+/*
+ * Find (and store) the function depth of occurence t
+ */
+static inline int32_t occ_depth(egraph_t *egraph, occ_t t) {
+  return eterm_depth(egraph, term_of_occ(t));
+}
+
+static inline bool egraph_is_at_base_level(egraph_t *egraph) {
+  return egraph->decision_level == egraph->base_level;
+}
 
 #endif /* __EGRAPH_H */

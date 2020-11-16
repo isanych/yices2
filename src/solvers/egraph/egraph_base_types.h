@@ -215,6 +215,7 @@ typedef struct composite_s {
   uint32_t tag;
   uint32_t hash;
   eterm_t id;
+  int32_t depth;    // function composition depth
   int32_t child[0]; // real size depends on arity
 } composite_t;
 
@@ -240,6 +241,16 @@ enum {
  * (sizeof(composite_t) + 2.n * sizeof(int32_t)) does not overflow
  */
 #define MAX_COMPOSITE_ARITY ((UINT32_MAX>>CTAG_BITS)-sizeof(composite_t))
+
+/*
+ * Unknown depth
+ */
+#define UNKNOWN_DEPTH (-1)
+
+/*
+ * Default depth
+ */
+#define DEF_DEPTH 0
 
 
 /*
@@ -409,12 +420,13 @@ typedef enum etype_s {
   ETYPE_INT,      // 0
   ETYPE_REAL,     // 1
   ETYPE_BV,       // 2
-  ETYPE_FUNCTION, // 3
+  ETYPE_QUANT,    // 3
+  ETYPE_FUNCTION, // 4
 
   // etypes internal to the egraph
-  ETYPE_BOOL,     // 4
-  ETYPE_TUPLE,    // 5
-  ETYPE_NONE,     // 6
+  ETYPE_BOOL,     // 5
+  ETYPE_TUPLE,    // 6
+  ETYPE_NONE,     // 7
 
 } etype_t;
 

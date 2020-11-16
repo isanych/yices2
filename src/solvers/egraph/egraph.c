@@ -1131,6 +1131,7 @@ static eterm_t new_composite_eterm(egraph_t *egraph, composite_t *cmp) {
   eterm_t t;
   t = new_eterm(&egraph->terms, cmp);
   cmp->id = t;
+  cmp->depth = UNKNOWN_DEPTH;
   return t;
 }
 
@@ -2349,18 +2350,19 @@ static void egraph_reactivate_dynamic_terms(egraph_t *egraph) {
 bool egraph_check_diseq(egraph_t *egraph, occ_t t1, occ_t t2) {
   uint32_t *dmask;
   composite_t *eq;
-  class_t c1, c2;
+  elabel_t l1, l2;
 
-  c1 = egraph_class(egraph, t1);
-  c2 = egraph_class(egraph, t2);
+  l1 = egraph_label(egraph, t1);
+  l2 = egraph_label(egraph, t2);
 
-  if (c1 == c2) {
-    return polarity_of_occ(t1) != polarity_of_occ(t2);
-  }
+  if (l1 == l2) return false;
+  if (l1 == opposite_label(l2))  return true;  // t1 == (not t2)
 
-  dmask = egraph->classes.dmask;
-  if ((dmask[c1] & dmask[c2]) != 0) {
-    return true;
+  if (is_pos_label(l1) && is_pos_label(l2)) {
+    dmask = egraph->classes.dmask;
+    if ((dmask[class_of(l1)] & dmask[class_of(l2)]) != 0) {
+      return true;
+    }
   }
 
   eq = congruence_table_find_eq(&egraph->ctable, t1, t2, egraph->terms.label);
@@ -5394,6 +5396,87 @@ static bool egraph_is_high_order(egraph_t *egraph) {
 }
 
 
+/*
+ * Find the maximum function depth of the children of composite cmp
+ * - scan children from i to cmp's arity (i=0 or i=1 to skip the first child)
+ */
+static int32_t composite_max_child_depth(egraph_t *egraph, composite_t *cmp, uint32_t i) {
+  uint32_t n;
+  int32_t maxdepth, cdepth;
+  eterm_t x;
+  composite_t *c;
+
+  n = composite_arity(cmp);
+  maxdepth = DEF_DEPTH;
+  while (i < n) {
+    x = term_of_occ(composite_child(cmp, i));
+    c = egraph_term_body(egraph, x);
+    if (composite_body(c)) {
+      cdepth = composite_depth(egraph, c);
+      maxdepth = (cdepth > maxdepth) ? cdepth : maxdepth;
+    }
+    i ++;
+  }
+  return maxdepth;
+}
+
+
+/*
+ * Find (and store) the function depth of composite cmp
+ */
+int32_t composite_depth(egraph_t *egraph, composite_t *cmp) {
+  if (cmp->depth != UNKNOWN_DEPTH) {
+#if 0
+    printf("cmp_depth (cached) is %d for ", cmp->depth);
+    print_composite(stdout, cmp);
+    printf("\n");
+#endif
+    return cmp->depth;
+  }
+
+  int32_t depth;
+  depth = UNKNOWN_DEPTH;
+
+  switch (composite_kind(cmp)) {
+  case COMPOSITE_APPLY:
+  case COMPOSITE_UPDATE:
+    depth = 1 + composite_max_child_depth(egraph, cmp, 1);
+    break;
+  case COMPOSITE_TUPLE:
+  case COMPOSITE_EQ:
+  case COMPOSITE_ITE:
+  case COMPOSITE_DISTINCT:
+  case COMPOSITE_OR:
+  case COMPOSITE_LAMBDA:
+    depth = composite_max_child_depth(egraph, cmp, 0);
+    break;
+  default:
+    assert(false);
+  }
+
+  cmp->depth = depth;
+#if 0
+  printf("cmp_depth is %d for ", depth);
+  print_composite(stdout, cmp);
+  printf("\n");
+#endif
+
+  return depth;
+}
+
+
+/*
+ * Find (and store) the function depth of eterm t
+ */
+int32_t eterm_depth(egraph_t *egraph, eterm_t t) {
+  composite_t *c;
+
+  c = egraph_term_body(egraph, t);
+  if (composite_body(c))
+    return composite_depth(egraph, c);
+  else
+    return DEF_DEPTH;
+}
 
 
 /******************************************************************
@@ -6077,6 +6160,20 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
     c = FCHECK_CONTINUE;
   }
 
+  if (c == FCHECK_SAT) {
+    if (egraph->ctrl[ETYPE_QUANT] != NULL) {
+      // quant solver
+      c = egraph->ctrl[ETYPE_QUANT]->final_check(egraph->th[ETYPE_QUANT]);
+      if (c != FCHECK_SAT) {
+#if TRACE_FCHECK
+        printf("---> exit at quant final check\n");
+        fflush(stdout);
+#endif
+        return c;
+      }
+    }
+  }
+
   return c;
 }
 
@@ -6189,6 +6286,21 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
   }
 
   egraph_release_models(egraph);
+
+
+  if (c == FCHECK_SAT) {
+    if (egraph->ctrl[ETYPE_QUANT] != NULL) {
+      // quant solver
+      c = egraph->ctrl[ETYPE_QUANT]->final_check(egraph->th[ETYPE_QUANT]);
+      if (c != FCHECK_SAT) {
+#if TRACE_FCHECK
+        printf("---> exit at quant final check\n");
+        fflush(stdout);
+#endif
+        return c;
+      }
+    }
+  }
 
   return c;
 }
@@ -6796,6 +6908,7 @@ void init_egraph(egraph_t *egraph, type_table_t *ttbl) {
   egraph->arith_eg = NULL;
   egraph->bv_eg = NULL;
   egraph->fun_eg = NULL;
+  egraph->quant_eg = NULL;
 
   // model-construction object
   init_egraph_model(&egraph->mdl);
@@ -6861,6 +6974,25 @@ void egraph_attach_funsolver(egraph_t *egraph, void *solver, th_ctrl_interface_t
   egraph->fun_eg = fun_eg;
 }
 
+
+/*
+ * Attach a quant subsolver
+ * - solver = pointer to the subsolver object
+ * - ctrl, eg, quant_eg  = interface descriptors
+ */
+void egraph_attach_quantsolver(egraph_t *egraph, void *solver, th_ctrl_interface_t *ctrl,
+                             th_egraph_interface_t *eg, quant_egraph_interface_t *quant_eg) {
+  etype_t id;
+
+//  assert(egraph->core == NULL && egraph->ctrl[ETYPE_QUANT] == NULL);
+  assert(egraph->ctrl[ETYPE_QUANT] == NULL);
+
+  id = ETYPE_QUANT;
+  egraph->th[id] = solver;
+  egraph->ctrl[id] = ctrl;
+  egraph->eg[id] = eg;
+  egraph->quant_eg = quant_eg;
+}
 
 /*
  * Get the egraph control and smt interfaces:

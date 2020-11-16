@@ -70,6 +70,7 @@ void init_term_manager(term_manager_t *manager, term_table_t *terms) {
 
   manager->simplify_ite = true;
   manager->simplify_bveq1 = true;
+  manager->simplify_bvite_offset = false;
 }
 
 
@@ -551,7 +552,7 @@ static term_t bvarray_get_var(term_table_t *tbl, const term_t *a, uint32_t n) {
 /*
  * Convert array a to a term
  * - side effect: use bv0
- */
+< */
 static term_t bvarray_get_term(term_manager_t *manager, const term_t *a, uint32_t n) {
   term_table_t *terms;
   bvconstant_t *bv;
@@ -1202,20 +1203,19 @@ static term_t const_ite_simplify(term_t c, term_t x, term_t y) {
  * Convert (ite c u v) into a bvarray term:
  * - c is a boolean
  * - u and v are two bv64 constants
+ * - n = number of bits in u and v
  */
-static term_t mk_bvconst64_ite(term_manager_t *manager, term_t c, bvconst64_term_t *u, bvconst64_term_t *v) {
-  uint32_t i, n;
+static term_t mk_bvconst64_ite_core(term_manager_t *manager, term_t c, uint64_t u, uint64_t v, uint32_t n) {
+  uint32_t i;
   term_t bu, bv;
   term_t *a;
 
-  n = u->bitsize;
-  assert(v->bitsize == n);
   resize_ivector(&manager->vector0, n);
   a = manager->vector0.data;
 
   for (i=0; i<n; i++) {
-    bu = bool2term(tst_bit64(u->value, i)); // bit i of u
-    bv = bool2term(tst_bit64(v->value, i)); // bit i of v
+    bu = bool2term(tst_bit64(u, i)); // bit i of u
+    bv = bool2term(tst_bit64(v, i)); // bit i of v
 
     a[i] = const_ite_simplify(c, bu, bv); // a[i] = (ite c bu bv)
   }
@@ -1223,28 +1223,40 @@ static term_t mk_bvconst64_ite(term_manager_t *manager, term_t c, bvconst64_term
   return bvarray_get_term(manager, a, n);
 }
 
+static inline term_t mk_bvconst64_ite(term_manager_t *manager, term_t c, bvconst64_term_t *u, bvconst64_term_t *v) {
+  assert(v->bitsize == u->bitsize);
+  return mk_bvconst64_ite_core(manager, c, u->value, v->value, u->bitsize);
+}
+
 
 /*
  * Same thing with u and v two generic bv constants
+ * - c: boolean term
+ * - u = array of words
+ * - v = array of words
+ * - n = number of bits in u and b
  */
-static term_t mk_bvconst_ite(term_manager_t *manager, term_t c, bvconst_term_t *u, bvconst_term_t *v) {
-  uint32_t i, n;
+static term_t mk_bvconst_ite_core(term_manager_t *manager, term_t c, uint32_t *u, uint32_t *v, uint32_t n) {
+  uint32_t i;
   term_t bu, bv;
   term_t *a;
 
-  n = u->bitsize;
-  assert(v->bitsize == n);
   resize_ivector(&manager->vector0, n);
   a = manager->vector0.data;
 
   for (i=0; i<n; i++) {
-    bu = bool2term(bvconst_tst_bit(u->data, i));
-    bv = bool2term(bvconst_tst_bit(v->data, i));
+    bu = bool2term(bvconst_tst_bit(u, i));
+    bv = bool2term(bvconst_tst_bit(v, i));
 
     a[i] = const_ite_simplify(c, bu, bv);
   }
 
   return bvarray_get_term(manager, a, n);
+}
+
+static inline term_t mk_bvconst_ite(term_manager_t *manager, term_t c, bvconst_term_t *u, bvconst_term_t *v) {
+  assert(u->bitsize == v->bitsize);
+  return mk_bvconst_ite_core(manager, c, u->data, v->data, u->bitsize);
 }
 
 
@@ -1368,6 +1380,215 @@ static term_t check_ite_bvarray(term_manager_t *manager, term_t c, composite_ter
 }
 
 
+/*
+ * Construct t + (ite c a b)
+ * - n = number of bits in a and b and t
+ */
+static term_t mk_bvoffset64_ite(term_manager_t *manager, term_t c, term_t t, uint64_t a, uint64_t b, uint32_t n) {
+  bvarith64_buffer_t *buffer;
+  term_table_t *tbl;
+  term_t u;
+
+  tbl = manager->terms;
+  buffer = term_manager_get_bvarith64_buffer(manager);
+
+  u = mk_bvconst64_ite_core(manager, c, a, b, n);   // (ite c a b)
+  bvarith64_buffer_set_term(buffer, tbl, t);
+  bvarith64_buffer_add_term(buffer, tbl, u);
+  return mk_bvarith64_term(manager, buffer);
+}
+
+
+/*
+ * Try to rewrite (ite c x y) to  (ite c a b) + t where a and b are constants.
+ * - x and y are both polynomials
+ */
+static term_t check_ite_bvoffset64(term_manager_t *manager, term_t c, term_t x, term_t y) {
+  term_table_t *tbl;
+  bvpoly64_t *u, *v;
+  uint64_t a, b;
+  term_t t;
+  uint32_t n;
+
+  tbl = manager->terms;
+
+  u = bvpoly64_term_desc(tbl, x);
+  v = bvpoly64_term_desc(tbl, y);
+  n = u->bitsize;
+
+  assert(n == v->bitsize);
+
+  if (bvpoly64_is_offset(u) && bvpoly64_is_offset(v)) {
+    assert(u->nterms == 2 && v->nterms == 2);
+    assert(u->mono[0].var == const_idx && v->mono[0].var == const_idx);
+
+    t = u->mono[1].var;
+    if (v->mono[1].var == t) {
+      n = u->bitsize;
+      a = u->mono[0].coeff;
+      b = v->mono[0].coeff;
+      return mk_bvoffset64_ite(manager, c, t, a, b, n);
+    }
+
+  } else if (delta_bvpoly64_is_constant(u, v)) {
+    // x - y is a constant
+    if (u->nterms + 1 == v->nterms) {
+      // rewrite (ite c x (b + x)) to x + (ite c 0 b)
+      assert(v->mono[0].var == const_idx);
+      b =  v->mono[0].coeff;
+      return mk_bvoffset64_ite(manager, c, x, 0, b, n);
+    }
+    if (u->nterms == v->nterms + 1) {
+      // rewrite (ite c (a + y) y) to y + (ite c a 0)
+      assert(u->mono[0].var == const_idx);
+      a = u->mono[0].coeff;
+      return mk_bvoffset64_ite(manager, c, y, a, 0, n);
+    }
+    // TODO: handle the case u->nterms == v->nterms?
+  }
+
+  return NULL_TERM;
+}
+
+/*
+ * Try to rewrite (ite c t u) to (ite c a 0) + t where
+ */
+static term_t check_ite_bvoffset64_var(term_manager_t *manager, term_t c, term_t t, bvpoly64_t *u) {
+  uint32_t n;
+
+  if (bvpoly64_is_const_plus_var(u, t)) {
+    assert(u->nterms == 2 && u->mono[0].var == const_idx &&
+	   u->mono[1].var == t && u->mono[1].coeff == 1);
+
+    n = u->bitsize;
+    return mk_bvoffset64_ite(manager, c, t, 0, u->mono[0].coeff, n);
+  }
+
+  return NULL_TERM;
+}
+
+
+/*
+ * Construct t + (ite c a b)
+ * - n = number of bits in a and b and t
+ * - a or b may be NULL, in which case they are interpreted as zero
+ */
+static term_t mk_bvoffset_ite(term_manager_t *manager, term_t c, term_t t, uint32_t *a, uint32_t *b, uint32_t n) {
+  uint32_t aux[32];
+  bvarith_buffer_t *buffer;
+  term_table_t *tbl;
+  uint32_t w;
+  uint32_t *tmp;
+  term_t u;
+
+  tbl = manager->terms;
+  buffer = term_manager_get_bvarith_buffer(manager);
+
+  tmp = NULL;
+  if (a == NULL || b == NULL) {
+    assert(a != b); // only one can be NULL
+    w = (n + 31) >> 5; // number of words to store the zero constant
+    tmp = aux;
+    if (w > 32) tmp = (uint32_t *) safe_malloc(w * sizeof(uint32_t));
+    bvconst_clear(tmp, w);
+    if (a == NULL) a = tmp;
+    if (b == NULL) b = tmp;
+  }
+
+  u = mk_bvconst_ite_core(manager, c, a, b, n);   // (ite c a b)
+  bvarith_buffer_set_term(buffer, tbl, t);
+  bvarith_buffer_add_term(buffer, tbl, u);
+  u = mk_bvarith_term(manager, buffer);
+
+  if (tmp != NULL && w > 32) {
+    safe_free(tmp);
+  }
+
+  return u;
+}
+
+
+/*
+ * Try to rewrite (ite c x y) to  (ite c a b) + t where a and b are constants.
+ * - x and y are both polynomials
+ */
+static term_t check_ite_bvoffset(term_manager_t *manager, term_t c, term_t x, term_t y) {
+  term_table_t *tbl;
+  bvpoly_t *u, *v;
+  uint32_t *a, *b;
+  term_t t;
+  uint32_t n;
+
+  tbl = manager->terms;
+
+  u = bvpoly_term_desc(tbl, x);
+  v = bvpoly_term_desc(tbl, y);
+  n = u->bitsize;
+
+  assert(n == v->bitsize);
+
+  if (bvpoly_is_offset(u) && bvpoly_is_offset(v)) {
+    assert(u->nterms == 2 && v->nterms == 2);
+    assert(u->mono[0].var == const_idx && v->mono[0].var == const_idx);
+
+    t = u->mono[1].var;
+    if (v->mono[1].var == t) {
+      n = u->bitsize;
+      a = u->mono[0].coeff;
+      b = v->mono[0].coeff;
+      return mk_bvoffset_ite(manager, c, t, a, b, n);
+    }
+  } else if (delta_bvpoly_is_constant(u, v)) {
+    // x - y is a constant
+    if (u->nterms + 1 == v->nterms) {
+      // rewrite (ite c x (b + x)) to x + (ite c 0 b)
+      assert(v->mono[0].var == const_idx);
+      b = v->mono[0].coeff;
+      return mk_bvoffset_ite(manager, c, x, NULL, b, n);
+    }
+    if (u->nterms == v->nterms + 1) {
+      // rewrite (ite c (a + y) y) to y + (ite c a 0)
+      assert(u->mono[0].var == const_idx);
+      a = u->mono[0].coeff;
+      return mk_bvoffset_ite(manager, c, y, a, NULL, n);
+    }
+  }
+
+  return NULL_TERM;
+}
+
+/*
+ * Try to rewrite (ite c t u) to (ite c a 0) + t where
+ */
+static term_t check_ite_bvoffset_var(term_manager_t *manager, term_t c, term_t t, bvpoly_t *u) {
+  uint32_t aux[32];
+  uint32_t n, w;
+  uint32_t *a;
+  term_t result;
+
+
+  result = NULL_TERM;
+  if (bvpoly_is_const_plus_var(u, t)) {
+    assert(u->nterms == 2 && u->mono[0].var == const_idx &&
+	   u->mono[1].var == t && bvconst_is_one(u->mono[1].coeff, u->width));
+
+    n = u->bitsize;
+    w = (n + 31) >> 5;
+    if (w <= 32) {
+      bvconst_clear(aux, w);
+      result = mk_bvoffset_ite(manager, c, t, aux, u->mono[0].coeff, n);
+    } else {
+      a = (uint32_t *) safe_malloc(w * sizeof(uint32_t));
+      bvconst_clear(a, w);
+      result = mk_bvoffset_ite(manager, c, t, a, u->mono[0].coeff, n);
+      safe_free(a);
+    }
+  }
+
+  return result;
+}
+
+
 
 /*
  * Build (ite c x y) c is boolean, x and y are bitvector terms
@@ -1389,10 +1610,11 @@ term_t mk_bv_ite(term_manager_t *manager, term_t c, term_t x, term_t y) {
   if (c == true_term) return x;
   if (c == false_term) return y;
 
-  // Check whether (ite c x y) simplifies to a bv_array term
   kind_x = term_kind(tbl, x);
   kind_y = term_kind(tbl, y);
   aux = NULL_TERM;
+
+  // Check whether (ite c x y) simplifies to a bv_array term
   switch (kind_x) {
   case BV64_CONSTANT:
     assert(kind_y != BV_CONSTANT);
@@ -1427,6 +1649,25 @@ term_t mk_bv_ite(term_manager_t *manager, term_t c, term_t x, term_t y) {
   default:
     break;
   }
+
+  if (manager->simplify_bvite_offset) {
+    // More rewrites
+    // (ite c (a + t) (b + t)) --> t + (ite c a b) where a and b are constants
+    if (kind_x == BV64_POLY && kind_y == BV64_POLY) {
+      aux = check_ite_bvoffset64(manager, c, x, y);
+    } else if (kind_y == BV64_POLY) {
+      aux = check_ite_bvoffset64_var(manager, c, x, bvpoly64_term_desc(tbl, y));
+    } else if (kind_x == BV64_POLY) {
+      aux = check_ite_bvoffset64_var(manager, opposite_term(c), y, bvpoly64_term_desc(tbl, x));
+    } else if (kind_x == BV_POLY && kind_y == BV_POLY) {
+      aux = check_ite_bvoffset(manager, c, x, y);
+    } else if (kind_y == BV_POLY) {
+      aux = check_ite_bvoffset_var(manager, c, x, bvpoly_term_desc(tbl, y));
+    } else if (kind_x == BV_POLY) {
+      aux = check_ite_bvoffset_var(manager, opposite_term(c), y, bvpoly_term_desc(tbl, x));
+    }
+  }
+
 
   if (aux != NULL_TERM) {
     return aux;
@@ -2510,9 +2751,6 @@ static bool check_for_lift_if(term_table_t *tbl, term_t t1, term_t t2, lift_resu
 
 
 
-
-
-
 /*
  * Store t1 - t2 in buffer b
  */
@@ -2957,6 +3195,7 @@ term_t mk_direct_arith_root_atom_eq(rba_buffer_t* b, term_table_t* terms, uint32
   return mk_direct_arith_root_atom(b, terms, k, x, p, ROOT_ATOM_EQ, simplify_ite);
 }
 
+
 /*
  * ARITHMETIC FUNCTIONS
  */
@@ -3086,6 +3325,37 @@ term_t mk_arith_abs(term_manager_t *manager, term_t t) {
 
 
 /*
+ * FLOOR AND CEIL
+ */
+
+/*
+ * Floor/ceil of a rational constant
+ */
+static term_t arith_constant_floor(term_manager_t *manager, rational_t *q) {
+  rational_t *aux;
+
+  aux = &manager->r0;
+  q_set(aux, q);
+  q_floor(aux);
+  q_normalize(aux);
+
+  return arith_constant(manager->terms, aux);
+}
+
+static term_t arith_constant_ceil(term_manager_t *manager, rational_t *q) {
+  rational_t *aux;
+
+  aux = &manager->r0;
+  q_set(aux, q);
+  q_ceil(aux);
+  q_normalize(aux);
+
+  return arith_constant(manager->terms, aux);
+}
+
+
+
+/*
  * (floor t) and (ceil t)
  * - if t is an integer --> t
  * - otherwise, build the term.
@@ -3101,6 +3371,10 @@ term_t mk_arith_floor(term_manager_t *manager, term_t t) {
   tbl = manager->terms;
   if (is_integer_term(tbl, t)) return t;
 
+  if (term_kind(tbl, t) == ARITH_CONSTANT) {
+    return arith_constant_floor(manager, rational_term_desc(tbl, t));
+  }
+
   return arith_floor(tbl, t);
 }
 
@@ -3109,6 +3383,10 @@ term_t mk_arith_ceil(term_manager_t *manager, term_t t) {
 
   tbl = manager->terms;
   if (is_integer_term(tbl, t)) return t;
+
+  if (term_kind(tbl, t) == ARITH_CONSTANT) {
+    return arith_constant_ceil(manager, rational_term_desc(tbl, t));
+  }
 
   return arith_ceil(manager->terms, t);
 }
@@ -3506,6 +3784,7 @@ term_t mk_application(term_manager_t *manager, term_t fun, uint32_t n, const ter
   }
 
   while (term_kind(tbl, fun) == UPDATE_TERM) {
+    assert(is_pos_term(fun));
     // fun is (update f (a_1 ... a_n) v)
     update = update_term_desc(tbl, fun);
     assert(update->arity == n+2);
@@ -3663,6 +3942,7 @@ term_t mk_update(term_manager_t *manager, term_t fun, uint32_t n, const term_t a
   // try simplification
   while (term_kind(tbl, fun) == UPDATE_TERM) {
     // fun is (update f b_1 ... b_n v)
+    assert(is_pos_term(fun));
     update = update_term_desc(tbl, fun);
     assert(update->arity == n+2);
 
@@ -3676,7 +3956,7 @@ term_t mk_update(term_manager_t *manager, term_t fun, uint32_t n, const term_t a
   }
 
   // build (update fun a_1 .. a_n new_v): try second simplification
-  if (term_kind(tbl, new_v) == APP_TERM) {
+  if (is_pos_term(new_v) && term_kind(tbl, new_v) == APP_TERM) {
     app = app_term_desc(tbl, new_v);
     if (app->arity == n+1 && app->arg[0] == fun &&
         equal_term_arrays(n, app->arg + 1, arg)) {
@@ -3954,9 +4234,9 @@ term_t mk_bv_constant(term_manager_t *manager, bvconstant_t *b) {
 
 
 
-/**************************
+/***************************
  *  CONVERT BITS TO TERMS  *
- *************************/
+ **************************/
 
 /*
  * A bvlogic buffer stores an array of bits in manager->nodes.
@@ -4300,7 +4580,6 @@ static bool bvarray_check_addmul64(ivector_t *v, uint32_t n, uint64_t c, term_t 
 
   return true;
 }
-
 
 
 
@@ -4701,7 +4980,6 @@ term_t mk_bvarith64_term(term_manager_t *manager, bvarith64_buffer_t *b) {
     }
     if (m->coeff == 1) {
       // power product
-      //      t = pp_is_var(r) ? var_of_pp(r) : pprod_term(manager->terms, r);
       t = pp_is_var(r) ? var_of_pp(r) : mk_pprod64_term(manager, n, r);
       goto done;
     }
@@ -4794,28 +5072,6 @@ static term_t mk_bvshl_const(term_manager_t *manager, term_t t1, bvconst_term_t 
   return mk_bvlogic_term(manager, b);
 }
 
-// special case: if t1 is 0b000...0 then (bvshl t1 t2) = t2 for any t2
-static bool term_is_bvzero(term_table_t *tbl, term_t t1) {
-  bvconst64_term_t *u;
-  bvconst_term_t *v;
-  uint32_t k;
-
-  switch (term_kind(tbl, t1)) {
-  case BV64_CONSTANT:
-    u = bvconst64_term_desc(tbl, t1);
-    assert(u->value == norm64(u->value, u->bitsize));
-    return u->value == 0;
-
-  case BV_CONSTANT:
-    v = bvconst_term_desc(tbl, t1);
-    k = (v->bitsize + 31) >> 5; // number of words in v
-    return bvconst_is_zero(v->data, k);
-
-  default:
-    return false;
-  }
-}
-
 
 term_t mk_bvshl(term_manager_t *manager, term_t t1, term_t t2) {
   term_table_t *tbl;
@@ -4833,7 +5089,7 @@ term_t mk_bvshl(term_manager_t *manager, term_t t1, term_t t2) {
     return mk_bvshl_const(manager, t1, bvconst_term_desc(tbl, t2));
 
   default:
-    if (term_is_bvzero(tbl, t1)) {
+    if (bvterm_is_zero(tbl, t1)) {
       return t1;
     } else {
       return bvshl_term(tbl, t1, t2);
@@ -4890,7 +5146,7 @@ term_t mk_bvlshr(term_manager_t *manager, term_t t1, term_t t2) {
 
   default:
     // as above: if t1 is zero, then shifting does not change it
-    if (term_is_bvzero(tbl, t1)) {
+    if (bvterm_is_zero(tbl, t1)) {
       return t1;
     } else {
       return bvlshr_term(tbl, t1, t2);
@@ -4997,7 +5253,6 @@ term_t mk_bvashr(term_manager_t *manager, term_t t1, term_t t2) {
  * to shift and bit masking operations?
  */
 
-
 /*
  * Check whether b is a power of 2.
  * - if so return the k such such b = 2^k
@@ -5025,7 +5280,100 @@ static int32_t bvconst_term_is_power_of_two(bvconst_term_t *b) {
 
 
 /*
- * UNSIGNED DIVISION: QUOTIENT
+ * Unsigned division by zero: the result is 0b11...1.
+ * - divide t1 by 0
+ * side effect: use bv0
+ */
+static term_t bvdiv_by_zero(term_manager_t *manager, term_t t1) {
+  bvconstant_t *bv;
+  uint32_t n;
+
+  n = term_bitsize(manager->terms, t1);
+  bv = &manager->bv0;
+  bvconstant_set_all_one(bv, n);
+  return mk_bv_constant(manager, bv);
+}
+
+/*
+ * Auxiliary function: build (ite c 0b11111 0b00001) = (ite c -1 +1)
+ * - n = number of bits
+ * - c = boolean term
+ * side effect: use vector0
+ */
+static term_t mk_ite_minus_or_plus_one(term_manager_t *manager, term_t c, uint32_t n) {
+  term_t *a;
+  uint32_t i;
+
+  /*
+   * build (ite c 0b11111 0b00001) as an array of booleans a
+   *  a[0] = true_term (i.e., 1)
+   *  a[1] = c
+   *  ..
+   *  a[n-1] = c
+   */
+  resize_ivector(&manager->vector0, n);
+  a = manager->vector0.data;
+  a[0] = true_term;
+  for (i=1; i<n; i++) {
+    a[i] = c;
+  }
+
+  return bvarray_get_term(manager, a, n);
+}
+
+/*
+ * Signed or unsigned division of t by itself:
+ * - the result is (ite (= t zero) 0b11111 0b00001)
+ *
+ * This holds because (bvdiv zero zero) = (bvsdiv zero zero) = 0b11111
+ */
+static term_t bvdiv_by_self(term_manager_t *manager, term_t t) {
+  term_t zero, eq;
+  uint32_t n;
+
+  n = term_bitsize(manager->terms, t);
+  zero = make_zero_bv(manager, n);
+  eq = mk_bitvector_eq(manager, t, zero);
+
+  return mk_ite_minus_or_plus_one(manager, eq, n);
+}
+
+
+/*
+ * Signed division of t1 by zero
+ * - the result is (ite (not b[n-1]) 0b111111 0b000001)
+ * where b[n-1] is the sign bit of t1
+ *
+ * I.e., if t1 < 0  then  (bvsrem t1 zero) = 0b000001
+ *       if t1 >= 0 then  (bvsrem t1 zero) = 0b111111
+ */
+static term_t bvsdiv_by_zero(term_manager_t *manager, term_t t1) {
+  uint32_t n;
+  term_t sign;
+
+  n = term_bitsize(manager->terms, t1);
+  assert(n > 0);
+
+  sign = mk_bitextract(manager, t1, n-1);
+
+  return mk_ite_minus_or_plus_one(manager, opposite_term(sign), n);
+}
+
+
+/*
+ * zero term of same size as t
+ */
+static term_t bvzero_for_term(term_manager_t *manager, term_t t) {
+  uint32_t n;
+
+  n = term_bitsize(manager->terms, t);
+  return make_zero_bv(manager, n);
+}
+
+
+
+/*
+ * Unsigned division of two constants
  */
 static term_t bvdiv_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
   uint64_t x;
@@ -5038,7 +5386,6 @@ static term_t bvdiv_const64(term_manager_t *manager, bvconst64_term_t *a, bvcons
 
   return bv64_constant(manager->terms, n, x);
 }
-
 
 static term_t bvdiv_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
   bvconstant_t *bv;
@@ -5056,61 +5403,8 @@ static term_t bvdiv_const(term_manager_t *manager, bvconst_term_t *a, bvconst_te
   return bvconst_term(manager->terms, n, bv->data);
 }
 
-
-// divide t1 by 2^k
-static term_t bvdiv_power(term_manager_t *manager, term_t t1, uint32_t k) {
-  bvlogic_buffer_t *b;
-
-  if (k == 0) return t1;
-
-  b = term_manager_get_bvlogic_buffer(manager);
-  bvlogic_buffer_set_term(b, manager->terms, t1);
-  bvlogic_buffer_shift_right0(b, k);
-
-  return mk_bvlogic_term(manager, b);
-}
-
-
-term_t mk_bvdiv(term_manager_t *manager, term_t t1, term_t t2) {
-  term_table_t *tbl;
-  int32_t k;
-
-  tbl = manager->terms;
-
-  assert(is_bitvector_term(tbl, t1) && is_bitvector_term(tbl, t2)
-         && term_type(tbl, t1) == term_type(tbl, t2));
-
-  switch (term_kind(tbl, t2)) {
-  case BV64_CONSTANT:
-    if (term_kind(tbl, t1) == BV64_CONSTANT) {
-      return bvdiv_const64(manager, bvconst64_term_desc(tbl, t1), bvconst64_term_desc(tbl, t2));
-    }
-    k = bvconst64_term_is_power_of_two(bvconst64_term_desc(tbl, t2));
-    if (k >= 0) {
-      return bvdiv_power(manager, t1, k);
-    }
-    break;
-
-  case BV_CONSTANT:
-    if (term_kind(tbl, t1) == BV_CONSTANT) {
-      return bvdiv_const(manager, bvconst_term_desc(tbl, t1), bvconst_term_desc(tbl, t2));
-    }
-    k = bvconst_term_is_power_of_two(bvconst_term_desc(tbl, t2));
-    if (k >= 0) {
-      return bvdiv_power(manager, t1, k);
-    }
-    break;
-
-  default:
-    break;
-  }
-
-  return bvdiv_term(tbl, t1, t2);
-}
-
-
 /*
- * UNSIGNED DIVISION: REMAINDER
+ * Unsigned remainder: two constants
  */
 static term_t bvrem_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
   uint64_t x;
@@ -5140,7 +5434,124 @@ static term_t bvrem_const(term_manager_t *manager, bvconst_term_t *a, bvconst_te
   return bvconst_term(manager->terms, n, bv->data);
 }
 
-// remainder of t1/2^k
+
+/*
+ * Quotient in signed division of two constants
+ */
+static term_t bvsdiv_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
+  uint64_t x;
+  uint32_t n;
+
+  n = a->bitsize;
+  assert(n == b->bitsize);
+  x = bvconst64_sdiv2z(a->value, b->value, n);
+  assert(x == norm64(x, n));
+
+  return bv64_constant(manager->terms, n, x);
+}
+
+static term_t bvsdiv_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
+  bvconstant_t *bv;
+  uint32_t n;
+
+  n = a->bitsize;
+  assert(n == b->bitsize && n > 64);
+
+  bv = &manager->bv0;
+
+  bvconstant_set_bitsize(bv, n);
+  bvconst_sdiv2z(bv->data, n, a->data, b->data);
+  bvconst_normalize(bv->data, n);
+
+  return bvconst_term(manager->terms, n, bv->data);
+}
+
+
+/*
+ * Remainder in signed division of constants: rounding to zero
+ */
+static term_t bvsrem_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
+  uint64_t x;
+  uint32_t n;
+
+  n = a->bitsize;
+  assert(n == b->bitsize);
+  x = bvconst64_srem2z(a->value, b->value, n);
+  assert(x == norm64(x, n));
+
+  return bv64_constant(manager->terms, n, x);
+}
+
+static term_t bvsrem_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
+  bvconstant_t *bv;
+  uint32_t n;
+
+  n = a->bitsize;
+  assert(n == b->bitsize && n > 64);
+
+  bv = &manager->bv0;
+
+  bvconstant_set_bitsize(bv, n);
+  bvconst_srem2z(bv->data, n, a->data, b->data);
+  bvconst_normalize(bv->data, n);
+
+  return bvconst_term(manager->terms, n, bv->data);
+}
+
+
+/*
+ * Remainder in signed division of constants: rounding to minus infinity
+ */
+static term_t bvsmod_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
+  uint64_t x;
+  uint32_t n;
+
+  n = a->bitsize;
+  assert(n == b->bitsize);
+  x = bvconst64_smod2z(a->value, b->value, n);
+  assert(x == norm64(x, n));
+
+  return bv64_constant(manager->terms, n, x);
+}
+
+static term_t bvsmod_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
+  bvconstant_t *bv;
+  uint32_t n;
+
+  n = a->bitsize;
+  assert(n == b->bitsize && n > 64);
+
+  bv = &manager->bv0;
+
+  bvconstant_set_bitsize(bv, n);
+  bvconst_smod2z(bv->data, n, a->data, b->data);
+  bvconst_normalize(bv->data, n);
+
+  return bvconst_term(manager->terms, n, bv->data);
+}
+
+
+/*
+ * Unsigned division: t1 by 2^k
+ * - convert to a right shift
+ */
+static term_t bvdiv_power(term_manager_t *manager, term_t t1, uint32_t k) {
+  bvlogic_buffer_t *b;
+
+  if (k == 0) return t1;
+
+  b = term_manager_get_bvlogic_buffer(manager);
+  bvlogic_buffer_set_term(b, manager->terms, t1);
+  bvlogic_buffer_shift_right0(b, k);
+
+  return mk_bvlogic_term(manager, b);
+}
+
+
+/*
+ * Unsigned remainder of t1/2^k
+ * - convert to a bit-mask
+ */
 static term_t bvrem_power(term_manager_t *manager, term_t t1, uint32_t k) {
   bvlogic_buffer_t *b;
   uint32_t n;
@@ -5156,6 +5567,61 @@ static term_t bvrem_power(term_manager_t *manager, term_t t1, uint32_t k) {
 }
 
 
+
+
+/*
+ * UNSIGNED DIVISION: QUOTIENT
+ */
+term_t mk_bvdiv(term_manager_t *manager, term_t t1, term_t t2) {
+  term_table_t *tbl;
+  bvconst_term_t *bv;
+  bvconst64_term_t *bv64;
+  int32_t k;
+
+  tbl = manager->terms;
+
+  assert(is_bitvector_term(tbl, t1) && is_bitvector_term(tbl, t2)
+         && term_type(tbl, t1) == term_type(tbl, t2));
+
+  switch (term_kind(tbl, t2)) {
+  case BV64_CONSTANT:
+    bv64 = bvconst64_term_desc(tbl, t2);
+    assert(bv64->value == norm64(bv64->value, bv64->bitsize));
+    if (term_kind(tbl, t1) == BV64_CONSTANT) {
+      return bvdiv_const64(manager, bvconst64_term_desc(tbl, t1), bv64);
+    }
+    k = bvconst64_term_is_power_of_two(bv64);
+    if (k >= 0) {
+      return bvdiv_power(manager, t1, k);
+    }
+    break;
+
+  case BV_CONSTANT:
+    bv = bvconst_term_desc(tbl, t2);
+    if (term_kind(tbl, t1) == BV_CONSTANT) {
+      return bvdiv_const(manager, bvconst_term_desc(tbl, t1), bv);
+    }
+    k = bvconst_term_is_power_of_two(bv);
+    if (k >= 0) {
+      return bvdiv_power(manager, t1, k);
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  if (bvterm_is_zero(manager->terms, t2)) return bvdiv_by_zero(manager, t1);
+
+  if (t1 == t2) return bvdiv_by_self(manager, t1);
+
+  return bvdiv_term(tbl, t1, t2);
+}
+
+
+/*
+ * UNSIGNED DIVISION: REMAINDER
+ */
 term_t mk_bvrem(term_manager_t *manager, term_t t1, term_t t2) {
   term_table_t *tbl;
   int32_t k;
@@ -5190,6 +5656,12 @@ term_t mk_bvrem(term_manager_t *manager, term_t t1, term_t t2) {
     break;
   }
 
+  // (bvrem x 0) is x
+  if (bvterm_is_zero(manager->terms, t2)) return t1;
+
+  // (bvrem x x) is 0 (even if x = 0)
+  if (t1 == t2) return bvzero_for_term(manager, t1);
+
   return bvrem_term(tbl, t1, t2);
 }
 
@@ -5197,34 +5669,6 @@ term_t mk_bvrem(term_manager_t *manager, term_t t1, term_t t2) {
 /*
  * SIGNED DIVISION: QUOTIENT
  */
-static term_t bvsdiv_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
-  uint64_t x;
-  uint32_t n;
-
-  n = a->bitsize;
-  assert(n == b->bitsize);
-  x = bvconst64_sdiv2z(a->value, b->value, n);
-  assert(x == norm64(x, n));
-
-  return bv64_constant(manager->terms, n, x);
-}
-
-static term_t bvsdiv_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
-  bvconstant_t *bv;
-  uint32_t n;
-
-  n = a->bitsize;
-  assert(n == b->bitsize && n > 64);
-
-  bv = &manager->bv0;
-
-  bvconstant_set_bitsize(bv, n);
-  bvconst_sdiv2z(bv->data, n, a->data, b->data);
-  bvconst_normalize(bv->data, n);
-
-  return bvconst_term(manager->terms, n, bv->data);
-}
-
 term_t mk_bvsdiv(term_manager_t *manager, term_t t1, term_t t2) {
   term_table_t *tbl;
 
@@ -5250,6 +5694,15 @@ term_t mk_bvsdiv(term_manager_t *manager, term_t t1, term_t t2) {
     break;
   }
 
+  // (bvsdiv t1 0)
+  if (bvterm_is_zero(manager->terms, t2)) return bvsdiv_by_zero(manager, t1);
+
+  // (bvsdiv t1 1) = t1
+  if (bvterm_is_one(manager->terms, t2)) return t1;
+
+  // (bvsdiv t t) = (bvdiv t t)
+  if (t1 == t2) return bvdiv_by_self(manager, t1);
+
   return bvsdiv_term(tbl, t1, t2);
 }
 
@@ -5257,34 +5710,6 @@ term_t mk_bvsdiv(term_manager_t *manager, term_t t1, term_t t2) {
 /*
  * SIGNED DIVISION: REMAINDER (ROUNDING TO 0)
  */
-static term_t bvsrem_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
-  uint64_t x;
-  uint32_t n;
-
-  n = a->bitsize;
-  assert(n == b->bitsize);
-  x = bvconst64_srem2z(a->value, b->value, n);
-  assert(x == norm64(x, n));
-
-  return bv64_constant(manager->terms, n, x);
-}
-
-static term_t bvsrem_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
-  bvconstant_t *bv;
-  uint32_t n;
-
-  n = a->bitsize;
-  assert(n == b->bitsize && n > 64);
-
-  bv = &manager->bv0;
-
-  bvconstant_set_bitsize(bv, n);
-  bvconst_srem2z(bv->data, n, a->data, b->data);
-  bvconst_normalize(bv->data, n);
-
-  return bvconst_term(manager->terms, n, bv->data);
-}
-
 term_t mk_bvsrem(term_manager_t *manager, term_t t1, term_t t2) {
   term_table_t *tbl;
 
@@ -5310,6 +5735,18 @@ term_t mk_bvsrem(term_manager_t *manager, term_t t1, term_t t2) {
     break;
   }
 
+  // (bvsrem x 0) is x
+  if (bvterm_is_zero(manager->terms, t2)) return t1;
+
+  // (bvsrem x 1) is 0
+  if (bvterm_is_one(manager->terms, t2)) return bvzero_for_term(manager, t1);
+
+  // (bvsrem x -1) is 0
+  if (bvterm_is_minus_one(manager->terms, t2)) return bvzero_for_term(manager, t1);
+
+  // (bvsrem x x) is 0 (even if x = 0)
+  if (t1 == t2) return bvzero_for_term(manager, t1);
+
   return bvsrem_term(tbl, t1, t2);
 }
 
@@ -5317,35 +5754,6 @@ term_t mk_bvsrem(term_manager_t *manager, term_t t1, term_t t2) {
 /*
  * FLOOR DIVISION: REMAINDER (ROUNDING TO - INFINITY)
  */
-static term_t bvsmod_const64(term_manager_t *manager, bvconst64_term_t *a, bvconst64_term_t *b) {
-  uint64_t x;
-  uint32_t n;
-
-  n = a->bitsize;
-  assert(n == b->bitsize);
-  x = bvconst64_smod2z(a->value, b->value, n);
-  assert(x == norm64(x, n));
-
-  return bv64_constant(manager->terms, n, x);
-}
-
-static term_t bvsmod_const(term_manager_t *manager, bvconst_term_t *a, bvconst_term_t *b) {
-  bvconstant_t *bv;
-  uint32_t n;
-
-  n = a->bitsize;
-  assert(n == b->bitsize && n > 64);
-
-  bv = &manager->bv0;
-
-  bvconstant_set_bitsize(bv, n);
-  bvconst_smod2z(bv->data, n, a->data, b->data);
-  bvconst_normalize(bv->data, n);
-
-  return bvconst_term(manager->terms, n, bv->data);
-}
-
-
 term_t mk_bvsmod(term_manager_t *manager, term_t t1, term_t t2) {
   term_table_t *tbl;
 
@@ -5370,6 +5778,18 @@ term_t mk_bvsmod(term_manager_t *manager, term_t t1, term_t t2) {
   default:
     break;
   }
+
+  // (bvsmod x 0) is x
+  if (bvterm_is_zero(manager->terms, t2)) return t1;
+
+  // (bvsmod x 1) is 0
+  if (bvterm_is_one(manager->terms, t2)) return bvzero_for_term(manager, t1);
+
+  // (bvsmoe x -1) is 0
+  if (bvterm_is_minus_one(manager->terms, t2)) return bvzero_for_term(manager, t1);
+
+  // (bvsmod x x) is 0 (even if x = 0)
+  if (t1 == t2) return bvzero_for_term(manager, t1);
 
   return bvsmod_term(tbl, t1, t2);
 }
@@ -5450,12 +5870,10 @@ term_t bvl_get_bit(term_manager_t *manager, bvlogic_buffer_t *b, uint32_t i) {
  * For debugging: check that t1 and t2 are bitvectors terms of the same size
  */
 #ifndef NDEBUG
-
 static bool valid_bvcomp(term_table_t *tbl, term_t t1, term_t t2) {
   return is_bitvector_term(tbl, t1) && is_bitvector_term(tbl, t2)
     && term_type(tbl, t1) == term_type(tbl, t2);
 }
-
 #endif
 
 
@@ -5802,6 +6220,8 @@ term_t mk_bvarith_poly(term_manager_t *mngr, bvpoly_t *p, uint32_t n, const term
  * - given a polynomial p and a term t that occurs in p
  * - construct the polynomial q such that (t == q) is equivalent to (p == 0)
  *   (i.e., write p as a.t + r and construct  q :=  -r/a).
+ *
+ * BUG FIX: if t is an integer and q is not, return NULL_TERM
  */
 term_t mk_arith_elim_poly(term_manager_t *mngr, polynomial_t *p, term_t t) {
   rba_buffer_t *b;
@@ -5860,6 +6280,12 @@ term_t mk_arith_elim_poly(term_manager_t *mngr, polynomial_t *p, term_t t) {
     if (! q_is_one(a)) {
       rba_buffer_div_const(b, a);
     }
+  }
+
+  if (is_integer_term(mngr->terms, t) && !arith_poly_is_integer(mngr->terms, b)) {
+    // t is an integer term, -r/a is not so (p == 0) is not equivalent to t=-r/a
+    reset_rba_buffer(b);
+    return NULL_TERM;
   }
 
   return mk_arith_term(mngr, b);
