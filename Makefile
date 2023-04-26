@@ -66,6 +66,7 @@ YICES_VERSION = $(MAJOR).$(MINOR).$(PATCH_LEVEL)
 #
 ARCH=$(shell ./config.sub `./config.guess`)
 POSIXOS=$(shell ./autoconf/os)
+PLATFORM=$(shell uname -p)
 
 ifeq (,$(POSIXOS))
   $(error "Problem running ./autoconf/os")
@@ -150,12 +151,22 @@ ifneq ($(OPTION),)
     endif
   else
   ifeq ($(POSIXOS),darwin)
-    ifeq ($(OPTION),64bits)
-      newarch=$(subst i386,x86_64,$(ARCH))
+    ifeq ($(PLATFORM),powerpc)
+      ifeq ($(OPTION),64bits)
+        newarch=$(subst powerpc,powerpc64,$(ARCH))
+      else
+      ifeq ($(OPTION),32bits)
+        newarch=$(subst powerpc64,powerpc,$(ARCH))
+      endif
+      endif
     else
-    ifeq ($(OPTION),32bits)
-      newarch=$(subst x86_64,i386,$(ARCH))
-    endif
+      ifeq ($(OPTION),64bits)
+        newarch=$(subst i386,x86_64,$(ARCH))
+      else
+      ifeq ($(OPTION),32bits)
+        newarch=$(subst x86_64,i386,$(ARCH))
+      endif
+      endif
     endif
   else
   ifeq ($(POSIXOS),cygwin)
@@ -295,4 +306,4 @@ checkgmake:
 
 
 .PHONY: checkgmake show-config doc all bin lib obj dist static-bin static-lib static-obj static-dist install \
-        test static-test default check static-check chesk-api static-check-api
+        test static-test default check static-check check-api static-check-api

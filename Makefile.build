@@ -89,7 +89,7 @@ srcsubdirs = mt io terms utils solvers solvers/floyd_warshall \
     solvers/funs solvers/bv solvers/egraph solvers/cdcl solvers/simplex solvers/quant \
     parser_utils model scratch api frontend frontend/common \
     frontend/smt1 frontend/yices frontend/smt2 context exists_forall \
-    mcsat mcsat/eq mcsat/uf mcsat/bool mcsat/ite mcsat/nra mcsat/bv \
+    mcsat mcsat/eq mcsat/weq mcsat/uf mcsat/bool mcsat/ite mcsat/nra mcsat/bv \
     mcsat/bv/explain mcsat/utils
 
 testdir = tests/unit
@@ -491,8 +491,11 @@ install-darwin: install-default
 install-solaris: install-default
 	$(LDCONFIG) -n $(DESTDIR)$(libdir) && (cd $(DESTDIR)$(libdir) && $(LN_S) -f libyices.so.$(YICES_VERSION) libyices.so)
 
+# Avoid ldconfig as it's not present on musl. We create the following symlinks:
+# - libyices.so.X.Y.Z -> libyices.so.X.Y
+# - libyices.so.X.Y   -> libyices.so
 install-linux install-unix: install-default
-	$(LDCONFIG) -n $(DESTDIR)$(libdir) && (cd $(DESTDIR)$(libdir) && $(LN_S) -f libyices.so.$(YICES_VERSION) libyices.so)
+	(cd $(DESTDIR)$(libdir) && $(LN_S) -f libyices.so.$(YICES_VERSION) libyices.so.$(MAJOR).$(MINOR) && $(LN_S) -f libyices.so.$(MAJOR).$(MINOR) libyices.so)
 
 # on FreeBSD: the library file is libyices.so.X.Y and ldconfig does not take -n
 # TODO: fix this. We must also create a symbolic link: libyices.so.X in libdir

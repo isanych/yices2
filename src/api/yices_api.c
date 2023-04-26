@@ -8478,6 +8478,10 @@ context_t *_o_yices_new_context(const ctx_config_t *config) {
  * Delete ctx
  */
 EXPORTED void yices_free_context(context_t *ctx) {
+  MT_PROTECT_VOID(__yices_globals.lock, _o_yices_free_context(ctx));
+}
+
+void _o_yices_free_context(context_t *ctx) {
   delete_context(ctx);
   free_context(ctx);
 }
@@ -9528,10 +9532,13 @@ model_t *yices_new_model_internal(bool keep_subst) {
  * Delete mdl
  */
 EXPORTED void yices_free_model(model_t *mdl) {
+  MT_PROTECT_VOID(__yices_globals.lock, _o_yices_free_model(mdl));
+}
+
+void _o_yices_free_model(model_t *mdl) {
   delete_model(mdl);
   free_model(mdl);
 }
-
 
 /*
  * Print model mdl on FILE f
@@ -10222,7 +10229,7 @@ bool trivially_true_assertions(const term_t *a, uint32_t n, model_t **model) {
     *model = mdl;
   } else {
     delete_evaluator(&evaluator);
-    yices_free_model(mdl);
+    _o_yices_free_model(mdl);
   }
 
   yices_release_mutex();
