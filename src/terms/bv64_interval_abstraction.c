@@ -18,6 +18,7 @@
 
 
 #include <assert.h>
+#include <stdint.h>
 
 #include "terms/bv64_constants.h"
 #include "terms/bv64_interval_abstraction.h"
@@ -87,7 +88,7 @@ static int64_t diff(int64_t x, int64_t y, uint32_t k, bool *overflow) {
 /*
  * Max of two bitsizes
  */
-static inline uint32_t max(uint32_t x, uint32_t y) {
+static inline uint32_t max_(uint32_t x, uint32_t y) {
   return (x > y) ? x : y;
 }
 
@@ -589,7 +590,7 @@ void bv64_abs_add(bv64_abs_t *a, const bv64_abs_t *b) {
   uint32_t k;
   bool low_overflow, high_overflow;
 
-  k = max(a->nbits, b->nbits);
+  k = max_(a->nbits, b->nbits);
   high = sum(a->high, b->high, k, &high_overflow);
   low = sum(a->low, b->low, k, &low_overflow);
   if ((high_overflow || low_overflow) && k >= 64) {
@@ -625,7 +626,7 @@ void bv64_abs_sub(bv64_abs_t *a, const bv64_abs_t *b) {
   uint32_t k;
   bool low_overflow, high_overflow;
 
-  k = max(a->nbits, b->nbits);
+  k = max_(a->nbits, b->nbits);
   high = diff(a->high, b->low, k, &high_overflow);
   low = diff(a->low, b->high, k, &low_overflow);
   if ((high_overflow || low_overflow) && k >= 64) {

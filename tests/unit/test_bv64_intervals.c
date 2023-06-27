@@ -30,7 +30,7 @@
 #include "solvers/bv/bv64_intervals.h"
 #include "terms/bv64_constants.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -45,7 +45,7 @@ static void show_interval_unsigned(FILE *f, bv64_interval_t *intv) {
   uint32_t n;
 
   n = intv->nbits;
-  fprintf(f, "[%"PRIu64", %"PRIu64"  %"PRIu32" bits]", intv->low, intv->high, n);
+  fprintf(f, "[%" PRIu64 ", %" PRIu64 "  %" PRIu32 " bits]", intv->low, intv->high, n);
 }
 
 static void show_interval_signed(FILE *f, bv64_interval_t *intv) {
@@ -55,7 +55,7 @@ static void show_interval_signed(FILE *f, bv64_interval_t *intv) {
   n = intv->nbits;
   low = signed_int64(intv->low, n);
   high = signed_int64(intv->high, n);
-  fprintf(f, "[%"PRId64", %"PRId64"  %"PRIu32" bits]", low, high, n);
+  fprintf(f, "[%" PRId64 ", %" PRId64 "  %" PRIu32 " bits]", low, high, n);
 }
 
 #if 0
@@ -92,10 +92,10 @@ static void show_bvset_unsigned(FILE *f, uint64_t s) {
   for (i=0; i<64; i++) {
     if (tst_bit64(s, i)) {
       if (first) {
-	fprintf(f, "%"PRIu32, i);
+	fprintf(f, "%" PRIu32, i);
 	first = false;
       } else {
-	fprintf(f, " %"PRIu32, i);
+	fprintf(f, " %" PRIu32, i);
       }
     }
   }
@@ -113,10 +113,10 @@ static void show_bvset_signed(FILE *f, uint64_t s) {
   for (i=32; i<64; i++) {
     if (tst_bit64(s, i)) {
       if (first) {
-	fprintf(f, "%"PRId32, (i-64));
+	fprintf(f, "%" PRId32, (i-64));
 	first = false;
       } else {
-	fprintf(f, " %"PRId32, (i-64));
+	fprintf(f, " %" PRId32, (i-64));
       }
     }
   }
@@ -124,10 +124,10 @@ static void show_bvset_signed(FILE *f, uint64_t s) {
   for (i=0; i<32; i++) {
     if (tst_bit64(s, i)) {
       if (first) {
-	fprintf(f, "%"PRId32, i);
+	fprintf(f, "%" PRId32, i);
 	first = false;
       } else {
-	fprintf(f, " %"PRId32, i);
+	fprintf(f, " %" PRId32, i);
       }
     }
   }
@@ -364,7 +364,7 @@ static void test_sum6(bv64_interval_t *a, bv64_interval_t *b) {
   printf("sum set: ");
   show_bvset_unsigned(stdout, sc);
   printf("\n");
-  printf("min = %"PRIu32", max = %"PRIu32"\n", bvset_min_unsigned(sc), bvset_max_unsigned(sc));
+  printf("min = %" PRIu32 ", max = %" PRIu32 "\n", bvset_min_unsigned(sc), bvset_max_unsigned(sc));
 
   bv64_interval_add_u(a, b);
   printf("\nsum interval: ");
@@ -416,7 +416,7 @@ static void test_sum6_signed(bv64_interval_t *a, bv64_interval_t *b) {
     assert(max < 64);
     max = max - 64;
   }
-  printf("min = %"PRId32", max = %"PRId32"\n", min, max);
+  printf("min = %" PRId32 ", max = %" PRId32 "\n", min, max);
 
   bv64_interval_add_s(a, b);
   printf("sum interval: ");
@@ -457,7 +457,7 @@ static void test_diff6(bv64_interval_t *a, bv64_interval_t *b) {
   printf("sum set: ");
   show_bvset_unsigned(stdout, sc);
   printf("\n");
-  printf("min = %"PRIu32", max = %"PRIu32"\n", bvset_min_unsigned(sc), bvset_max_unsigned(sc));
+  printf("min = %" PRIu32 ", max = %" PRIu32 "\n", bvset_min_unsigned(sc), bvset_max_unsigned(sc));
 
   bv64_interval_sub_u(a, b);
   printf("difference interval: ");
@@ -509,7 +509,7 @@ static void test_diff6_signed(bv64_interval_t *a, bv64_interval_t *b) {
     assert(max < 64);
     max = max - 64;
   }
-  printf("min = %"PRId32", max = %"PRId32"\n", min, max);
+  printf("min = %" PRId32 ", max = %" PRId32 "\n", min, max);
 
   bv64_interval_sub_s(a, b);
   printf("difference interval: ");
@@ -550,12 +550,12 @@ static void test_addmul6(bv64_interval_t *a, bv64_interval_t *b, uint64_t c) {
   show_bvset_unsigned(stdout, sb);
   printf("\n\n");
 
-  printf("scale c = %"PRIu64"\n\n", c);
+  printf("scale c = %" PRIu64 "\n\n", c);
 
   printf("result set: ");
   show_bvset_unsigned(stdout, sc);
   printf("\n");
-  printf("min = %"PRIu32", max = %"PRIu32"\n", bvset_min_unsigned(sc), bvset_max_unsigned(sc));
+  printf("min = %" PRIu32 ", max = %" PRIu32 "\n", bvset_min_unsigned(sc), bvset_max_unsigned(sc));
 
   bv64_interval_addmul_u(a, b, c);
   printf("\nresult interval: ");
@@ -596,7 +596,7 @@ static void test_addmul6_signed(bv64_interval_t *a, bv64_interval_t *b, uint64_t
   show_bvset_signed(stdout, sb);
   printf("\n\n");
 
-  printf("scale c = %"PRIu64"\n\n", c);
+  printf("scale c = %" PRIu64 "\n\n", c);
 
   printf("result set: ");
   show_bvset_signed(stdout, sc);
@@ -611,7 +611,7 @@ static void test_addmul6_signed(bv64_interval_t *a, bv64_interval_t *b, uint64_t
     assert(max < 64);
     max = max - 64;
   }
-  printf("min = %"PRId32", max = %"PRId32"\n", min, max);
+  printf("min = %" PRId32 ", max = %" PRId32 "\n", min, max);
 
   bv64_interval_addmul_s(a, b, c);
   printf("\nresult interval: ");
@@ -1086,7 +1086,7 @@ static void test_addmul(bv64_interval_t *a, bv64_interval_t *b, uint64_t c) {
   show_interval_unsigned(stdout, a);
   printf("\nb: ");
   show_interval_unsigned(stdout, b);
-  printf("\nc = %"PRIu64"\n", c);
+  printf("\nc = %" PRIu64 "\n", c);
 
   la = a->low;
   ua = a->high;
@@ -1139,7 +1139,7 @@ static void test_addmul_signed(bv64_interval_t *a, bv64_interval_t *b, uint64_t 
 
   n = a->nbits;
   sc = signed_int64(c, n); // sign-extend for print
-  printf("\nc = %"PRId64"\n", sc);
+  printf("\nc = %" PRId64 "\n", sc);
 
   la = a->low;
   ua = a->high;

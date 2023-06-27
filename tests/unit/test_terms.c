@@ -282,7 +282,7 @@ static void hash_consing_failed(void) {
 static term_t test_constant_term(type_t tau, int32_t index, char *name) {
   term_t x, y;
 
-  printf("Testing: constant %"PRId32" of type ", index);
+  printf("Testing: constant %" PRId32 " of type ", index);
   print_type_name(stdout, &types, tau);
   printf(": ");
 
@@ -639,7 +639,7 @@ static term_t test_select(type_t tau, term_t a, uint32_t k, char *name) {
   term_t x, y;
 
 
-  printf("Testing: (select %"PRIu32" ",k);
+  printf("Testing: (select %" PRIu32 " ",k);
   print_term_name(stdout, &terms, a);
   printf("): ");
 
@@ -873,7 +873,7 @@ static term_t test_xor3(term_t a, term_t b, term_t c, char *name) {
 static term_t test_bit(term_t a, uint32_t k, char *name) {
   term_t x, y;
 
-  printf("Testing: (bit %"PRIu32" ",k);
+  printf("Testing: (bit %" PRIu32 " ",k);
   print_term_name(stdout, &terms, a);
   printf("): ");
 
@@ -1873,7 +1873,7 @@ static void test_bvconst64(void) {
   printf("\n");
 
   // mark it for next GC test
-  printf("Marking term %"PRId32"\n", index_of(x));
+  printf("Marking term %" PRId32 "\n", index_of(x));
   term_table_set_gc_mark(&terms, index_of(x));
 }
 
@@ -1939,7 +1939,7 @@ static void test_bvpoly64(void) {
   printf("\n");
 
   // mark it for next GC test
-  printf("Marking term %"PRId32"\n", index_of(s));
+  printf("Marking term %" PRId32 "\n", index_of(s));
   term_table_set_gc_mark(&terms, index_of(s));
 
   delete_bvarith64_buffer(&buffer1);

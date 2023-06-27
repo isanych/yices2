@@ -29,13 +29,9 @@
 #include "solvers/egraph/composites.h"
 #include "context/internalization_printer.h"
 #include "utils/prng.h"
+#include "yices_config.h"
 
-
-#define TRACE_LIGHT 0
-
-#define TRACE 0
-
-#if TRACE || TRACE_LIGHT
+#if YICES_TRACE || YICES_TRACE_LIGHT
 
 #include <stdio.h>
 
@@ -129,7 +125,7 @@ static void egraph_get_all_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t 
   occ_t occi, occp;
 
 
-#if TRACE
+#if YICES_TRACE
   printf("  Finding all fapps for function ");
   intern_tbl_print_reverse(exec->intern, pos_occ(f));
 //  print_eterm_id(stdout, f);
@@ -156,7 +152,7 @@ static void egraph_get_all_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t 
               occp = pos_occ(ti);
               ivector_push(aux, occp);
 
-#if TRACE
+#if YICES_TRACE
               printf("    (pushing) ");
               print_occurrence(stdout, occp);
               printf(" @ depth %d: ", composite_depth(egraph, p));
@@ -169,7 +165,7 @@ static void egraph_get_all_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t 
               }
 #endif
             } else {
-#if TRACE
+#if YICES_TRACE
               fputs("    (filtered) ", stdout);
               print_composite(stdout, p);
               printf(" @ depth %d: ", composite_depth(egraph, p));
@@ -190,7 +186,7 @@ static void egraph_get_all_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t 
     assert(term_of_occ(occi) != term_of_occ(occ) || occi == occ);
   } while (occi != occ);
 
-#if TRACE
+#if YICES_TRACE
     printf("    added %d fapps\n", (aux->size - old_sz));
 #endif
 }
@@ -202,7 +198,7 @@ static void egraph_get_fapps_in_class_all(ematch_exec_t *exec, eterm_t f, occ_t 
   ivector_t *aux;
   uint32_t i, n;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("  FAPPS mode: All\n");
 #endif
 
@@ -212,7 +208,7 @@ static void egraph_get_fapps_in_class_all(ematch_exec_t *exec, eterm_t f, occ_t 
 
   for(i=0; i<n; i++) {
     if (out->size >= exec->max_fapps) {
-#if TRACE
+#if YICES_TRACE
       printf("    reached fapps limit of %d\n", exec->max_fapps);
 #endif
       break;
@@ -231,7 +227,7 @@ static void egraph_get_fapps_in_class_random(ematch_exec_t *exec, eterm_t f, occ
   int_hmap_pair_t *p;
   uint32_t *seed;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("  FAPPS mode: Explore\n");
 #endif
 
@@ -251,7 +247,7 @@ static void egraph_get_fapps_in_class_random(ematch_exec_t *exec, eterm_t f, occ
     p = int_hmap_get(auxMap, randIdx);
     if (p->val < 0) {
       if (out->size >= exec->max_fapps) {
-#if TRACE
+#if YICES_TRACE
         printf("    reached fapps limit of %d\n", exec->max_fapps);
 #endif
         break;
@@ -272,7 +268,7 @@ static void egraph_get_fapps_in_class_random(ematch_exec_t *exec, eterm_t f, occ
  */
 static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ_t occ, ivector_t *out) {
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("  FAPPS mode: Exploit\n");
 #endif
 
@@ -288,7 +284,7 @@ static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ
 
   reset_generic_heap(aux_heap);
 
-#if TRACE
+#if YICES_TRACE
   printf("  Finding all fapps for function ");
   intern_tbl_print_reverse(exec->intern, pos_occ(f));
 //  print_eterm_id(stdout, f);
@@ -317,7 +313,7 @@ static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ
               if (composite_depth(egraph, p) < exec->fdepth) {
                 generic_heap_add(aux_heap, ti);
               } else {
-#if TRACE
+#if YICES_TRACE
                 fputs("    (filtered) ", stdout);
                 print_composite(stdout, p);
                 printf(" @ depth %d: ", composite_depth(egraph, p));
@@ -332,7 +328,7 @@ static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ
               }
             }
           } else {
-#if TRACE
+#if YICES_TRACE
             fputs("    (filtered: not in heap) ", stdout);
             ti = term_of_occ(occi);
             p = egraph_term_body(exec->egraph, ti);
@@ -355,7 +351,7 @@ static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ
 
   while(!generic_heap_is_empty(aux_heap)) {
     if (out->size >= exec->max_fapps) {
-#if TRACE
+#if YICES_TRACE
       printf("    reached fapps limit of %d\n", exec->max_fapps);
 #endif
       break;
@@ -367,7 +363,7 @@ static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ
     occp = pos_occ(ti);
     ivector_push(out, occp);
 
-#if TRACE
+#if YICES_TRACE
     p = egraph_term_body(egraph, ti);
     printf("    (pushing) ");
     print_occurrence(stdout, occp);
@@ -382,7 +378,7 @@ static void egraph_get_fapps_in_class_greedy(ematch_exec_t *exec, eterm_t f, occ
 #endif
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("    added %d fapps\n", (out->size - old_sz));
 #endif
 
@@ -410,14 +406,14 @@ static void egraph_get_fapps_in_class_epsilon_greedy(ematch_exec_t *exec, eterm_
 static void egraph_get_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ, ivector_t *out) {
   term_learner_t *term_learner;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   uint32_t i, oldcount, n;
   oldcount = out->size;
 #endif
 
   term_learner = exec->term_learner;
 
-#if TRACE
+#if YICES_TRACE
 //  uint_learner_print_indices_priority(&term_learner->learner, "(begin)");
 #endif
 
@@ -437,7 +433,7 @@ static void egraph_get_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ,
     egraph_get_fapps_in_class_all(exec, f, occ, out);
   }
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   occ_t occi;
   eterm_t ti;
 
@@ -449,7 +445,7 @@ static void egraph_get_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ,
     ti = term_of_occ(occi);
 //    term_learner_add_cnstr(term_learner, ti);
 
-#if TRACE
+#if YICES_TRACE
     composite_t *p;
     p = egraph_term_body(exec->egraph, ti);
     printf("    (term) ");
@@ -472,7 +468,7 @@ static void egraph_get_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ,
   }
 #endif
 
-#if TRACE
+#if YICES_TRACE
 //  uint_learner_print_indices_priority(&term_learner->learner, "(end)");
 #endif
 
@@ -492,7 +488,7 @@ static void egraph_get_all_fapps(ematch_exec_t *exec, eterm_t f, ivector_t *out)
   ranget = function_type_range(egraph->types, egraph_term_real_type(egraph, f));
   //  n = egraph->terms.nterms; BD: dead store
 
-#if TRACE
+#if YICES_TRACE
   printf("  Finding all fapps for function ");
   intern_tbl_print_reverse(exec->intern, pos_occ(f));
 //  print_eterm_id(stdout, f);
@@ -514,7 +510,7 @@ static void egraph_get_all_fapps(ematch_exec_t *exec, eterm_t f, ivector_t *out)
 #endif
         egraph_get_fapps_in_class(exec, f, occi, out);
         if (out->size >= exec->max_fapps) {
-#if TRACE
+#if YICES_TRACE
           printf("    reached fapps limit of %d\n", exec->max_fapps);
 #endif
           break;
@@ -536,7 +532,7 @@ static bool egraph_has_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ)
 
   egraph = exec->egraph;
 
-#if TRACE
+#if YICES_TRACE
   printf("  Checking if an fapp for function ");
   intern_tbl_print_reverse(exec->intern, pos_occ(f));
 //  print_eterm_id(stdout, f);
@@ -554,7 +550,7 @@ static bool egraph_has_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ)
       if (valid_entry(p) && composite_kind(p) == COMPOSITE_APPLY) {
         x = term_of_occ(composite_child(p, 0));
         if (x == f) {
-#if TRACE
+#if YICES_TRACE
           printf("    found!\n");
 #endif
           return true;
@@ -565,7 +561,7 @@ static bool egraph_has_fapps_in_class(ematch_exec_t *exec, eterm_t f, occ_t occ)
     assert(term_of_occ(occi) != term_of_occ(occ) || occi == occ);
   } while (occi != occ);
 
-#if TRACE
+#if YICES_TRACE
   printf("    not found!\n");
 #endif
 
@@ -619,7 +615,7 @@ static occ_t term2occ(intern_tbl_t *tbl, term_t t) {
     }
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("    %s <-> ", yices_term_to_string(t, 120, 1, 0));
   print_occurrence(stdout, occ);
   printf("\n");
@@ -663,7 +659,7 @@ static void ematch_exec_set_reg(ematch_exec_t *exec, occ_t t, uint32_t idx) {
     reg->data[idx] = t;
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("    setting reg[%d] := ", idx);
   intern_tbl_print_reverse(exec->intern, t);
 //  print_occurrence(stdout, t);
@@ -775,7 +771,7 @@ static void ematch_exec_all_chooseapps(ematch_exec_t *exec, ematch_instr_t *inst
     nmatches = exec->aux_vector.size;
     if (nmatches != 0) {
       if(nmatches >= exec->max_matches) {
-#if TRACE
+#if YICES_TRACE
         printf("    chooseapp exit\n");
 #endif
         break;
@@ -819,7 +815,7 @@ static void ematch_exec_bind(ematch_exec_t *exec, ematch_instr_t *instr) {
       instr->nsubs = n;
 
       for(j=0; j<n; j++) {
-#if TRACE
+#if YICES_TRACE
         printf("    choosing fapps: ");
         print_occurrence(stdout, fapps.data[j]);
         printf("\n");
@@ -869,7 +865,7 @@ static void ematch_exec_continue(ematch_exec_t *exec, ematch_instr_t *instr) {
       instr->nsubs = n;
 
       for(j=0; j<n; j++) {
-#if TRACE
+#if YICES_TRACE
         printf("    choosing fapps: ");
         print_occurrence(stdout, fapps.data[j]);
         printf("\n");
@@ -1021,7 +1017,7 @@ static void ematch_exec_yield(ematch_exec_t *exec, ematch_instr_t *instr) {
   // BD: fix memory leak
   delete_ivector(&v);
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   instance_t *inst;
   term_t lhs;
 
@@ -1047,23 +1043,23 @@ static void ematch_exec_yield(ematch_exec_t *exec, ematch_instr_t *instr) {
 
   if (maxdepth < exec->vdepth) {
     if (exec->filter == NULL || !int_hset_member(exec->filter, i)) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
       printf("    match%d added\n", i);
 #endif
       ivector_push(&exec->aux_vector, i);
       if(exec->aux_vector.size >= exec->max_matches_per_yield) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
         printf("    early exit\n");
 #endif
         reset_ematch_stack(&exec->bstack);
       }
     } else {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
       printf("    match%d filtered out (already present)\n", i);
 #endif
     }
   } else {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
     printf("    match%d filtered out (too high depth)\n", i);
 #endif
   }
@@ -1111,7 +1107,7 @@ void ematch_exec_instr(ematch_exec_t *exec, int32_t idx) {
   assert(idx >=0 && idx < exec->itbl->ninstr);
   instr = &exec->itbl->data[idx];
 
-#if TRACE
+#if YICES_TRACE
   printf("  executing ");
   ematch_print_instr(stdout, exec->itbl, instr->idx, false);
 #endif
@@ -1172,7 +1168,7 @@ uint32_t ematch_exec_pattern(ematch_exec_t *exec, pattern_t *pat, int_hset_t *fi
   eterm_t tf;
   uint32_t max_matches_orig;
 
-#if TRACE
+#if YICES_TRACE
   printf("  Pattern code:\n");
   ematch_print_instr(stdout, exec->itbl, pat->code, true);
 #endif
@@ -1213,7 +1209,7 @@ uint32_t ematch_exec_pattern(ematch_exec_t *exec, pattern_t *pat, int_hset_t *fi
     for (i=0; i<n; i++) {
       tf = term_of_occ(fapps.data[i]);
 
-#if TRACE
+#if YICES_TRACE
       occ_t fapp = fapps.data[i];
 
       printf("  Matching fapp: ");
@@ -1232,7 +1228,7 @@ uint32_t ematch_exec_pattern(ematch_exec_t *exec, pattern_t *pat, int_hset_t *fi
       m = aux->size;
 
       if (m != 0) {
-#if TRACE
+#if YICES_TRACE
         printf("  Found %d matches from fapp ", m);
         print_occurrence(stdout, fapp);
         printf("\n");

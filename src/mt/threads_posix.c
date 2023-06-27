@@ -62,7 +62,7 @@ void launch_threads(int32_t nthreads, void* extras, size_t extra_sz, const char*
     }
     tdata[thread].id = thread;
     if(extras != NULL){
-      tdata[thread].extra = (extras + (thread * extra_sz));
+      tdata[thread].extra = (char*)extras + thread * extra_sz;
     }
     tdata[thread].output = fopen(buff, "w");
     if(tdata[thread].output == NULL)

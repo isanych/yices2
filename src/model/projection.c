@@ -30,16 +30,13 @@
 #include "model/val_to_term.h"
 #include "terms/term_sets.h"
 #include "utils/memalloc.h"
-
+#include "yices_config.h"
 
 #ifdef HAVE_MCSAT
 #include "mcsat/nra/nra_plugin_explain.h"
 #endif
 
-
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 #include <inttypes.h>
 #include "io/term_printer.h"
 #endif
@@ -562,7 +559,7 @@ static void proj_process_arith_literals(projector_t *proj) {
   term_t x;
   int32_t code;
 
-#if TRACE
+#if YICES_TRACE
   printf("[1]  --> Process arith_literals\n");
   fflush(stdout);
 #endif
@@ -644,8 +641,8 @@ static void proj_process_arith_literals(projector_t *proj) {
   aproj_close_var_set(aproj);
   n = proj->arith_literals.size;
   for (i=0; i<n; i++) {
-#if TRACE
-    printf("[1]  --> input literal[%"PRIu32"]: (%"PRId32")\n", i, proj->arith_literals.data[i]);
+#if YICES_TRACE
+    printf("[1]  --> input literal[%" PRIu32 "]: (%" PRId32 ")\n", i, proj->arith_literals.data[i]);
     print_term_full(stdout, terms, proj->arith_literals.data[i]);
     printf("\n");
     fflush(stdout);
@@ -663,11 +660,11 @@ static void proj_process_arith_literals(projector_t *proj) {
   ivector_reset(&proj->arith_literals);
   aproj_get_formula_vector(aproj, &proj->arith_literals);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n[1]  --> projection result:\n");
   n = proj->arith_literals.size;
   for (i=0; i<n; i++) {
-    printf("[1]  --> output literal[%"PRIu32"]: (%"PRId32")\n", i, proj->arith_literals.data[i]);
+    printf("[1]  --> output literal[%" PRIu32 "]: (%" PRId32 ")\n", i, proj->arith_literals.data[i]);
     print_term_full(stdout, terms, proj->arith_literals.data[i]);
     printf("\n");
   }
@@ -687,7 +684,7 @@ static void proj_process_presburger_literals(projector_t *proj) {
   term_t x;
   int32_t code;
 
-#if TRACE
+#if YICES_TRACE
   printf("[1]  --> Process presburger_literals\n");
   fflush(stdout);
 #endif
@@ -725,8 +722,8 @@ static void proj_process_presburger_literals(projector_t *proj) {
   presburger_close_var_set(pres);
   n = proj->arith_literals.size;
   for (i=0; i<n; i++) {
-#if TRACE
-    printf("[1]  --> input literal[%"PRIu32"]: (%"PRId32")\n", i, proj->arith_literals.data[i]);
+#if YICES_TRACE
+    printf("[1]  --> input literal[%" PRIu32 "]: (%" PRId32 ")\n", i, proj->arith_literals.data[i]);
     print_term_full(stdout, terms, proj->arith_literals.data[i]);
     printf("\n");
     fflush(stdout);
@@ -744,11 +741,11 @@ static void proj_process_presburger_literals(projector_t *proj) {
   ivector_reset(&proj->arith_literals);
   presburger_get_formula_vector(pres, &proj->arith_literals);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n[1]  --> projection result:\n");
   n = proj->arith_literals.size;
   for (i=0; i<n; i++) {
-    printf("[1]  --> output literal[%"PRIu32"]: (%"PRId32")\n", i, proj->arith_literals.data[i]);
+    printf("[1]  --> output literal[%" PRIu32 "]: (%" PRId32 ")\n", i, proj->arith_literals.data[i]);
     print_term_full(stdout, terms, proj->arith_literals.data[i]);
     printf("\n");
   }
@@ -798,10 +795,10 @@ static void proj_subst_vector(projector_t *proj, ivector_t *v) {
 
 static void proj_elim_by_model_value(projector_t *proj) {
   proj_build_val_subst(proj);
-  if (proj->flag == NO_ERROR) {
+  if (proj->flag == YICES_NO_ERROR) {
     proj_subst_vector(proj, &proj->gen_literals);
   }
-  if (proj->flag == NO_ERROR) {
+  if (proj->flag == YICES_NO_ERROR) {
     proj_subst_vector(proj, &proj->arith_literals);
   }
   proj_delete_val_subst(proj);
@@ -821,10 +818,10 @@ static void proj_elim_by_model_value(projector_t *proj) {
  * - v is not reset
  */
 proj_flag_t run_projector(projector_t *proj, ivector_t *v) {
-  if (proj->flag == NO_ERROR && proj->gen_literals.size > 0) {
+  if (proj->flag == YICES_NO_ERROR && proj->gen_literals.size > 0) {
     proj_elim_by_substitution(proj);
   }
-  if (proj->flag == NO_ERROR && proj->arith_literals.size > 0) {
+  if (proj->flag == YICES_NO_ERROR && proj->arith_literals.size > 0) {
     if (proj->is_presburger) {
       proj_process_presburger_literals(proj);
     } else {
@@ -832,13 +829,13 @@ proj_flag_t run_projector(projector_t *proj, ivector_t *v) {
     }
   }
 
-  if (proj->flag == NO_ERROR && proj->num_evars > 0) {  
+  if (proj->flag == YICES_NO_ERROR && proj->num_evars > 0) {
     // some variables were not eliminated in the first two phases
     // replace them by their value in the model
     proj_elim_by_model_value(proj);
   } 
   
-  if (proj->flag == NO_ERROR) {
+  if (proj->flag == YICES_NO_ERROR) {
     /*
      * Copy the results in v
      */
@@ -846,7 +843,7 @@ proj_flag_t run_projector(projector_t *proj, ivector_t *v) {
     ivector_add(v, proj->arith_literals.data, proj->arith_literals.size);
   }
   
-  return proj->flag;
+  return (proj_flag_t)proj->flag;
 }
 
 
@@ -883,7 +880,7 @@ proj_flag_t project_literals(model_t *mdl, term_manager_t *mngr, uint32_t n, con
     projector_add_literal(&proj, a[i]);
     if (proj.flag < 0) {
       // unsupported term or non-linear arithmetic
-      code = proj.flag;
+      code = (proj_flag_t)proj.flag;
       *extra_error = proj.error_code;
       goto abort;
     }

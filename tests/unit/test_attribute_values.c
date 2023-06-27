@@ -28,7 +28,7 @@
 #include "terms/rationals.h"
 #include "utils/memalloc.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline int random(void) {
   return rand();
 }
@@ -77,7 +77,7 @@ static void test_bv64_attr(attr_vtbl_t *table, uint32_t nbits, uint64_t c) {
     exit(1);
   }
 
-  d = table->desc[i].ptr;
+  d = (bvconst_attr_t*)table->desc[i].ptr;
   if (d->nbits != nbits || d->data[0] != (uint32_t) c ||
       (nbits> 32 && d->data[1] != (uint32_t) (c >> 32))) {
     fprintf(stderr, "BUG in bv64 constructor (wrong value)\n");
@@ -103,7 +103,7 @@ static void test_bv_attr(attr_vtbl_t *table, uint32_t nbits, uint32_t *c) {
     exit(1);
   }
 
-  d = table->desc[i].ptr;
+  d = (bvconst_attr_t*)table->desc[i].ptr;
   w = (nbits + 31) >> 5;
   if (d->nbits != nbits || bvconst_neq(d->data, c, w)) {
     fprintf(stderr, "BUG in bv constructor (wrong value)\n");
@@ -125,7 +125,7 @@ static void test_string_attr(attr_vtbl_t *table, const char *s) {
     exit(1);
   }
 
-  if (strcmp(s, table->desc[i].ptr) != 0) {
+  if (strcmp(s, (char*)table->desc[i].ptr) != 0) {
     fprintf(stderr, "BUG in string constructor (wrong value)\n");
     exit(1);
   }
@@ -145,7 +145,7 @@ static void test_symbol_attr(attr_vtbl_t *table, const char *s) {
     exit(1);
   }
 
-  if (strcmp(s, table->desc[i].ptr) != 0) {
+  if (strcmp(s, (char*)table->desc[i].ptr) != 0) {
     fprintf(stderr, "BUG in symbol constructor (wrong value)\n");
     exit(1);
   }
@@ -157,9 +157,9 @@ static void print_list(uint32_t n, aval_t *a) {
   if (n == 0) {
     printf("()");
   } else {
-    printf("(a!%"PRId32, a[0]);
+    printf("(a!%" PRId32, a[0]);
     for (i=1; i<n; i++) {
-      printf(" a!%"PRId32, a[i]);
+      printf(" a!%" PRId32, a[i]);
     }
     printf(")");
   }
@@ -192,7 +192,7 @@ static void test_list_attr(attr_vtbl_t *table, uint32_t n, aval_t *a) {
     exit(1);
   }
 
-  d = table->desc[i].ptr;
+  d = (attr_list_t*)table->desc[i].ptr;
   if (d->nelems != n || ! equal_lists(a, d->data, n)) {
     fprintf(stderr, "BUG in list constructor (wrong value)\n");
     exit(1);
@@ -205,7 +205,7 @@ static void test_list_attr(attr_vtbl_t *table, uint32_t n, aval_t *a) {
 static void test_decref(attr_vtbl_t *table, aval_t i) {
   uint32_t c1, c2;
 
-  printf("testing decref on a!%"PRId32"\n", i);
+  printf("testing decref on a!%" PRId32 "\n", i);
   fflush(stdout);
 
   c1 = aval_refcount(table, i);
@@ -216,7 +216,7 @@ static void test_decref(attr_vtbl_t *table, aval_t i) {
     exit(1);
   }
   if (c2 == 0 && table->tag[i] != ATTR_DELETED) {
-    printf("BUG in decref: a!%"PRId32" should be deleted\n", i);
+    printf("BUG in decref: a!%" PRId32 " should be deleted\n", i);
     exit(1);
   }
 }
@@ -342,9 +342,9 @@ static void print_array(attr_list_t *a) {
   if (n == 0) {
     printf("()");
   } else {
-    printf("(a!%"PRId32, a->data[0]);
+    printf("(a!%" PRId32, a->data[0]);
     for (i=1; i<n; i++) {
-      printf(" a!%"PRId32, a->data[i]);
+      printf(" a!%" PRId32, a->data[i]);
     }
     printf(")");
   }
@@ -355,10 +355,10 @@ static void print_aval(attr_vtbl_t *table, int32_t i) {
 
   assert(valid_aval(table, i));
 
-  printf("   attr[%"PRId32"]: ", i);
+  printf("   attr[%" PRId32 "]: ", i);
   switch (aval_tag(table, i)) {
   case ATTR_DELETED:
-    printf("deleted (next = %"PRId32")", table->desc[i].next);
+    printf("deleted (next = %" PRId32 ")", table->desc[i].next);
     break;
 
   case ATTR_RATIONAL:
@@ -366,7 +366,7 @@ static void print_aval(attr_vtbl_t *table, int32_t i) {
     break;
 
   case ATTR_BV:
-    b = table->desc[i].ptr;
+    b = (bvconst_attr_t*)table->desc[i].ptr;
     bvconst_print(stdout, b->data, b->nbits);
     break;
 
@@ -379,7 +379,7 @@ static void print_aval(attr_vtbl_t *table, int32_t i) {
     break;
 
   case ATTR_LIST:
-    print_array(table->desc[i].ptr);
+    print_array((attr_list_t*)table->desc[i].ptr);
     break;
   }
   printf("\n");
@@ -392,9 +392,9 @@ static void print_attr_vtbl(attr_vtbl_t *table) {
   uint32_t i, n;
 
   printf("table %p\n", table);
-  printf("  size = %"PRIu32"\n", table->size);
-  printf("  nelems = %"PRIu32"\n", table->nelems);
-  printf("  free_idx = %"PRId32"\n", table->free_idx);
+  printf("  size = %" PRIu32 "\n", table->size);
+  printf("  nelems = %" PRIu32 "\n", table->nelems);
+  printf("  free_idx = %" PRId32 "\n", table->free_idx);
 
   n = table->nelems;
   for (i=0; i<n; i++) {

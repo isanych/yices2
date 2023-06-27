@@ -28,7 +28,7 @@
 #include "context/pseudo_subst.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -41,7 +41,7 @@ static inline long int random(void) {
  * Print the table
  */
 static void print_triple(subst_triple_t *triple) {
-  printf("[var = %"PRId32", map = %"PRId32", eq = %"PRId32"]", triple->var, triple->map, triple->eq);
+  printf("[var = %" PRId32 ", map = %" PRId32 ", eq = %" PRId32 "]", triple->var, triple->map, triple->eq);
 }
 
 static void print_subst(pseudo_subst_t *subst) {
@@ -49,9 +49,9 @@ static void print_subst(pseudo_subst_t *subst) {
   uint32_t i, n;
 
   printf("subst %p\n", subst);
-  printf("  size = %"PRIu32"\n", subst->size);
-  printf("  nelems = %"PRIu32"\n", subst->nelems);
-  printf("  resize threshold = %"PRIu32"\n", subst->resize_threshold);
+  printf("  size = %" PRIu32 "\n", subst->size);
+  printf("  nelems = %" PRIu32 "\n", subst->nelems);
+  printf("  resize threshold = %" PRIu32 "\n", subst->resize_threshold);
 
   if (subst->nelems == 0) {
     printf("  empty\n");
@@ -84,7 +84,7 @@ static void print_bank(st_bank_t *bank) {
   }
 
   while (b != bank->tail) {
-    printf("block %"PRIu32"\n", j);
+    printf("block %" PRIu32 "\n", j);
     for (i=0; i<ST_BANK_SIZE; i++) {
       printf("  ");
       print_triple(b->data + i);
@@ -97,7 +97,7 @@ static void print_bank(st_bank_t *bank) {
 
   assert(b != NULL && b->next == NULL);
 
-  printf("block %"PRIu32"\n", j);
+  printf("block %" PRIu32 "\n", j);
   n = bank->free_idx;
   for (i=0; i<n; i++) {
     printf("  ");
@@ -116,7 +116,7 @@ static void print_bank(st_bank_t *bank) {
 static void test_var(pseudo_subst_t *subst, term_t x) {
   subst_triple_t *s, *r;
 
-  printf("Testing: var %"PRId32"\n", x);
+  printf("Testing: var %" PRId32 "\n", x);
 
   s = pseudo_subst_find(subst, x);
   if (s == NULL) {
@@ -137,7 +137,7 @@ static void test_var(pseudo_subst_t *subst, term_t x) {
   if (s == NULL) {
     assert(r->map == NULL_TERM && r->eq == NULL_TERM);
     printf("  new triple\n");
-    printf("  adding map: %"PRId32" --> %"PRId32"\n", x, x);
+    printf("  adding map: %" PRId32 " --> %" PRId32 "\n", x, x);
     r->map = x;
   } else {
     assert(r == s && r->map == x && r->eq == NULL_TERM);

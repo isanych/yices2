@@ -21,14 +21,9 @@
  * Intended to support parsing.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <assert.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "api/yices_extensions.h"
 #include "api/yices_api_lock_free.h"
@@ -69,7 +64,7 @@
  *   or a binding, or to NULL otherwise.
  * code is returned to exception handler by longjmp
  */
-void __attribute__((noreturn)) raise_exception(tstack_t *stack, stack_elem_t *e, int code) {
+ATTRIBUTE_NORETURN void raise_exception(tstack_t *stack, stack_elem_t *e, int code) {
   stack->error_loc = e->loc;
   stack->error_op = stack->top_op;
   switch (e->tag) {
@@ -96,7 +91,7 @@ void __attribute__((noreturn)) raise_exception(tstack_t *stack, stack_elem_t *e,
  * - code = error code
  */
 #ifndef NDEBUG
-static void __attribute__((noreturn)) bad_op_exception(tstack_t *stack, loc_t *loc, uint32_t op) {
+ATTRIBUTE_NORETURN static void bad_op_exception(tstack_t *stack, loc_t *loc, uint32_t op) {
   stack->error_loc = *loc;
   stack->error_op = op;
   stack->error_string = NULL;
@@ -108,7 +103,7 @@ static void __attribute__((noreturn)) bad_op_exception(tstack_t *stack, loc_t *l
 /*
  * Bad format or other error on a push_rational, push_float, push_bvbin, push_hexbin operation, etc.
  */
-void __attribute__((noreturn)) push_exception(tstack_t *stack, loc_t *loc, char *s, int code) {
+ATTRIBUTE_NORETURN void push_exception(tstack_t *stack, loc_t *loc, char *s, int code) {
   stack->error_loc = *loc;
   stack->error_op = NO_OP;
   stack->error_string = s;
@@ -118,7 +113,7 @@ void __attribute__((noreturn)) push_exception(tstack_t *stack, loc_t *loc, char 
 /*
  * Translate a yices error into an exception.
  */
-void __attribute__((noreturn)) report_yices_error(tstack_t *stack) {
+ATTRIBUTE_NORETURN void report_yices_error(tstack_t *stack) {
   uint32_t i;
 
   i = stack->frame;
@@ -1165,12 +1160,12 @@ static void print_elem(tstack_t *stack, stack_elem_t *e) {
     break;
 
   case TAG_OP:
-    printf("<op: code = %"PRId32", mult = %"PRIu32", prev = %"PRIu32">", e->val.opval.opcode,
+    printf("<op: code = %" PRId32 ", mult = %" PRIu32 ", prev = %" PRIu32 ">", e->val.opval.opcode,
            e->val.opval.multiplicity,e->val.opval.prev);
     break;
 
   case TAG_OPCODE:
-    printf("<opcode: %"PRId32">", e->val.op);
+    printf("<opcode: %" PRId32 ">", e->val.op);
     break;
 
   case TAG_SYMBOL:
@@ -1218,7 +1213,7 @@ static void print_elem(tstack_t *stack, stack_elem_t *e) {
     break;
 
   case TAG_MACRO:
-    printf("<macro: %"PRId32">", e->val.macro);
+    printf("<macro: %" PRId32 ">", e->val.macro);
     break;
 
   case TAG_ARITH_BUFFER:
@@ -1369,7 +1364,7 @@ static bool check_duplicate_string(tagged_string_t *a, int32_t n, char *s) {
  */
 static void check_distinct_scalar_names(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   uint32_t i;
-  tagged_string_t check[n];
+  tagged_string_t* check = (tagged_string_t*)alloca(n * sizeof(tagged_string_t));
 
   // check for duplicate strings in the sequence
   for (i=0; i<n; i++) {
@@ -1392,7 +1387,7 @@ static void check_distinct_scalar_names(tstack_t *stack, stack_elem_t *f, uint32
 void check_distinct_binding_names(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   if (n > 0) {
     uint32_t i;
-    tagged_string_t check[n];
+    tagged_string_t* check = (tagged_string_t*)alloca(n * sizeof(tagged_string_t));
 
     // check for duplicate strings in the sequence
     for (i=0; i<n; i++) {
@@ -1414,7 +1409,7 @@ void check_distinct_binding_names(tstack_t *stack, stack_elem_t *f, uint32_t n) 
 void check_distinct_type_binding_names(tstack_t *stack, stack_elem_t *f, uint32_t n) {
   if (n > 0) {
     uint32_t i;
-    tagged_string_t check[n];
+    tagged_string_t* check = (tagged_string_t*)alloca(n * sizeof(tagged_string_t));
 
     // check for duplicate strings in the sequence
     for (i=0; i<n; i++) {
@@ -3273,7 +3268,8 @@ static void check_mk_apply(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_mk_apply(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t arg[n], fun, t;
+  term_t* arg = (term_t*)alloca(n * sizeof(term_t));
+  term_t fun, t;
   uint32_t i;
 
   fun = get_term(stack, f);
@@ -3528,7 +3524,8 @@ static void check_mk_tuple(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_mk_tuple(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t arg[n], t;
+  term_t* arg = (term_t*)alloca(n * sizeof(term_t));
+  term_t  t;
   uint32_t i;
 
   for (i=0; i<n; i++) {
@@ -3598,7 +3595,8 @@ static void check_mk_update(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_mk_update(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t arg[n], t;
+  term_t* arg = (term_t*)alloca(n * sizeof(term_t));
+  term_t t;
   uint32_t i;
 
   for (i=0; i<n; i++) {
@@ -3623,7 +3621,8 @@ static void check_mk_forall(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_mk_forall(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t t, arg[n];
+  term_t t;
+  term_t* arg = (term_t*)alloca(n * sizeof(term_t));
   uint32_t i;
 
   for (i=0; i<n-1; i++) {
@@ -3650,7 +3649,8 @@ static void check_mk_exists(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_mk_exists(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t t, arg[n];
+  term_t* arg = (term_t*)alloca(n * sizeof(term_t));
+  term_t t;
   uint32_t i;
 
   for (i=0; i<n-1; i++) {
@@ -3677,7 +3677,8 @@ static void check_mk_lambda(tstack_t *stack, stack_elem_t *f, uint32_t n) {
 }
 
 static void eval_mk_lambda(tstack_t *stack, stack_elem_t *f, uint32_t n) {
-  term_t t, arg[n];
+  term_t* arg = (term_t*)alloca(n * sizeof(term_t));
+  term_t  t;
   uint32_t i;
 
   for (i=0; i<n-1; i++) {

@@ -20,13 +20,6 @@
  * Skolemization for the EF solver.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include <stdint.h>
 #include <stdio.h>
 
@@ -35,9 +28,7 @@
 #include "yices.h"
 #include "io/yices_pp.h"
 #include "terms/term_explorer.h"
-
-
-#define TRACE 0
+#include "yices_config.h"
 
 /*
  * - t = skolemized term
@@ -93,7 +84,7 @@ void delete_ef_skolemize(ef_skolemize_t *sk) {
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    sk_pair_t* skp = p->val;
+    sk_pair_t* skp = (sk_pair_t*)p->val;
     safe_free(skp);
   }
   delete_ptr_hmap(map);
@@ -355,7 +346,7 @@ static ef_skolem_t ef_skolem_term(ef_analyzer_t *ef, term_t x, uint32_t n, term_
     ef->uint_skolem = false;
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("Skolemization: %s --> %s\n", yices_get_term_name(x), yices_term_to_string(skolem.fapp, 120, 1, 0));
 #endif
   return skolem;
@@ -526,13 +517,13 @@ static sk_pair_t *ef_skolemize_term(ef_skolemize_t *sk, term_t t) {
 
   r = ptr_hmap_get(&sk->cache, t);
   if (r->val != NULL) {
-    return r->val;
+    return (sk_pair_t*)r->val;
   }
 
   sk_pair_t *sp_result, *sp;
 
   r->val = safe_malloc(sizeof(sk_pair_t));
-  sp_result = r->val;
+  sp_result = (sk_pair_t*)r->val;
 
   term_manager_t *mgr;
   term_table_t *terms;
@@ -826,7 +817,7 @@ static sk_pair_t *ef_skolemize_term(ef_skolemize_t *sk, term_t t) {
     }
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("Original (%d): %s\nSkolemized: %s\n", resultq,  yices_term_to_string(t, 120, 1, 0), yices_term_to_string(result, 120, 1, 0));
 #endif
 
@@ -905,7 +896,7 @@ void ef_skolemize(ef_skolemize_t *sk, term_t t, ivector_t *v) {
       p = ptr_hmap_get(patterns, t);
       if (p->val == NULL) {
         p->val = safe_malloc(sizeof(ivector_t));
-        init_ivector(p->val, 1);
+        init_ivector((ivector_t*)p->val, 1);
       }
     }
   }
@@ -936,7 +927,7 @@ void ef_skolemize_patterns(ef_skolemize_t *sk) {
     for (r1 = ptr_hmap_first_record(patterns1);
          r1 != NULL;
          r1 = ptr_hmap_next_record(patterns1, r1)) {
-      rv1 = r1->val;
+      rv1 = (ivector_t*)r1->val;
       n = rv1->size;
 
 #if 0
@@ -953,10 +944,10 @@ void ef_skolemize_patterns(ef_skolemize_t *sk) {
       r2 = ptr_hmap_get(patterns2, key2);
       if (r2->val == NULL) {
         r2->val = safe_malloc(sizeof(ivector_t));
-        init_ivector(r2->val, rv1->size);
+        init_ivector((ivector_t*)r2->val, rv1->size);
       }
 
-      rv2 = r2->val;
+      rv2 = (ivector_t*)r2->val;
       pdata = rv1->data;
       for (i=0; i<n; i++) {
         sp = ef_skolemize_term(sk, pdata[i]);

@@ -195,7 +195,7 @@ static void show_progress(smt_core_t *core,
     printf("---------------------------------------------------------------------------------\n");
   }
 
-  printf("| %7"PRIu32"  %8"PRIu32" |  %8"PRIu32" | %8"PRIu32" %8"PRIu64" | %8"PRIu32" %8"PRIu64" %7.1f |\n",
+  printf("| %7" PRIu32 "  %8" PRIu32 " |  %8" PRIu32 " | %8" PRIu32 " %8" PRIu64 " | %8" PRIu32 " %8" PRIu64 " %7.1f |\n",
 	 restart_threshold, reduce_threshold,
 	 num_binary_clauses(core),
 	 num_prob_clauses(core), num_prob_literals(core),
@@ -489,10 +489,10 @@ static void print_problem_size(FILE *f, smt_core_t *core, char *filename, double
   if (mem_used > 0) {
     printf("Memory used             : %.2f MB\n", mem_used);
   }
-  fprintf(f, "nb. of vars             : %"PRIu32"\n", num_vars(core));
-  fprintf(f, "nb. of unit clauses     : %"PRIu32"\n", num_unit_clauses(core));
-  fprintf(f, "nb. of bin clauses      : %"PRIu32"\n", num_binary_clauses(core));
-  fprintf(f, "nb. of big clauses      : %"PRIu32"\n", num_prob_clauses(core));
+  fprintf(f, "nb. of vars             : %" PRIu32 "\n", num_vars(core));
+  fprintf(f, "nb. of unit clauses     : %" PRIu32 "\n", num_unit_clauses(core));
+  fprintf(f, "nb. of bin clauses      : %" PRIu32 "\n", num_binary_clauses(core));
+  fprintf(f, "nb. of big clauses      : %" PRIu32 "\n", num_prob_clauses(core));
   fprintf(f, "clause decay            : %g\n", clause_decay_factor(core));
   fprintf(f, "var decay               : %g\n", var_decay_factor(core));
   fprintf(f, "randomness factor       : %g\n\n", randomness_factor(core));
@@ -500,24 +500,24 @@ static void print_problem_size(FILE *f, smt_core_t *core, char *filename, double
 
 
 static void show_stats(dpll_stats_t *stat) {
-  printf("restarts                : %"PRIu32"\n", stat->restarts);
-  printf("simplify db             : %"PRIu32"\n", stat->simplify_calls);
-  printf("reduce db               : %"PRIu32"\n", stat->reduce_calls);
-  printf("decisions               : %"PRIu64"\n", stat->decisions);
-  printf("random decisions        : %"PRIu64"\n", stat->random_decisions);
-  printf("propagations            : %"PRIu64"\n", stat->propagations);
-  printf("conflicts               : %"PRIu64"\n", stat->conflicts);
-  printf("theory propagations     : %"PRIu32"\n", stat->th_props);
-  printf("clauses from th. prop   : %"PRIu32"\n", stat->th_prop_lemmas);
-  printf("theory conflicts        : %"PRIu32"\n", stat->th_conflicts);
-  printf("clauses from conflicts  : %"PRIu32"\n", stat->th_conflict_lemmas);
-  printf("lits in pb. clauses     : %"PRIu64"\n", stat->prob_literals);
-  printf("lits in learned clauses : %"PRIu64"\n", stat->learned_literals);
-  printf("total lits. in learned  : %"PRIu64"\n", stat->literals_before_simpl);
-  printf("subsumed lits.          : %"PRIu64"\n", stat->subsumed_literals);
-  printf("deleted pb. clauses     : %"PRIu64"\n", stat->prob_clauses_deleted);
-  printf("deleted learned clauses : %"PRIu64"\n", stat->learned_clauses_deleted);
-  printf("deleted binary clauses  : %"PRIu64"\n", stat->bin_clauses_deleted);
+  printf("restarts                : %" PRIu32 "\n", stat->restarts);
+  printf("simplify db             : %" PRIu32 "\n", stat->simplify_calls);
+  printf("reduce db               : %" PRIu32 "\n", stat->reduce_calls);
+  printf("decisions               : %" PRIu64 "\n", stat->decisions);
+  printf("random decisions        : %" PRIu64 "\n", stat->random_decisions);
+  printf("propagations            : %" PRIu64 "\n", stat->propagations);
+  printf("conflicts               : %" PRIu64 "\n", stat->conflicts);
+  printf("theory propagations     : %" PRIu32 "\n", stat->th_props);
+  printf("clauses from th. prop   : %" PRIu32 "\n", stat->th_prop_lemmas);
+  printf("theory conflicts        : %" PRIu32 "\n", stat->th_conflicts);
+  printf("clauses from conflicts  : %" PRIu32 "\n", stat->th_conflict_lemmas);
+  printf("lits in pb. clauses     : %" PRIu64 "\n", stat->prob_literals);
+  printf("lits in learned clauses : %" PRIu64 "\n", stat->learned_literals);
+  printf("total lits. in learned  : %" PRIu64 "\n", stat->literals_before_simpl);
+  printf("subsumed lits.          : %" PRIu64 "\n", stat->subsumed_literals);
+  printf("deleted pb. clauses     : %" PRIu64 "\n", stat->prob_clauses_deleted);
+  printf("deleted learned clauses : %" PRIu64 "\n", stat->learned_clauses_deleted);
+  printf("deleted binary clauses  : %" PRIu64 "\n", stat->bin_clauses_deleted);
 }
 
 
@@ -528,7 +528,7 @@ static const char * const status2string[] = {
 
 static void print_status(FILE *f, smt_status_t s) {
   if (s > YICES_STATUS_INTERRUPTED) {
-    s = YICES_STATUS_INTERRUPTED + 1;
+    s = (smt_status_t)(YICES_STATUS_INTERRUPTED + 1);
   }
   fputs(status2string[s], f);
 }
@@ -557,7 +557,7 @@ static void print_results(smt_core_t *core, double construction_time, double sea
   if (stat->literals_before_simpl > 0) {
     simplified_percent = (100.0 * stat->subsumed_literals) / stat->literals_before_simpl;
   }
-  printf("STAT %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu32" %"PRIu64" %"PRIu64" %.2f %.2f %.2f\n",
+  printf("STAT %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu32 " %" PRIu64 " %" PRIu64 " %.2f %.2f %.2f\n",
 	 stat->decisions,
 	 stat->conflicts,
 	 stat->propagations,
@@ -603,7 +603,7 @@ static void handler(int signum) {
 static void init_handler(void) {
   signal(SIGINT, handler);
   signal(SIGABRT, handler);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGALRM, handler);
   signal(SIGXCPU, handler);
 #endif

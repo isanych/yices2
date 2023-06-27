@@ -1704,7 +1704,7 @@ static bool rdl_add_edge(rdl_solver_t *solver, int32_t x, int32_t y, rdl_const_t
        */
       n = v->size;
       for (i=0; i<n; i++) {
-        v->data[i] = not(v->data[i]);
+        v->data[i] = not_(v->data[i]);
       }
       ivector_push(v, null_literal); // end marker
       record_theory_conflict(solver->core, v->data);
@@ -2196,7 +2196,7 @@ literal_t rdl_select_polarity(rdl_solver_t *solver, void *a, literal_t l) {
 /*
  * Raise exception or abort
  */
-static __attribute__ ((noreturn)) void rdl_exception(rdl_solver_t *solver, int code) {
+ATTRIBUTE_NORETURN static void rdl_exception(rdl_solver_t *solver, int code) {
   if (solver->env != NULL) {
     longjmp(*solver->env, code);
   }
@@ -2357,7 +2357,7 @@ static void rdl_assert_triple_eq(rdl_solver_t *solver, dl_triple_t *d, bool tt) 
     q_set_neg(&solver->q, &d->constant);            // q := -c
     l2 = rdl_make_atom(solver, x, y, &solver->q);   // atom (x - y <= -c)
 
-    add_binary_clause(solver->core, not(l1), not(l2));
+    add_binary_clause(solver->core, not_(l1), not_(l2));
   }
 }
 
@@ -2676,7 +2676,7 @@ void rdl_assert_cond_vareq_axiom(rdl_solver_t *solver, literal_t c, thvar_t v, t
   if (x == y) {
     if (q_is_nonzero(&triple->constant)) {
       // (x - y + d) == 0 is false
-      add_unit_clause(solver->core, not(c));
+      add_unit_clause(solver->core, not_(c));
     }
     return;
   }
@@ -2696,8 +2696,8 @@ void rdl_assert_cond_vareq_axiom(rdl_solver_t *solver, literal_t c, thvar_t v, t
   l1 = rdl_make_atom(solver, y, x, &triple->constant);  // (y - x <= d)
   q_set_neg(&solver->q, &triple->constant);             /// q := -d
   l2 = rdl_make_atom(solver, x, y, &solver->q);         // (x - y <= -d)
-  add_binary_clause(solver->core, not(c), l1);
-  add_binary_clause(solver->core, not(c), l2);
+  add_binary_clause(solver->core, not_(c), l1);
+  add_binary_clause(solver->core, not_(c), l2);
 }
 
 

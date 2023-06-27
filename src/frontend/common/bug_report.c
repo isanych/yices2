@@ -16,19 +16,13 @@
  * along with Yices.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdarg.h>
 
 #include "yices.h"
 #include "yices_exit_codes.h"
 
 
-void __attribute__((noreturn)) freport_bug(FILE *fp, const char *format, ...) {
+YICES_DEFINE ATTRIBUTE_NORETURN void freport_bug(FILE *fp, const char *format, ...) {
   va_list p;
 
   fprintf(fp, "\n*************************************************************\n");

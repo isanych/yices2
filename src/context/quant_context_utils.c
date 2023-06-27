@@ -29,9 +29,7 @@
 #include "utils/memalloc.h"
 
 #include "api/yices_globals.h"
-
-#define TRACE 0
-
+#include "yices_config.h"
 
 /*
  * Enable quant flag to allow adding quantifier instances

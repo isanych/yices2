@@ -40,10 +40,10 @@ static void print_particle(particle_t x) {
 
   switch (particle_kind(&store, x)) {
   case LABEL_PARTICLE:
-    printf("(lab %"PRId32")", particle_label(&store, x));
+    printf("(lab %" PRId32 ")", particle_label(&store, x));
     break;
   case FRESH_PARTICLE:
-    printf("(fresh tau!%"PRId32")", fresh_particle_type(&store, x));
+    printf("(fresh tau!%" PRId32 ")", fresh_particle_type(&store, x));
     break;
   case TUPLE_PARTICLE:
     tup = tuple_particle_desc(&store, x);
@@ -51,7 +51,7 @@ static void print_particle(particle_t x) {
     n = tup->nelems;
     for (i=0; i<n; i++) {
       if (is_fresh_particle(&store, tup->elem[i])) {
-	printf(" p!%"PRId32, tup->elem[i]);
+	printf(" p!%" PRId32, tup->elem[i]);
       } else {
 	printf(" ");
 	print_particle(tup->elem[i]);
@@ -66,7 +66,7 @@ static void print_particle(particle_t x) {
  * Print p[x] = ...
  */
 static void print_particle_def(particle_t x) {
-  printf(" p!%"PRId32" = ", x);
+  printf(" p!%" PRId32 " = ", x);
   print_particle(x);
   printf("\n");
 }
@@ -83,7 +83,7 @@ static void print_particle_array(particle_t *q, uint32_t n) {
     if (i > 0) {
       printf(" ");
     }
-    printf("p!%"PRId32, q[i]);
+    printf("p!%" PRId32, q[i]);
   }
   printf("]");
 }
@@ -104,7 +104,7 @@ static void print_particle_set(particle_set_t *set) {
       if (i>0) {
 	printf(", ");
       }
-      printf("tau!%"PRId32, set->type[i]);
+      printf("tau!%" PRId32, set->type[i]);
     }
     printf("] = {");
     n = set->nelems;
@@ -112,7 +112,7 @@ static void print_particle_set(particle_set_t *set) {
       if (i>0) {
 	printf(", ");
       }
-      printf("p!%"PRId32, set->data[i]);
+      printf("p!%" PRId32, set->data[i]);
     }
     printf("}\n");
     for (i=0; i<n; i++) {
@@ -142,7 +142,7 @@ static void test1(void) {
   b = pstore_labeled_particle(&store, 34, tau);
   c = pstore_fresh_particle(&store, tau);
 
-  printf("\nInitial objects of type tau!%"PRId32"\n", tau);
+  printf("\nInitial objects of type tau!%" PRId32 "\n", tau);
   print_particle_def(a);
   print_particle_def(b);
   print_particle_def(c);
@@ -193,7 +193,7 @@ static void test2(void) {
   b = pstore_labeled_particle(&store, 102, tau);
   c = pstore_fresh_particle(&store, tau);
 
-  printf("\nInitial objects of type tau!%"PRId32"\n", tau);
+  printf("\nInitial objects of type tau!%" PRId32 "\n", tau);
   print_particle_def(a);
   print_particle_def(b);
   print_particle_def(c);
@@ -241,7 +241,7 @@ static void test3(void) {
   a = pstore_labeled_particle(&store, 0, tau[0]);
   b = pstore_labeled_particle(&store, 1, tau[0]);
 
-  printf("\nInitial objects of type tau!%"PRId32"\n", tau[0]);
+  printf("\nInitial objects of type tau!%" PRId32 "\n", tau[0]);
   print_particle_def(a);
   print_particle_def(b);
   printf("\n");
@@ -346,12 +346,12 @@ static void test5(void) {
   q[1] = b;
   d = pstore_tuple_particle(&store, 2, q, tau);
 
-  printf("\nInitial objects of type tau!%"PRId32"\n", tau[0]);
+  printf("\nInitial objects of type tau!%" PRId32 "\n", tau[0]);
   print_particle_def(a);
   print_particle_def(b);
   printf("\n");
 
-  printf("Initial objects of type tau!%"PRId32" x tau!%"PRId32"\n", tau[0], tau[1]);
+  printf("Initial objects of type tau!%" PRId32 " x tau!%" PRId32 "\n", tau[0], tau[1]);
   print_particle_def(c);
   print_particle_def(d);
   printf("\n");
@@ -419,12 +419,12 @@ static void test6(void) {
   q[1] = b;
   d = pstore_tuple_particle(&store, 2, q, tau);
 
-  printf("\nInitial objects of type tau!%"PRId32"\n", tau[0]);
+  printf("\nInitial objects of type tau!%" PRId32 "\n", tau[0]);
   print_particle_def(a);
   print_particle_def(b);
   printf("\n");
 
-  printf("Initial objects of type tau!%"PRId32" x tau!%"PRId32"\n", tau[0], tau[1]);
+  printf("Initial objects of type tau!%" PRId32 " x tau!%" PRId32 "\n", tau[0], tau[1]);
   print_particle_def(c);
   print_particle_def(d);
   printf("\n");

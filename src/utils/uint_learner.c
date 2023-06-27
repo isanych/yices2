@@ -36,13 +36,13 @@ static bool cmp_term(void *table, int32_t x, int32_t y) {
   pvector_t *stats;
   uint_learner_stats_t *xstat, *ystat;
 
-  stats = table;
+  stats = (pvector_t*)table;
 
   assert(x >= 0 && x < stats->size);
   assert(y >= 0 && y < stats->size);
 
-  xstat = stats->data[x];
-  ystat = stats->data[y];
+  xstat = (uint_learner_stats_t*)stats->data[x];
+  ystat = (uint_learner_stats_t*)stats->data[y];
 
   return xstat->Q > ystat->Q;
 }
@@ -111,7 +111,7 @@ void uint_learner_print_index_priority(uint_learner_t *learner, uint32_t i) {
   uint_learner_stats_t *s;
 
   assert(i < learner->stats.size);
-  s = learner->stats.data[i];
+  s = (uint_learner_stats_t*)learner->stats.data[i];
 
   printf("\tQ(%d) = %.2f\n", i, s->Q);
 }

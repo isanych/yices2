@@ -401,7 +401,7 @@ static inline uint64_t bvvar_val64(bv_vartable_t *table, thvar_t x) {
 
 static inline uint32_t *bvvar_val(bv_vartable_t *table, thvar_t x) {
   assert(bvvar_is_const(table, x));
-  return table->def[x].ptr;
+  return (uint32_t *)table->def[x].ptr;
 }
 
 
@@ -410,27 +410,27 @@ static inline uint32_t *bvvar_val(bv_vartable_t *table, thvar_t x) {
  */
 static inline bvpoly_t *bvvar_poly_def(bv_vartable_t *table, thvar_t x) {
   assert(bvvar_is_poly(table, x));
-  return table->def[x].ptr;
+  return (bvpoly_t *)table->def[x].ptr;
 }
 
 static inline bvpoly64_t *bvvar_poly64_def(bv_vartable_t *table, thvar_t x) {
   assert(bvvar_is_poly64(table, x));
-  return table->def[x].ptr;
+  return (bvpoly64_t *)table->def[x].ptr;
 }
 
 static inline pprod_t *bvvar_pprod_def(bv_vartable_t *table, thvar_t x) {
   assert(bvvar_is_pprod(table, x));
-  return table->def[x].ptr;
+  return (pprod_t *)table->def[x].ptr;
 }
 
 static inline literal_t *bvvar_bvarray_def(bv_vartable_t *table, thvar_t x) {
   assert(bvvar_is_bvarray(table, x));
-  return table->def[x].ptr;
+  return (literal_t *)table->def[x].ptr;
 }
 
 static inline bv_ite_t *bvvar_ite_def(bv_vartable_t *table, thvar_t x) {
   assert(bvvar_is_ite(table, x));
-  return table->def[x].ptr;
+  return (bv_ite_t *)table->def[x].ptr;
 }
 
 // pair of operands

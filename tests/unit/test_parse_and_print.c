@@ -144,11 +144,11 @@ int main(int argc, char *argv[]) {
   area.truncate = true;
   printf("Benchmark: %s\n", bench.name);
   printf("Logic: %s\n", bench.logic_name);
-  printf("%"PRIu32" assertions\n\n", bench.nformulas);
+  printf("%" PRIu32 " assertions\n\n", bench.nformulas);
   fflush(stdout);
 
   for (i=0; i<n; i++) {
-    printf("Assertion[%"PRIu32"]:  ", i);
+    printf("Assertion[%" PRIu32 "]:  ", i);
     print_space(i, n);
     pretty_print_term_full(stdout, &area, __yices_globals.terms, bench.formulas[i]);
   }

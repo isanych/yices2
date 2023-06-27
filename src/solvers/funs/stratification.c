@@ -157,8 +157,8 @@ void stratify_make_arrays(stratification_t *s) {
     out_of_memory();
   }
 
-  s->vars = safe_malloc(s->nvars * sizeof(thvar_t));
-  s->diseqs = safe_malloc(s->ndiseqs * sizeof(uint32_t));
+  s->vars = (thvar_t*)safe_malloc(s->nvars * sizeof(thvar_t));
+  s->diseqs = (uint32_t*)safe_malloc(s->ndiseqs * sizeof(uint32_t));
 
   // initialize the var_idx/diseq_idx of each stratum
   n = s->nlevels;

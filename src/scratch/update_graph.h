@@ -156,7 +156,7 @@ struct update_graph_s {
 
   uint32_t size;  // size of arrays class, edges, and tag
   uint32_t nodes; // number of nodes
-  class_t *class; // class[i] = class of node i
+  class_t *class_; // class[i] = class of node i
   void ***edges;  // edges[i] = array of (void*) pointers
   int32_t *tag;   // tag[i] = lambda tag
   byte_t *mark;   // mark[i] = one bit

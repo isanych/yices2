@@ -29,7 +29,7 @@ int main(void) {
     aux = ((uint64_t) 1) << n;
     mask = ~((uint64_t) 0) >> (64 - n);
     neg = - mask;
-    printf("n = %2"PRIu32", aux = %016"PRIx64" mask = %016"PRIx64", neg = %016"PRIx64"\n", n, aux, mask, neg);
+    printf("n = %2" PRIu32 ", aux = %016" PRIx64 " mask = %016" PRIx64 ", neg = %016" PRIx64 "\n", n, aux, mask, neg);
   }
 
   return 0;

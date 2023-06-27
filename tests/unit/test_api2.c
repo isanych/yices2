@@ -48,7 +48,7 @@
 
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -831,7 +831,7 @@ static term_t test_tuple4(term_t arg1, term_t arg2, term_t arg3, term_t arg4) {
 static term_t test_select(term_t arg, uint32_t i) {
   term_t t;
 
-  printf("test: (select %"PRIu32" ", i);
+  printf("test: (select %" PRIu32 " ", i);
   print_term(stdout, __yices_globals.terms, arg);
   printf(") --> ");
   t = yices_select(i, arg);
@@ -894,7 +894,7 @@ static term_t test_tuple_update(term_t arg, term_t new_v, uint32_t i) {
 
   printf("test: (tuple-update ");
   print_term(stdout, __yices_globals.terms, arg);
-  printf(" %"PRIu32" ", i);
+  printf(" %" PRIu32 " ", i);
   print_term(stdout, __yices_globals.terms, new_v);
   printf(") --> ");
   t = yices_tuple_update(arg, i, new_v);

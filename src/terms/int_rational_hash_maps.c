@@ -220,7 +220,7 @@ static void int_rat_hmap_extend(int_rat_hmap_t *hmap) {
  *   and  set *new to true.
  * - k must be non-negative
  */
-int_rat_hmap_rec_t *int_rat_hmap_get(int_rat_hmap_t *hmap, int32_t k, bool *new) {
+int_rat_hmap_rec_t *int_rat_hmap_get(int_rat_hmap_t *hmap, int32_t k, bool *new_) {
   int_rat_hmap_rec_t *r;
   uint32_t i, mask;
 
@@ -228,7 +228,7 @@ int_rat_hmap_rec_t *int_rat_hmap_get(int_rat_hmap_t *hmap, int32_t k, bool *new)
   assert(hmap->nelems < hmap->size); // otherwise, this will loop
   assert(is_power_of_two(hmap->size));
 
-  *new = false;
+  *new_ = false;
   mask = hmap->size - 1;
   i = hash_key(k) & mask;
   for (;;) {
@@ -239,7 +239,7 @@ int_rat_hmap_rec_t *int_rat_hmap_get(int_rat_hmap_t *hmap, int32_t k, bool *new)
     i &= mask;
   }
 
-  *new = true;
+  *new_ = true;
   r->key = k;  
   hmap->nelems ++;
   if (hmap->nelems > hmap->resize_threshold) {

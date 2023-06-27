@@ -101,7 +101,7 @@ bool tracing_tag(tracer_t *tracer, const char *tag) {
 
   if (tracer != NULL) {
     for (i=0; i<tracer->trace_tags.size; i++) {
-      if (strcmp(tag, tracer->trace_tags.data[i]) == 0) {
+      if (strcmp(tag, (const char*)tracer->trace_tags.data[i]) == 0) {
 	return true;
       }
     }

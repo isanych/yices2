@@ -404,14 +404,14 @@ static void extend_equiv_queue(equiv_queue_t *queue) {
   if (n == 0) {
     n = DEF_EQUIV_QUEUE_SIZE;
     assert(n <= MAX_EQUIV_QUEUE_SIZE);
-    queue->data = safe_malloc(n * sizeof(equiv_t));
+    queue->data = (equiv_t*)safe_malloc(n * sizeof(equiv_t));
     queue->size = n;
   } else {
     n += (n+1)>>1;
     if (n > MAX_EQUIV_QUEUE_SIZE) {
       out_of_memory();
     }
-    queue->data = safe_realloc(queue->data, n * sizeof(equiv_t));
+    queue->data = (equiv_t*)safe_realloc(queue->data, n * sizeof(equiv_t));
     queue->size = n;
   }
 }
@@ -632,7 +632,7 @@ void bool_vartable_simplify_and_add_clause(bool_vartable_t *table, uint32_t n, l
   for (i=1; i<n; i++) {
     aux = a[i];
     if (aux != l) {
-      if (aux == not(l)) return; // true clause
+      if (aux == not_(l)) return; // true clause
       a[p] = aux;
       l = aux;
       p ++;
@@ -679,7 +679,7 @@ literal_t literal_get_root(bool_vartable_t *table, literal_t l) {
 
   while (!tst_bit(table->root, var_of(l))) {
     // if l is pos(x), replace l by map[x]
-    // if l is neg(x), replace l by not(map[x])
+    // if l is neg(x), replace l by not_(map[x])
     assert(table->map[var_of(l)] != null_literal);
     l = table->map[var_of(l)] ^ sign_of_lit(l);
   }
@@ -723,7 +723,7 @@ static void merge_root_literals(bool_vartable_t *table, literal_t l1, literal_t 
 
   /*
    * If l1 is positive: store l2 in map[var_of(l1)]
-   * If l1 is negative: store not(l2) in map[var_of(l1)]
+   * If l1 is negative: store not_(l2) in map[var_of(l1)]
    */
   x1 = var_of(l1);
   assert(table->map[x1] == null_literal);
@@ -740,21 +740,21 @@ static void merge_root_literals(bool_vartable_t *table, literal_t l1, literal_t 
  * - otherwise, push [l1 == l2] into the internal queue
  *   then attempt to merge the classes of l1 and l2
  */
-void  bool_vartable_push_eq(bool_vartable_t *table, literal_t l1, literal_t l2) {
+void bool_vartable_push_eq(bool_vartable_t *table, literal_t l1, literal_t l2) {
   l1 = literal_get_root(table, l1);
   l2 = literal_get_root(table, l2);
 
   if (opposite(l1, l2)) {
     bool_vartable_add_empty_clause(table);
   } else if (l1 != l2) {
-    if (l1 == true_literal)  return bool_vartable_add_unit_clause(table, l2);
-    if (l1 == false_literal) return bool_vartable_add_unit_clause(table, not(l2));
-    if (l2 == true_literal)  return bool_vartable_add_unit_clause(table, l1);
-    if (l2 == false_literal) return bool_vartable_add_unit_clause(table, not(l1));
+    if (l1 == true_literal)  { bool_vartable_add_unit_clause(table, l2); return; }
+    if (l1 == false_literal) { bool_vartable_add_unit_clause(table, not_(l2)); return; }
+    if (l2 == true_literal)  { bool_vartable_add_unit_clause(table, l1); return; }
+    if (l2 == false_literal) { bool_vartable_add_unit_clause(table, not_(l1)); return; }
 
     push_equiv(&table->queue, l1, l2);
     if (root_boolvar_map(table, var_of(l1)) == null_literal ||
-	root_boolvar_map(table, var_of(l2)) == null_literal) {
+        root_boolvar_map(table, var_of(l2)) == null_literal) {
       merge_root_literals(table, l1, l2);
     }
   }
@@ -1277,7 +1277,7 @@ static literal_t gate_for_truth_table(bool_vartable_t *table, ttbl_t *tt) {
     assert(tt->mask == 0x0f || tt->mask == 0xf0);
     l = pos_lit(tt->label[0]);
     if (tt->mask == 0x0f) {
-      l = not(l);
+      l = not_(l);
     }
   } else {
     assert(tt->nvars == 2 || tt->nvars == 3);
@@ -1349,7 +1349,7 @@ static bvar_t direct_or2_gate(bool_vartable_t *table, literal_t l1, literal_t l2
   bgate_t g;
   uint8_t m1, m2;
 
-  assert(false_literal < l1 && l1 < l2 && l1 != not(l2));
+  assert(false_literal < l1 && l1 < l2 && l1 != not_(l2));
 
   m1 = 0xf0;
   if (is_neg(l1)) m1 = 0x0f;
@@ -1368,7 +1368,7 @@ static bvar_t direct_or3_gate(bool_vartable_t *table, literal_t l1, literal_t l2
   bgate_t g;
   uint8_t m1, m2, m3;
 
-  assert(false_literal < l1 && l1 < l2 && l2 < l3 && l1 != not(l2) && l2 != not(l3));
+  assert(false_literal < l1 && l1 < l2 && l2 < l3 && l1 != not_(l2) && l2 != not_(l3));
 
   m1 = 0xf0;
   if (is_neg(l1)) m1 = 0x0f;
@@ -1424,7 +1424,7 @@ static literal_t make_or_aux(bool_vartable_t *table, uint32_t n, literal_t *a) {
   for (i=1; i<n; i++) {
     aux = a[i];
     if (aux != l) {
-      if (aux == not(l)) return true_literal;
+      if (aux == not_(l)) return true_literal;
       a[p] = aux;
       l = aux;
       p ++;
@@ -1472,12 +1472,12 @@ literal_t make_and(bool_vartable_t *table, uint32_t n, literal_t *a) {
     l = a[i];
     if (l == false_literal) return false_literal;
     if (l != true_literal) {
-      a[p] = not(l);
+      a[p] = not_(l);
       p ++;
     }
   }
 
-  return not(make_or_aux(table, p, a));
+  return not_(make_or_aux(table, p, a));
 }
 
 
@@ -1501,7 +1501,7 @@ literal_t make_xor(bool_vartable_t *table, uint32_t n, literal_t *a) {
       sign ^= 1; // flip sign
     } else if (l != false_literal) {
       sign ^= sign_of_lit(l);      // flip sign if l is negative
-      a[p] = unsigned_literal(l);  // convert l to not(l) if l is negative
+      a[p] = unsigned_literal(l);  // convert l to not_(l) if l is negative
       p ++;
     }
   }

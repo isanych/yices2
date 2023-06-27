@@ -42,11 +42,11 @@
  * WRAPPERS FOR THE YICES SAT_SOLVER
  */
 static void ysat_add_empty_clause(void *solver) {
-  nsat_solver_simplify_and_add_clause(solver, 0, NULL);
+  nsat_solver_simplify_and_add_clause((sat_solver_t*)solver, 0, NULL);
 }
 
 static void ysat_add_unit_clause(void *solver, literal_t l) {
-  nsat_solver_simplify_and_add_clause(solver, 1, &l);
+  nsat_solver_simplify_and_add_clause((sat_solver_t*)solver, 1, &l);
 }
 
 static void ysat_add_binary_clause(void *solver, literal_t l1, literal_t l2) {
@@ -54,7 +54,7 @@ static void ysat_add_binary_clause(void *solver, literal_t l1, literal_t l2) {
 
   a[0] = l1;
   a[1] = l2;
-  nsat_solver_simplify_and_add_clause(solver, 2, a);
+  nsat_solver_simplify_and_add_clause((sat_solver_t*)solver, 2, a);
 }
 
 static void ysat_add_ternary_clause(void *solver, literal_t l1, literal_t l2, literal_t l3) {
@@ -63,16 +63,16 @@ static void ysat_add_ternary_clause(void *solver, literal_t l1, literal_t l2, li
   a[0] = l1;
   a[1] = l2;
   a[2] = l3;
-  nsat_solver_simplify_and_add_clause(solver, 3, a);
+  nsat_solver_simplify_and_add_clause((sat_solver_t*)solver, 3, a);
 }
 
 static void ysat_add_clause(void *solver, uint32_t n, literal_t *a) {
-  nsat_solver_simplify_and_add_clause(solver, n, a);
+  nsat_solver_simplify_and_add_clause((sat_solver_t*)solver, n, a);
 }
 
 static smt_status_t ysat_check(void *solver) {
   // use new sat solver
-  switch (nsat_solve(solver)) {
+  switch (nsat_solve((sat_solver_t*)solver)) {
   case STAT_SAT: return STATUS_SAT;
   case STAT_UNSAT: return STATUS_UNSAT;
   default: return STATUS_UNKNOWN;
@@ -81,7 +81,7 @@ static smt_status_t ysat_check(void *solver) {
 
 static smt_status_t ysat_preprocess(void *solver) {
   // use new sat solver
-  switch (nsat_apply_preprocessing(solver)) {
+  switch (nsat_apply_preprocessing((sat_solver_t*)solver)) {
   case STAT_SAT: return STATUS_SAT;
   case STAT_UNSAT: return STATUS_UNSAT;
   default: return STATUS_UNKNOWN;
@@ -89,19 +89,19 @@ static smt_status_t ysat_preprocess(void *solver) {
 }
 
 static void ysat_export_to_dimacs(void *solver, FILE *f) {
-  nsat_export_to_dimacs(f, solver);
+  nsat_export_to_dimacs(f, (sat_solver_t*)solver);
 }
 
 static bval_t ysat_get_value(void *solver, bvar_t x) {
-  return var_value(solver, x);
+  return var_value((sat_solver_t*)solver, x);
 }
 
 static void ysat_set_verbosity(void *solver, uint32_t level) {
-  nsat_set_verbosity(solver, level);
+  nsat_set_verbosity((sat_solver_t*)solver, level);
 }
 
 static void ysat_delete(void *solver) {
-  delete_nsat_solver(solver);
+  delete_nsat_solver((sat_solver_t*)solver);
   safe_free(solver);
 }
 
@@ -115,24 +115,24 @@ static void ysat_keep_var(void *solver, bvar_t x) {
 
 #if USE_CUTS
 static void ysat_var_def2(void *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2) {
-  nsat_solver_add_def2(solver, x, b, l1, l2);
+  nsat_solver_add_def2((sat_solver_t*)solver, x, b, l1, l2);
 }
 
 static void ysat_var_def3(void *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2, literal_t l3) {
-  nsat_solver_add_def3(solver, x, b, l1, l2, l3);
+  nsat_solver_add_def3((sat_solver_t*)solver, x, b, l1, l2, l3);
 }
 #endif
 
 static void ysat_as_delegate(delegate_t *d, uint32_t nvars) {
   d->solver = (sat_solver_t *) safe_malloc(sizeof(sat_solver_t));
-  init_nsat_solver(d->solver, nvars, true); // with preprocessing
+  init_nsat_solver((sat_solver_t*)d->solver, nvars, true); // with preprocessing
   // init_nsat_solver(d->solver, nvars, false); // without preprocessing
-  nsat_set_randomness(d->solver, 0.01);
-  nsat_set_reduce_fraction(d->solver, 12);
-  nsat_set_res_clause_limit(d->solver, 300);   // more agressive var elimination
-  nsat_set_res_extra(d->solver, 20);
-  nsat_set_simplify_subst_delta(d->solver, 30);
-  nsat_solver_add_vars(d->solver, nvars);
+  nsat_set_randomness((sat_solver_t*)d->solver, 0.01);
+  nsat_set_reduce_fraction((sat_solver_t*)d->solver, 12);
+  nsat_set_res_clause_limit((sat_solver_t*)d->solver, 300);   // more agressive var elimination
+  nsat_set_res_extra((sat_solver_t*)d->solver, 20);
+  nsat_set_simplify_subst_delta((sat_solver_t*)d->solver, 30);
+  nsat_solver_add_vars((sat_solver_t*)d->solver, nvars);
   //
   init_ivector(&d->buffer, 0);
   d->add_empty_clause = ysat_add_empty_clause;
@@ -143,7 +143,7 @@ static void ysat_as_delegate(delegate_t *d, uint32_t nvars) {
   d->check = ysat_check;
   d->get_value = ysat_get_value;
   d->set_verbosity = ysat_set_verbosity;
-  d->delete = ysat_delete;
+  d->delete_ = ysat_delete;
 
   // experimental
   //  d->keep_var = ysat_keep_var;
@@ -160,7 +160,7 @@ static void ysat_as_delegate(delegate_t *d, uint32_t nvars) {
 #endif
   // more experimental functions
   d->preprocess = ysat_preprocess;
-  d->export = ysat_export_to_dimacs;
+  d->export_ = ysat_export_to_dimacs;
 }
 
 
@@ -290,7 +290,7 @@ static void cadical_as_delegate(delegate_t *d, uint32_t nvars) {
   d->check = cadical_check;
   d->get_value = cadical_get_value;
   d->set_verbosity = cadical_set_verbosity;
-  d->delete = cadical_delete;
+  d->delete_ = cadical_delete;
   d->keep_var = NULL;
   d->var_def2 = NULL;
   d->var_def3 = NULL;
@@ -387,7 +387,7 @@ static void cryptominisat_as_delegate(delegate_t *d, uint32_t nvars) {
   d->check = cryptominisat_check;
   d->get_value = cryptominisat_get_value;
   d->set_verbosity = cryptominisat_set_verbosity;
-  d->delete = cryptominisat_delete;
+  d->delete_ = cryptominisat_delete;
   d->keep_var = NULL;
   d->var_def2 = NULL;
   d->var_def3 = NULL;
@@ -492,7 +492,7 @@ static void kissat_as_delegate(delegate_t *d, uint32_t nvars) {
   d->check = kissat_check;
   d->get_value = kissat_get_value;
   d->set_verbosity = kissat_set_verbosity;
-  d->delete = kissat_delete;
+  d->delete_ = kissat_delete;
   d->keep_var = NULL;
   d->var_def2 = NULL;
   d->var_def3 = NULL;
@@ -587,7 +587,7 @@ bool supported_delegate(const char *solver_name, bool *unknown) {
  * Delete the solver and free memory
  */
 void delete_delegate(delegate_t *d) {
-  d->delete(d->solver);
+  d->delete_(d->solver);
   delete_ivector(&d->buffer);
   d->solver = NULL;
 }
@@ -849,8 +849,8 @@ smt_status_t preprocess_with_delegate(delegate_t *d, smt_core_t *core) {
  * Export to DIMACS (do nothing if that's not supported by the delegate)
  */
 void export_to_dimacs_with_delegate(delegate_t *d, FILE *f) {
-  if (d->export != NULL) {
-    d->export(d->solver, f);
+  if (d->export_ != NULL) {
+    d->export_(d->solver, f);
   }
 }
 

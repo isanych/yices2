@@ -389,10 +389,9 @@ static int32_t set_branching_param(const char *value, branch_t *v) {
  * - if the result is not in the interval, return -2
  */
 static int32_t set_int32_param(const char *value, int32_t *v, int32_t low, int32_t high) {
-  integer_parse_code_t k;
   int32_t aux;
 
-  k = parse_as_integer(value, &aux);
+  integer_parse_code_t k = parse_as_integer(value, &aux);
   switch (k) {
   case valid_integer:
     if (low <= aux && aux <= high) {
@@ -420,10 +419,9 @@ static int32_t set_int32_param(const char *value, int32_t *v, int32_t low, int32
  * - if val is not an unsigned integer, return -2
  */
 static int32_t set_uint32_param(const char *value, uint32_t *v) {
-  integer_parse_code_t k;
   int32_t code;
 
-  k = parse_as_uint(value, v);
+  integer_parse_code_t k = parse_as_uint(value, v);
   switch (k) {
   case valid_integer:
     code = 0;
@@ -449,11 +447,10 @@ static int32_t set_uint32_param(const char *value, uint32_t *v) {
  * - if the result is not in the interval, return -2
  */
 static int32_t set_double_param(const char *value, double *v, double low, double high) {
-  double_parse_code_t k;
   double aux;
   int32_t result;
 
-  k = parse_as_double(value, &aux);
+  const double_parse_code_t k = parse_as_double(value, &aux);
   switch (k) {
   case valid_double:
     if (low <= aux && aux <= high) {
@@ -489,13 +486,11 @@ static int32_t set_double_param(const char *value, double *v, double low, double
  *    0 otherwise (i.e., success)
  */
 int32_t params_set_field(param_t *parameters, const char *key, const char *value) {
-  int32_t k, r;
-  int32_t z;
   double x;
+  int32_t z = 0; // to prevent GCC warning
+  int32_t r;
 
-  z = 0; // to prevent GCC warning
-
-  k = parse_as_keyword(key, param_key_names, param_code, NUM_PARAM_KEYS);
+  int32_t k = parse_as_keyword(key, param_key_names, param_code, NUM_PARAM_KEYS);
   switch (k) {
   case PARAM_FAST_RESTART:
     r = set_bool_param(value, &parameters->fast_restart);

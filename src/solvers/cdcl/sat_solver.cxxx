@@ -34,16 +34,12 @@
 
 #include "solvers/cdcl/sat_solver.h"
 #include "solvers/cdcl/sat_parameters.h"
-
-#define DEBUG 0
-#define TRACE 0
-
-
+#include "yices_config.h"
 
 /*
  * Internal checks
  */
-#if DEBUG
+#if YICES_DEBUG
 
 static void check_literal_vector(literal_t *v);
 static void check_propagation(sat_solver_t *sol);
@@ -1318,7 +1314,7 @@ bvar_t sat_solver_new_var(sat_solver_t *solver) {
 static void assign_literal(sat_solver_t *solver, literal_t l) {
   bvar_t v;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Assigning literal %d, decision level = %u\n", l, solver->decision_level);
 #endif
   assert(0 <= l && l < solver->nb_lits);
@@ -1350,7 +1346,7 @@ void sat_solver_add_empty_clause(sat_solver_t *solver) {
  * or set status to unsat if l is already false
  */
 void sat_solver_add_unit_clause(sat_solver_t *solver, literal_t l) {
-#if TRACE
+#if YICES_TRACE
   printf("---> Add unit clause: { %d }\n", l);
 #endif
 
@@ -1374,7 +1370,7 @@ void sat_solver_add_unit_clause(sat_solver_t *solver, literal_t l) {
  * Add clause { l0, l1 }
  */
 void sat_solver_add_binary_clause(sat_solver_t *solver, literal_t l0, literal_t l1) {
-#if TRACE
+#if YICES_TRACE
   printf("---> Add binary clause: { %d %d }\n", l0, l1);
 #endif
 
@@ -1977,7 +1973,7 @@ static void decide_variable(sat_solver_t *solver, bvar_t x) {
 
   push_literal(&solver->stack, l);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Decision: literal %d, decision level = %u\n", l, solver->decision_level);
 #endif
 }
@@ -1992,7 +1988,7 @@ static void implied_literal(sat_solver_t *solver, literal_t l, antecedent_t a) {
 
   assert(lit_is_unassigned(solver, l));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Implied literal %d, decision level = %u\n", l, solver->decision_level);
 #endif
 
@@ -2027,7 +2023,7 @@ static void implied_literal(sat_solver_t *solver, literal_t l, antecedent_t a) {
  * Record a two-literal conflict: clause {l0, l1} is false
  */
 static void record_binary_conflict(sat_solver_t *solver, literal_t l0, literal_t l1) {
-#if TRACE
+#if YICES_TRACE
   printf("\n---> Binary conflict: {%d, %d}\n", l0, l1);
 #endif
 
@@ -2042,7 +2038,7 @@ static void record_binary_conflict(sat_solver_t *solver, literal_t l0, literal_t
  * Record cl as a conflict clause
  */
 static void record_clause_conflict(sat_solver_t *solver, clause_t *cl) {
-#if TRACE
+#if YICES_TRACE
   uint32_t i;
   literal_t ll;
 
@@ -2559,7 +2555,7 @@ static void analyze_conflict(sat_solver_t *sol) {
   buffer = &sol->buffer;
   unresolved = 0;
 
-#if DEBUG
+#if YICES_DEBUG
   check_marks(sol);
 #endif
 
@@ -2658,7 +2654,7 @@ static void analyze_conflict(sat_solver_t *sol) {
    */
   simplify_learned_clause(sol);
 
-#if DEBUG
+#if YICES_DEBUG
   check_marks(sol);
 #endif
 
@@ -2692,7 +2688,7 @@ static bvar_t select_variable(sat_solver_t *solver) {
   if (rnd <= (uint32_t) (0x1000000 * VAR_RANDOM_FACTOR)) {
     x = random_uint(solver->nb_vars);
     if (var_is_unassigned(solver, x)) {
-#if TRACE
+#if YICES_TRACE
       printf("---> Random selection: literal %d\n", l);
 #endif
       solver->stats.decisions ++;
@@ -2708,7 +2704,7 @@ static bvar_t select_variable(sat_solver_t *solver) {
   while (! heap_is_empty(&solver->heap)) {
     x = heap_get_top(&solver->heap);
     if (var_is_unassigned(solver, x)) {
-#if DEBUG
+#if YICES_DEBUG
       check_top_var(solver, x);
 #endif
       solver->stats.decisions ++;
@@ -2736,7 +2732,7 @@ static void backtrack(sat_solver_t *sol, uint32_t back_level) {
   literal_t l;
   bvar_t x;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Backtracking to level %u\n", back_level);
 #endif
 
@@ -2901,7 +2897,7 @@ solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
     code = propagation(sol);
 
     if (code == no_conflict) {
-#if DEBUG
+#if YICES_DEBUG
       check_propagation(sol);
 #endif
 
@@ -2920,7 +2916,7 @@ solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
 	if (sol->stack.top > sol->simplify_bottom &&
 	    sol->stats.propagations >= sol->simplify_props + sol->simplify_threshold) {
 
-#if TRACE
+#if YICES_TRACE
 	  printf("---> Simplify\n");
 	  printf("---> level = %u, bottom = %u, top = %u\n", sol->decision_level, sol->simplify_bottom, sol->stack.top);
 	  printf("---> props = %"PRIu64", threshold = %"PRIu64"\n", sol->stats.propagations, sol->simplify_threshold);
@@ -3017,7 +3013,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
 
   if (sol->status == status_unsat) return status_unsat;
 
-#if DEBUG
+#if YICES_DEBUG
   uint32_t i;
 
   check_marks(sol);
@@ -3033,7 +3029,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
     return status_unsat;
   }
 
-#if DEBUG
+#if YICES_DEBUG
   check_propagation(sol);
 #endif
 
@@ -3097,13 +3093,13 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
   }
 
   do {
-#if DEBUG
+#if YICES_DEBUG
     check_marks(sol);
 #endif
     //    code = sat_search(sol, c_threshold);  // PICO
     code = sat_search(sol, threshold);     // LUBY
 
-#if DEBUG
+#if YICES_DEBUG
     check_marks(sol);
 #endif
 
@@ -3203,7 +3199,7 @@ uint32_t get_true_literals(sat_solver_t *solver, literal_t *a) {
  *  DEBUGGING  *
  **************/
 
-#if DEBUG
+#if YICES_DEBUG
 
 /*
  * Check whether all variables in the heap have activity <= x

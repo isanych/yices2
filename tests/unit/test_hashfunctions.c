@@ -26,7 +26,7 @@
 #include "utils/cputime.h"
 #include "utils/hash_functions.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -354,7 +354,7 @@ static void words_from_file(char *filename) {
       }
       tmp = (char *) malloc(len + 1);
       if (tmp == NULL) {
-	fprintf(stderr, "malloc failed after %"PRIu32" words; skipping the rest of the file.\n", i);
+	fprintf(stderr, "malloc failed after %" PRIu32 " words; skipping the rest of the file.\n", i);
 	break;
       }
       strcpy(tmp, str);
@@ -384,7 +384,7 @@ static void file_test(char *filename) {
   uint32_t i, j, h;
   double runtime;
 
-  printf("\n--- File %s (%"PRIu32" strings) ---\n", filename, n_words);
+  printf("\n--- File %s (%" PRIu32 " strings) ---\n", filename, n_words);
 
   runtime = get_cpu_time();
   for (i=0; i<100000; i++) {

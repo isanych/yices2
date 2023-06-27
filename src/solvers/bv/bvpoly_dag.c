@@ -2908,7 +2908,7 @@ static void replace_node_in_sum(bvc_dag_t *dag, bvc_sum_t *p, bvnode_t n0, node_
     if (node_of_occ(x) ==  n0) {
       // either x == +n0 or x == -n0
       // in the first case, we replace x by n1
-      // in the second case, we replace  x by not(n1) = n1 ^ 1
+      // in the second case, we replace  x by not_(n1) = n1 ^ 1
       x = n1 ^ sign_of_occ(x);
     } else {
       has_duplicate |= same_node(x, n1);

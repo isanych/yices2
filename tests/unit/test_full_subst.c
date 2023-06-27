@@ -33,7 +33,7 @@
 #include "yices.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -92,7 +92,7 @@ static void init_vars(void) {
     if (i < NVNAMES) {
       name = vname[i];
     } else {
-      sprintf(aux, "x%"PRIu32, i);
+      sprintf(aux, "x%" PRIu32, i);
       name = aux;
     }
     code = yices_set_term_name(v, name);
@@ -118,7 +118,7 @@ static void init_funs(void) {
     if (i < NFNAMES) {
       name = fname[i];
     } else {
-      sprintf(aux, "f%"PRIu32, i);
+      sprintf(aux, "f%" PRIu32, i);
       name = aux;
     }
     code = yices_set_term_name(f, name);
@@ -202,8 +202,8 @@ static void show_map(FILE *f, term_t x, term_t t) {
  */
 // iterator: f is a FILE
 static void show_map_record(void *f, const int_hmap_pair_t *p) {
-  show_map(f, p->key, p->val);
-  fputc('\n', f);
+  show_map((FILE*)f, p->key, p->val);
+  fputc('\n', (FILE*)f);
 }
 
 static void show_subst(FILE *f, full_subst_t *subst) {
@@ -344,7 +344,7 @@ static void print_subst_error(FILE *f, int32_t code) {
     break;
 
   default:
-    fprintf(f, "Unexpected error code %"PRId32"\n", code);
+    fprintf(f, "Unexpected error code %" PRId32 "\n", code);
     fflush(f);
     exit(1);
   }
@@ -393,7 +393,7 @@ int main(void) {
 
   for (i=1; i<=3000; i++) {
     printf("**********************\n"
-	   "*  Random test %-4"PRIu32"  *\n"
+	   "*  Random test %-4" PRIu32 "  *\n"
 	   "**********************\n", i);
     init_full_subst(&test, __yices_globals.manager);
     printf("\nEmpty substitution:\n");

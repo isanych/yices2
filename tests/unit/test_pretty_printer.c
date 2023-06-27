@@ -205,7 +205,7 @@ int main(void) {
 
   init_tokens();
 
-  printf("\nNo truncate, height = %"PRIu32", width = %"PRIu32"\n",
+  printf("\nNo truncate, height = %" PRIu32 ", width = %" PRIu32 "\n",
 	 display.height, display.width);
   init_pp(&pp, &converter, stdout, &display, PP_HMODE, 0);
   test1(&pp);
@@ -217,7 +217,7 @@ int main(void) {
   display.truncate = true;
   for (w = 20; w<50; w++) {
     display.width = w;
-    printf("\n\nTruncate, height = %"PRIu32", width = %"PRIu32"\n",
+    printf("\n\nTruncate, height = %" PRIu32 ", width = %" PRIu32 "\n",
 	 display.height, display.width);
     init_pp(&pp, &converter, stdout, &display, PP_HMODE, 0);
     test1(&pp);
@@ -234,7 +234,7 @@ int main(void) {
 
   display.width = 20;
   display.truncate = false;
-  printf("\nNo truncate, height = %"PRIu32", width = %"PRIu32"\n",
+  printf("\nNo truncate, height = %" PRIu32 ", width = %" PRIu32 "\n",
 	 display.height, display.width);
   init_pp(&pp, &converter, stdout, &display, PP_VMODE, 0);
   test1(&pp);
@@ -246,7 +246,7 @@ int main(void) {
   display.truncate = true;
   for (w = 4; w<50; w++) {
     display.width = w;
-    printf("\n\nTruncate, height = %"PRIu32", width = %"PRIu32"\n",
+    printf("\n\nTruncate, height = %" PRIu32 ", width = %" PRIu32 "\n",
 	 display.height, display.width);
     init_pp(&pp, &converter, stdout, &display, PP_VMODE, 0);
     test1(&pp);
@@ -260,7 +260,7 @@ int main(void) {
   display.truncate = false;
   for (w = 4; w<50; w++) {
     display.width = w;
-    printf("\n\nNo truncate, height = %"PRIu32", width = %"PRIu32"\n",
+    printf("\n\nNo truncate, height = %" PRIu32 ", width = %" PRIu32 "\n",
 	 display.height, display.width);
     init_pp(&pp, &converter, stdout, &display, PP_VMODE, 0);
     test1(&pp);

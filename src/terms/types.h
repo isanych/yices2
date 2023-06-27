@@ -458,7 +458,7 @@ static inline bool valid_type(type_table_t *tbl, type_t i) {
 
 static inline type_kind_t type_kind(type_table_t *tbl, type_t i) {
   assert(valid_type(tbl, i));
-  return type_desc(tbl, i)->kind;
+  return (type_kind_t)type_desc(tbl, i)->kind;
 }
 
 /*

@@ -208,7 +208,7 @@ static inline bool flip_gate(uint32_t b) {
 /*
  * Search for key k: assumes the key is normalized.
  * - polarity is either 0 or 1.
- * - if k is mapped to some l then we return either l or not(l) depending
+ * - if k is mapped to some l then we return either l or not_(l) depending
  *   on polarity.
  */
 static literal_t gate_hmap_find_key(const gate_hmap_t *hmap, const bgate_t *k, int32_t polarity) {
@@ -311,7 +311,7 @@ void gate_hmap_add(gate_hmap_t *hmap, const bgate_t *g, literal_t l) {
   key = *g;
   if (flip_gate(key.ttbl)) {
     key.ttbl = (~key.ttbl) & 0xff;
-    l = not(l);
+    l = not_(l);
   }
   gate_hmap_add_entry(hmap, &key, l);
 }
@@ -322,7 +322,7 @@ void gate_hmap_add_ttbl(gate_hmap_t *hmap, const ttbl_t *tt, literal_t l) {
 
   if (flip_gate(tt->mask)) {
     key.ttbl = (~tt->mask) & 0xff;
-    l = not(l);
+    l = not_(l);
   } else {
     key.ttbl = tt->mask;
   }

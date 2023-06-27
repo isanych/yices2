@@ -383,7 +383,7 @@ literal_t remap_table_find_root(remap_table_t *table, literal_t l) {
 
   while (tst_bit(table->merge_bit, var_of(l))) {
     // if l = pos(v), replace l by map[v]
-    // if l = neg(v), replace l by not(map[v])
+    // if l = neg(v), replace l by not_(map[v])
     assert(table->map[var_of(l)] != null_literal);
     l = table->map[var_of(l)] ^ sign_of_lit(l);
   }
@@ -418,7 +418,7 @@ static inline void remap_table_save(remap_table_t *table, int32_t v) {
 
 /*
  * Merge l1 and l2:
- * - both must be root and l1 must be different from l2 and not(l2)
+ * - both must be root and l1 must be different from l2 and not_(l2)
  * - if remap[l1] != null_literal, we use l2 := l1
  * - otherwise, we map l1 to l2
  */
@@ -435,7 +435,7 @@ void remap_table_merge(remap_table_t *table, literal_t l1, literal_t l2) {
 
   /*
    * If l1 is positive: store l2 as map[var_of(l1)]
-   * If l1 is negative: store not(l2) in map[var_of(l1)]
+   * If l1 is negative: store not_(l2) in map[var_of(l1)]
    */
   assert(table->map[var_of(l1)] == null_literal);
   table->map[var_of(l1)] = l2 ^ sign_of_lit(l1);

@@ -25,7 +25,7 @@
 #include "utils/int_array_sort.h"
 #include "utils/memalloc.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -222,7 +222,7 @@ static void show_bset(bset_t *s) {
   printf("{");
   n = s->card;
   for (i=0; i<n; i++) {
-    printf(" %"PRIu32, s->data[i]);
+    printf(" %" PRIu32, s->data[i]);
   }
   printf(" }");
 }
@@ -237,7 +237,7 @@ static void show_cset(cset_t *c) {
   printf("{");
   n = aux.size;
   for (i=0; i<n; i++) {
-    printf(" %"PRIu32, aux.data[i]);
+    printf(" %" PRIu32, aux.data[i]);
   }
   printf(" }");
   delete_ivector(&aux);
@@ -316,8 +316,8 @@ static void test_copy(cset_t *c, bset_t *s) {
   n = cset_card(c);
   if (n != s->card) {
     printf("*** BUG ****\n");
-    printf(" cset_card returned %"PRIu32"\n", n);
-    printf(" expected cardinal is %"PRIu32"\n", s->card);
+    printf(" cset_card returned %" PRIu32 "\n", n);
+    printf(" expected cardinal is %" PRIu32 "\n", s->card);
     fflush(stdout);
     exit(1);
   }
@@ -525,7 +525,7 @@ static void do_tests(uint32_t n) {
 
   assert(n > 0);
   printf("\n============================"
-	 "\n    DOMAIN SIZE = %"PRIu32
+	 "\n    DOMAIN SIZE = %" PRIu32
 	 "\n============================\n\n", n);
 
   init_cset(&c1);

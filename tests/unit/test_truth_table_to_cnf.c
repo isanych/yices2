@@ -71,7 +71,7 @@ static void show_table(int32_t b[8]) {
     vy = (i & 4) >> 2;
     vz = (i & 2) >> 1;
     vt = (i & 1);
-    printf(" %"PRId32"  %"PRId32"  %"PRId32" | %"PRId32"\n", vy, vz, vt, b[i]);
+    printf(" %" PRId32 "  %" PRId32 "  %" PRId32 " | %" PRId32 "\n", vy, vz, vt, b[i]);
   }
   printf("-------------\n\n");
 }
@@ -154,7 +154,7 @@ static void show_compact_mask(uint32_t m[8]) {
     compact = (compact << 4) | m[i];
   }
 
-  printf("CNF compilation code: %"PRIu32" 0x%08x\n", compact, compact);
+  printf("CNF compilation code: %" PRIu32 " 0x%08x\n", compact, compact);
 }
 
 
@@ -343,7 +343,7 @@ int main(void) {
   uint32_t i, j;
 
   for (i=0; i<256; i++) {
-    printf("Function %"PRIu32"\n\n", i);
+    printf("Function %" PRIu32 "\n\n", i);
     for (j=0; j<8; j++) {
       b[j] = (i >> j) & 1;
     }

@@ -51,13 +51,13 @@
  */
 static void trace_stats(smt_core_t *core, const char *when, uint32_t level) {
   trace_printf(core->trace, level,
-	       "(%-10s %8"PRIu64" %10"PRIu64" %8"PRIu64" %8"PRIu32" %8"PRIu32" %8"PRIu64" %8"PRIu32" %8"PRIu64" %7.1f)\n",
+	       "(%-10s %8" PRIu64 " %10" PRIu64 " %8" PRIu64 " %8" PRIu32 " %8" PRIu32 " %8" PRIu64 " %8" PRIu32 " %8" PRIu64 " %7.1f)\n",
 	       when, core->stats.conflicts, core->stats.decisions, core->stats.random_decisions,
 	       num_binary_clauses(core), num_prob_clauses(core), num_prob_literals(core),
 	       num_learned_clauses(core), num_learned_literals(core), avg_learned_clause_size(core));
 #if 0
   fprintf(stderr,
-	  "(%-10s %8"PRIu64" %10"PRIu64" %8"PRIu64" %8"PRIu32" %8"PRIu32" %8"PRIu64" %8"PRIu32" %8"PRIu64" %7.1f)\n",
+	  "(%-10s %8" PRIu64 " %10" PRIu64 " %8" PRIu64 " %8" PRIu32 " %8" PRIu32 " %8" PRIu64 " %8" PRIu32 " %8" PRIu64 " %7.1f)\n",
 	  when, core->stats.conflicts, core->stats.decisions, core->stats.random_decisions,
 	  num_binary_clauses(core), num_prob_clauses(core), num_prob_literals(core),
 	  num_learned_clauses(core), num_learned_literals(core), avg_learned_clause_size(core));
@@ -89,7 +89,7 @@ static void trace_inner_restart(smt_core_t *core) {
  */
 static void trace_reduce(smt_core_t *core, uint64_t deleted) {
   trace_stats(core, "reduce:", 3);
-  trace_printf(core->trace, 4, "(%"PRIu64" clauses deleted)\n", deleted);
+  trace_printf(core->trace, 4, "(%" PRIu64 " clauses deleted)\n", deleted);
 }
 
 
@@ -522,7 +522,7 @@ static void context_set_search_parameters(context_t *ctx, const param_t *params)
    * Set simplex parameters
    */
   if (context_has_simplex_solver(ctx)) {
-    simplex = ctx->arith_solver;
+    simplex = (simplex_solver_t*)ctx->arith_solver;
     if (params->use_simplex_prop) {
       simplex_enable_propagation(simplex);
       simplex_set_prop_threshold(simplex, params->max_prop_row_size);
@@ -541,7 +541,7 @@ static void context_set_search_parameters(context_t *ctx, const param_t *params)
    * Set array solver parameters
    */
   if (context_has_fun_solver(ctx)) {
-    fsolver = ctx->fun_solver;
+    fsolver = (fun_solver_t*)ctx->fun_solver;
     fun_solver_set_max_update_conflicts(fsolver, params->max_update_conflicts);
     fun_solver_set_max_extensionality(fsolver, params->max_extensionality);
   }
@@ -1177,7 +1177,7 @@ bval_t context_bool_term_value(context_t *ctx, term_t t) {
     }
 
     // negate v if polarity is 1 (cf. smt_core_base_types.h)
-    v ^= polarity;
+    v = (bval_t)(v ^ polarity);
   }
 
   return v;

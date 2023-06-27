@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <yices_config.h>
 
 /*
  * - current = current character
@@ -80,13 +81,13 @@ struct reader_s {
  * - if the file was not open, any subsequent attempt
  *   to read will return EOF
  */
-extern int32_t init_file_reader(reader_t *reader, const char *filename);
+YICES_EXTERN int32_t init_file_reader(reader_t *reader, const char *filename);
 
 /*
  * Initialize reader for an already opened stream
  * - set filename to whatever is given as name
  */
-extern void init_stream_reader(reader_t *reader, FILE *f, const char *name);
+YICES_EXTERN void init_stream_reader(reader_t *reader, FILE *f, const char *name);
 
 /*
  * Initialize reader for standard input
@@ -98,16 +99,16 @@ static inline void init_stdin_reader(reader_t *reader) {
 /*
  * Initialize reader for string data
  */
-extern void init_string_reader(reader_t *reader, const char *data, const char *name);
+YICES_EXTERN void init_string_reader(reader_t *reader, const char *data, const char *name);
 
 
 #if 0
 /*
  * Experimental hack: attempt to support UTF-8 input
  */
-extern int32_t init_wide_file_reader(reader_t *reader, const char *filename);
+YICES_EXTERN int32_t init_wide_file_reader(reader_t *reader, const char *filename);
 
-extern void init_wide_stream_reader(reader_t *reader, FILE *f, const char *name);
+YICES_EXTERN void init_wide_stream_reader(reader_t *reader, FILE *f, const char *name);
 
 static inline void init_wide_stdin_reader(reader_t *reader) {
   init_wide_stream_reader(reader, stdin, "stdin");
@@ -121,7 +122,7 @@ static inline void init_wide_stdin_reader(reader_t *reader) {
  * - reset position/line/col and current
  * - reader must be a string reader.
  */
-extern void reset_string_reader(reader_t *reader, const char *data);
+YICES_EXTERN void reset_string_reader(reader_t *reader, const char *data);
 
 
 /*
@@ -129,7 +130,7 @@ extern void reset_string_reader(reader_t *reader, const char *data);
  * - return EOF on error, 0 otherwise
  * - no effect if reader is a string reader.
  */
-extern int close_reader(reader_t *reader);
+YICES_EXTERN int close_reader(reader_t *reader);
 
 
 /*

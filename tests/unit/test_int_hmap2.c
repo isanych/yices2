@@ -24,7 +24,7 @@
 #include "utils/int_hash_map2.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 // random does not exist on MINGW
 static inline long int random(void) {
   return rand();
@@ -41,9 +41,9 @@ static void print_map(int_hmap2_t *map) {
   uint32_t i, n, check;
 
   printf("map %p\n", map);
-  printf("  size = %"PRIu32"\n", map->size);
-  printf("  nelems = %"PRIu32"\n", map->nelems);
-  printf("  resize_threshold = %"PRIu32"\n", map->resize_threshold);
+  printf("  size = %" PRIu32 "\n", map->size);
+  printf("  nelems = %" PRIu32 "\n", map->nelems);
+  printf("  resize_threshold = %" PRIu32 "\n", map->resize_threshold);
   printf("  data = %p\n", map->data);
   printf("  content:\n");
 
@@ -52,12 +52,12 @@ static void print_map(int_hmap2_t *map) {
   n = map->size;
   for (i=0; i<n; i++) {
     if (d->k0 >= 0) {
-      printf("    [k0 = %"PRId32", k1 = %"PRId32", val = %"PRId32"]\n", d->k0, d->k1, d->val);
+      printf("    [k0 = %" PRId32 ", k1 = %" PRId32 ", val = %" PRId32 "]\n", d->k0, d->k1, d->val);
       check ++;
     }
     d ++;
   }
-  printf("  %"PRIu32" records\n\n", check);
+  printf("  %" PRIu32 " records\n\n", check);
   assert(check == map->nelems);
 }
 
@@ -109,26 +109,26 @@ static void test1(int_hmap2_t *hmap, pair_t *a, uint32_t n) {
   int_hmap2_rec_t *find, *get;
   int32_t k0, k1;
   uint32_t i;
-  bool new;
+  bool new_;
 
   // first pass: find + get
   for (i=0; i<n; i++) {
     k0 = a[i].k0;
     k1 = a[i].k1;
-    printf("Testing: k0 = %"PRId32", k1 = %"PRId32"\n", k0, k1);
+    printf("Testing: k0 = %" PRId32 ", k1 = %" PRId32 "\n", k0, k1);
     find = int_hmap2_find(hmap, k0, k1);
-    new = false;
-    get = int_hmap2_get(hmap, k0, k1, &new);
+    new_ = false;
+    get = int_hmap2_get(hmap, k0, k1, &new_);
     if (find != NULL) {
-      assert(!new && get == find && find->k0 == k0 &&
+      assert(!new_ && get == find && find->k0 == k0 &&
 	     find->k1 == k1 && find->val == (k0+k1));
 
-      printf("Found record: [k0 = %"PRId32", k1 = %"PRId32", val = %"PRId32"]\n",
+      printf("Found record: [k0 = %" PRId32 ", k1 = %" PRId32 ", val = %" PRId32 "]\n",
 	     find->k0, find->k1, find->val);
     } else {
-      assert(new && get != NULL && get->k0 == k0 && get->k1 == k1);
+      assert(new_ && get != NULL && get->k0 == k0 && get->k1 == k1);
       get->val = k0+k1;
-      printf("New record: [k0 = %"PRId32", k1 = %"PRId32", val = %"PRId32"]\n",
+      printf("New record: [k0 = %" PRId32 ", k1 = %" PRId32 ", val = %" PRId32 "]\n",
 	     get->k0, get->k1, get->val);
     }
   }
@@ -137,10 +137,10 @@ static void test1(int_hmap2_t *hmap, pair_t *a, uint32_t n) {
   for (i=0; i<n; i++) {
     k0 = a[i].k0;
     k1 = a[i].k1;
-    printf("Checking: k0 = %"PRId32", k1 = %"PRId32"...", k0, k1);
+    printf("Checking: k0 = %" PRId32 ", k1 = %" PRId32 "...", k0, k1);
     find = int_hmap2_find(hmap, k0, k1);
-    get = int_hmap2_get(hmap, k0, k1, &new);
-    if (!new &&  find != NULL && find == get &&
+    get = int_hmap2_get(hmap, k0, k1, &new_);
+    if (!new_ &&  find != NULL && find == get &&
 	find->k0 == k0 && find->k1 == k1 && find->val == k0+k1) {
       printf("ok\n");
     } else {

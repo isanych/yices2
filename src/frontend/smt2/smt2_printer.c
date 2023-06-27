@@ -167,7 +167,7 @@ void smt2_pp_object(smt2_pp_t *printer, value_table_t *table, value_t c) {
     smt2_pp_algebraic(printer, table->desc[c].ptr);
     break;
   case BITVECTOR_VALUE:
-    smt2_pp_bitvector(printer, table->desc[c].ptr);
+    smt2_pp_bitvector(printer, (value_bv_t*)table->desc[c].ptr);
     break;
   case UNINTERPRETED_VALUE:
     smt2_pp_unint_name(printer, c);
@@ -228,7 +228,7 @@ void smt2_pp_function(smt2_pp_t *printer, value_table_t *table, value_t c, bool 
   uint32_t j, m;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
 
   smt2_pp_function_header(printer, table, c, fun->type);
 
@@ -368,7 +368,7 @@ static void smt2_pp_array(smt2_pp_t *printer, value_table_t *table, type_t tau, 
   uint32_t j, m;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
 
   types = table->type_table;
   range = function_type_range(types, tau);
@@ -542,7 +542,7 @@ static void smt2_pp_function_definition(smt2_pp_t *printer, value_table_t *table
   type_t range;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
 
   range = function_type_range(table->type_table, tau);
 

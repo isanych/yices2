@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <malloc.h>
 
 #include "solvers/egraph/composites.h"
 #include "solvers/egraph/egraph_printer.h"
@@ -43,7 +44,7 @@
  */
 
 #define NC 4
-#define NT 11
+#define NT 12
 
 // fixed label array
 static elabel_t label[NT];
@@ -59,6 +60,7 @@ static eterm_t g = 7;
 static eterm_t h = 8;
 static eterm_t i = 9;
 static eterm_t j = 10;
+static eterm_t k = 11;
 
 
 #define NCMP 50
@@ -88,6 +90,7 @@ static void init_labels(void) {
   label[h] = pos_label(3);
   label[i] = pos_label(3);
   label[j] = pos_label(3);
+  label[k] = pos_label(4);
 };
 
 /*
@@ -165,7 +168,7 @@ static void print_composites(uint32_t n) {
 
   printf("==== Terms ====\n");
   for (k=0; k<n; k++) {
-    printf("cmp[%"PRIu32"] = ", k);
+    printf("cmp[%" PRIu32 "] = ", k);
     print_composite(stdout, composite[k]);
     printf("\n");
   }
@@ -173,6 +176,7 @@ static void print_composites(uint32_t n) {
 }
 
 static void show_label(eterm_t t) {
+  if (t >= NT) { return; }
   print_eterm_id(stdout, t);
   printf(" ---> ");
   print_label(stdout, label[t]);
@@ -193,7 +197,7 @@ static void test_signatures(uint32_t n) {
   uint32_t k;
 
   for (k=0; k<n; k++) {
-    printf("cmp[%"PRIu32"] = ", k);
+    printf("cmp[%" PRIu32 "] = ", k);
     print_composite(stdout, composite[k]);
     printf("\n");
     signature_composite(composite[k], label, &sgn);
@@ -281,11 +285,10 @@ static void test_congruences(uint32_t n) {
   uint32_t k;
   composite_t *tmp, *root;
   uint32_t nroots;
-  composite_t *roots[n];
-
+  composite_t** roots = (composite_t**)alloca(n * sizeof(composite_t*));
 
   nroots = 0;
-  for (k=0; k<n; k++) {
+  for (k = 0; k < n; k++) {
     print_composite(stdout, composite[k]);
     printf("\n");
     signature_composite(composite[k], label, &sgn);
@@ -309,10 +312,12 @@ static void test_congruences(uint32_t n) {
     if (tmp == composite[k] && root == NULL) {
       printf("---> added as congruence root\n");
       roots[nroots] = tmp;
-      nroots ++;
-    } else if (tmp == root && root != NULL) {
+      nroots++;
+    }
+    else if (tmp == root && root != NULL) {
       printf("---> confirmed congruence\n");
-    } else {
+    }
+    else {
       printf("\n*** BUG: get/find disagree ***\n");
     }
 
@@ -320,7 +325,7 @@ static void test_congruences(uint32_t n) {
     fflush(stdout);
   }
 
-  for (k=0; k<nroots; k++) {
+  for (k = 0; k < nroots; k++) {
     tmp = roots[k];
     printf("---> removing root: ");
     print_composite(stdout, tmp);

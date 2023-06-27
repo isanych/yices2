@@ -32,11 +32,11 @@
  */
 void print_rdl_vertex(FILE *f, int32_t x) {
   if (x >= 0) {
-    fprintf(f, "v!%"PRId32, x);
+    fprintf(f, "v!%" PRId32, x);
   } else if (x == null_rdl_vertex) {
     fputs("nil", f);
   } else {
-    fprintf(f, "<RDL-vertex%"PRId32">", x);
+    fprintf(f, "<RDL-vertex%" PRId32 ">", x);
   }
 }
 
@@ -59,7 +59,7 @@ void print_rdl_const(FILE *f, rdl_const_t *c) {
       if (d == 1) {
         fputs("delta", f);
       } else {
-        fprintf(f, "%"PRId32" * delta", d);
+        fprintf(f, "%" PRId32 " * delta", d);
       }
     }
   } else {
@@ -74,7 +74,7 @@ void print_rdl_const(FILE *f, rdl_const_t *c) {
       if (d == 1) {
         fputs("delta", f);
       } else {
-        fprintf(f, "%"PRId32" * delta", d);
+        fprintf(f, "%" PRId32 " * delta", d);
       }
     }
   }
@@ -120,7 +120,7 @@ void print_rdl_vertex_values(FILE *f, rdl_solver_t *rdl) {
 
   n = rdl->nvertices;
   for (i=0; i<n; i++) {
-    fprintf(f, "val[%"PRIu32"] = ", i);
+    fprintf(f, "val[%" PRIu32 "] = ", i);
     print_rdl_vertex_value(f, rdl, i);
     fprintf(f, "\n");
   }
@@ -194,11 +194,11 @@ void print_rdl_triple(FILE *f, dl_triple_t *triple) {
  */
 void print_rdl_var_name(FILE *f, thvar_t u) {
   if (u >= 0) {
-    fprintf(f, "x!%"PRId32, u);
+    fprintf(f, "x!%" PRId32, u);
   } else if (u == null_thvar) {
     fputs("nil-var", f);
   } else {
-    fprintf(f, "<RDL-var%"PRId32">", u);
+    fprintf(f, "<RDL-var%" PRId32 ">", u);
   }
 }
 
@@ -267,7 +267,7 @@ void print_rdl_edge(FILE *f, rdl_solver_t *solver, uint32_t i) {
   x = e->source;
   y = e->target;
 
-  fprintf(f, "edge[%"PRIu32"]: v!%"PRId32" - v!%"PRId32" <= ", i, x, y);
+  fprintf(f, "edge[%" PRIu32 "]: v!%" PRId32 " - v!%" PRId32 " <= ", i, x, y);
   print_rdl_const(f, solver->graph.edges.cost + i);
 }
 
@@ -289,7 +289,7 @@ void print_rdl_constraint(FILE *f, rdl_solver_t *solver, uint32_t i) {
   y = e->target;
   d = rdl_dist(m, x, y);
 
-  fprintf(f, "dist[%"PRIu32"]: v!%"PRId32" - v!%"PRId32" <= ", i, x, y);
+  fprintf(f, "dist[%" PRIu32 "]: v!%" PRId32 " - v!%" PRId32 " <= ", i, x, y);
   print_rdl_const(f, d);
 }
 
@@ -304,11 +304,11 @@ void print_rdl_path_constraint(FILE *f, rdl_solver_t *solver, int32_t x, int32_t
 
   cell = rdl_cell(&solver->graph.matrix, x, y);
   if (cell->id >= 0) {
-    fprintf(f, "path: v!%"PRId32" - v!%"PRId32" <= ", x, y);
+    fprintf(f, "path: v!%" PRId32 " - v!%" PRId32 " <= ", x, y);
     print_rdl_const(f, &cell->dist);
     fprintf(f, "\n");
   } else {
-    fprintf(f, "no path from v!%"PRId32" to v!%"PRId32"\n", x, y);
+    fprintf(f, "no path from v!%" PRId32 " to v!%" PRId32 "\n", x, y);
   }
 }
 

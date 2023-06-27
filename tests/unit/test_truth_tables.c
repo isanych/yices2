@@ -201,7 +201,7 @@ static uint64_t truth_tbl_of_ite(cond_def_collector_t *c, int32_t idx, term_t *x
 
 static uint64_t truth_tbl_of_or(cond_def_collector_t *c, int32_t idx, term_t *x, uint32_t n) {
   simple_cache_entry_t *e;
-  composite_term_t *or;
+  composite_term_t *or_;
   uint64_t r;
   uint32_t i, m;
 
@@ -214,10 +214,10 @@ static uint64_t truth_tbl_of_or(cond_def_collector_t *c, int32_t idx, term_t *x,
   }
 
   r = 0;
-  or = composite_for_idx(c->terms, idx);
-  m = or->arity;
+  or_ = composite_for_idx(c->terms, idx);
+  m = or_->arity;
   for (i=0; i<m; i++) {
-    r |= truth_tbl_of_term(c, or->arg[i], x, n);
+    r |= truth_tbl_of_term(c, or_->arg[i], x, n);
   }
 
   cache_truth_tbl(c, idx, r);
@@ -227,7 +227,7 @@ static uint64_t truth_tbl_of_or(cond_def_collector_t *c, int32_t idx, term_t *x,
 
 static uint64_t truth_tbl_of_xor(cond_def_collector_t *c, int32_t idx, term_t *x, uint32_t n) {
   simple_cache_entry_t *e;
-  composite_term_t *xor;
+  composite_term_t *xor_;
   uint64_t r;
   uint32_t i, m;
 
@@ -240,10 +240,10 @@ static uint64_t truth_tbl_of_xor(cond_def_collector_t *c, int32_t idx, term_t *x
   }
 
   r = 0;
-  xor = composite_for_idx(c->terms, idx);
-  m = xor->arity;
+  xor_ = composite_for_idx(c->terms, idx);
+  m = xor_->arity;
   for (i=0; i<m; i++) {
-    r ^= truth_tbl_of_term(c, xor->arg[i], x, n);
+    r ^= truth_tbl_of_term(c, xor_->arg[i], x, n);
   }
 
   cache_truth_tbl(c, idx, r);
@@ -332,7 +332,7 @@ static uint64_t truth_tbl_of_term(cond_def_collector_t *c, term_t t, term_t *x, 
 
   /*
    * ttbl is the truth table for i.
-   * if  r is not(i), we flip all bits
+   * if  r is not_(i), we flip all bits
    */
   if (is_neg_term(r)) {
     ttbl = ~ttbl;

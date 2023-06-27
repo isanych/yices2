@@ -20,12 +20,6 @@
  * TERM-STACK OPERATIONS FOR SMT-LIB 1.2
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdint.h>
 #include <assert.h>
 

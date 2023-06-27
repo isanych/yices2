@@ -103,7 +103,7 @@ static void resize_generic_heap_idx(generic_heap_t *heap, int32_t x) {
     out_of_memory();
   }
 
-  tmp = safe_realloc(heap->idx, n * sizeof(int32_t));
+  tmp = (int32_t*)safe_realloc(heap->idx, n * sizeof(int32_t));
   for (i=heap->idx_size; i<n; i++) {
     tmp[i] = -1;
   }

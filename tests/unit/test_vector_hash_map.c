@@ -26,14 +26,14 @@
 static void show_vector(FILE *f, vhmap_vector_t *v) {
   uint32_t i, n;
 
-  fprintf(f, "key %"PRId32": ", v->key);
+  fprintf(f, "key %" PRId32 ": ", v->key);
   n = v->nelems;
   if (n == 0) {
     fprintf(f, "[]");
   } else {
-    fprintf(f, "[%"PRId32, v->data[0]);
+    fprintf(f, "[%" PRId32, v->data[0]);
     for (i=1; i<n; i++) {
-      fprintf(f, " %"PRId32, v->data[i]);
+      fprintf(f, " %" PRId32, v->data[i]);
     }
     fprintf(f, "]");
   }
@@ -44,9 +44,9 @@ static void show_hmap(FILE *f, vector_hmap_t *hmap) {
   uint32_t i, n;
   
   fprintf(f, "hash-map %p\n", hmap);
-  fprintf(f, "  size = %"PRIu32"\n", hmap->size);
-  fprintf(f, "  nelems = %"PRIu32"\n", hmap->nelems);
-  fprintf(f, "  resize threshold = %"PRIu32"\n", hmap->resize_threshold);
+  fprintf(f, "  size = %" PRIu32 "\n", hmap->size);
+  fprintf(f, "  nelems = %" PRIu32 "\n", hmap->nelems);
+  fprintf(f, "  resize threshold = %" PRIu32 "\n", hmap->resize_threshold);
   fprintf(f, "  content:\n");
 
   n = hmap->size;
@@ -110,14 +110,14 @@ static void check_vector(const vector_hmap_t *hmap, int32_t k) {
   if (k < 1 || k > 23) {
     // no vector with that key
     if (v != NULL) {
-      fprintf(stderr, "*** BUG: found vector %p of key %"PRId32" ***\n", v, k);
+      fprintf(stderr, "*** BUG: found vector %p of key %" PRId32 " ***\n", v, k);
       fprintf(stderr, "    expected NULL\n");
       exit(1);
     }
   } else {
 
     if (v->key != k) {
-      fprintf(stderr, "*** BUG: bad vector for key %"PRId32" (v->key = %"PRId32") ***\n", k, v->key);
+      fprintf(stderr, "*** BUG: bad vector for key %" PRId32 " (v->key = %" PRId32 ") ***\n", k, v->key);
       exit(1);
     }
 
@@ -125,11 +125,11 @@ static void check_vector(const vector_hmap_t *hmap, int32_t k) {
     for (i=0; i<n; i++) {
       x = v->data[i];
       if (x < 1 || x > 23) {
-	fprintf(stderr, "*** BUG: out-of-range element in vector key %"PRId32" (x = %"PRId32") ***\n", k, x);
+	fprintf(stderr, "*** BUG: out-of-range element in vector key %" PRId32 " (x = %" PRId32 ") ***\n", k, x);
 	exit(1);
       }
       if (x % k != 0) {
-	fprintf(stderr, "*** BUG: bad element in vector of key %"PRId32" (x = %"PRId32") ***\n", k, x);
+	fprintf(stderr, "*** BUG: bad element in vector of key %" PRId32 " (x = %" PRId32 ") ***\n", k, x);
 	exit(1);
       }
     }
@@ -137,19 +137,19 @@ static void check_vector(const vector_hmap_t *hmap, int32_t k) {
     c = multiples(k);
     if (n < c) {
       fprintf(stderr,
-	      "*** BUG: missing elements in vector of key %"PRId32" (expected %"PRIu32", got %"PRIu32") ***\n",
+	      "*** BUG: missing elements in vector of key %" PRId32 " (expected %" PRIu32 ", got %" PRIu32 ") ***\n",
 	      k, c, n);
       exit(1);
     }
     if (n > c) {
       fprintf(stderr,
-	      "*** BUG: too many elements in vector of key %"PRId32" (expected %"PRIu32", got %"PRIu32") ***\n",
+	      "*** BUG: too many elements in vector of key %" PRId32 " (expected %" PRIu32 ", got %" PRIu32 ") ***\n",
 	      k, c, n);
       exit(1);
     }
   }
 
-  printf("Vector of key %"PRId32" looks correct\n", k);
+  printf("Vector of key %" PRId32 " looks correct\n", k);
 }
 
 static vector_hmap_t hmap;

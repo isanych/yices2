@@ -51,12 +51,12 @@ static void print_benchmark(FILE *f, smt_benchmark_t *bench) {
   n = bench->nformulas;
   fprintf(f, "Benchmark %s\n", bench->name);
   fprintf(f, "Logic: %s\n", bench->logic_name);
-  fprintf(f, "Parameter: %"PRId32"\n", bench->logic_parameter);
+  fprintf(f, "Parameter: %" PRId32 "\n", bench->logic_parameter);
   fprintf(f, "Status: %s\n", status2string[bench->status]);
-  fprintf(f, "Number of formulas or assumptions: %"PRIu32"\n", n);
+  fprintf(f, "Number of formulas or assumptions: %" PRIu32 "\n", n);
 
   for (i=0; i<n; i++) {
-    fprintf(f, "\n---- Assertion %"PRIu32" ----\n", i);
+    fprintf(f, "\n---- Assertion %" PRIu32 " ----\n", i);
     print_term(f, bench->formulas[i]);
     fprintf(f, "\n");
   }
@@ -92,9 +92,9 @@ static void dump_benchmark(FILE *f, smt_benchmark_t *bench) {
   n = bench->nformulas;
   fprintf(f, "Benchmark %s\n", bench->name);
   fprintf(f, "Logic: %s\n", bench->logic_name);
-  fprintf(f, "Parameter: %"PRId32"\n", bench->logic_parameter);
+  fprintf(f, "Parameter: %" PRId32 "\n", bench->logic_parameter);
   fprintf(f, "Status: %s\n", status2string[bench->status]);
-  fprintf(f, "Number of formulas or assumptions: %"PRIu32"\n", n);
+  fprintf(f, "Number of formulas or assumptions: %" PRIu32 "\n", n);
   fprintf(f, "Assertions: ");
   for (i=0; i<n; i++) {
     if (i % 20 == 19) {

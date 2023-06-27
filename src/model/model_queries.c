@@ -172,7 +172,7 @@ bool formulas_hold_in_model(model_t *mdl, uint32_t n, const term_t a[], int32_t 
  * - t is relevant if it's uninterpreted and has a name
  */
 static bool term_is_relevant(void *aux, term_t t) {
-  return is_pos_term(t) && term_kind(aux, t) == UNINTERPRETED_TERM && term_name(aux, t) != NULL;
+  return is_pos_term(t) && term_kind((term_table_t*)aux, t) == UNINTERPRETED_TERM && term_name((term_table_t*)aux, t) != NULL;
 }
 
 /*

@@ -47,9 +47,9 @@ void print_term_id(FILE *f, term_t t) {
   if (t <= false_term) {
     fputs(term2string[t], f);
   } else if (is_neg_term(t)) {
-    fprintf(f, "(not t!%"PRId32")", index_of(t));
+    fprintf(f, "(not t!%" PRId32 ")", index_of(t));
   } else {
-    fprintf(f, "t!%"PRId32, index_of(t));
+    fprintf(f, "t!%" PRId32, index_of(t));
   }
 }
 
@@ -67,14 +67,14 @@ static void print_varexp_array(FILE *f, varexp_t *a, uint32_t n) {
   d = a[0].exp;
   print_term_id(f, a[0].var);
   if (d != 1) {
-    fprintf(f, "^%"PRIu32, d);
+    fprintf(f, "^%" PRIu32, d);
   }
   for (i=1; i<n; i++) {
     d = a[i].exp;
     fputc('*', f);
     print_term_id(f, a[i].var);
     if (d != 1) {
-      fprintf(f, "^%"PRIu32, d);
+      fprintf(f, "^%" PRIu32, d);
     }
   }
 }
@@ -409,18 +409,18 @@ static void print_bvmono64_raw(FILE *f, uint64_t coeff, int32_t x, uint32_t n, b
 
   } else if (coeff == 1) {
     if (! first) fputs(" + ", f);
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
 
   } else if (bvconst64_is_minus_one(coeff, n)) {
     if (! first) fputc(' ', f);
     fputs("- ", f);
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
 
   } else {
     if (! first) fputs(" + ", f);
     print_bvconst64(f, coeff, n);
     fputc('*', f);
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
   }
 }
 
@@ -434,18 +434,18 @@ static void print_bvmono_raw(FILE *f, uint32_t *coeff, int32_t x, uint32_t n, bo
 
   } else if (bvconst_is_one(coeff, w)) {
     if (! first) fputs(" + ", f);
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
 
   } else if (bvconst_is_minus_one(coeff, n)) {
     if (! first) fputc(' ', f);
     fputs("- ", f);
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
 
   } else {
     if (! first) fputs(" + ", f);
     bvconst_print(f, coeff, n);
     fputc('*', f);
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
 
   }
 }
@@ -519,7 +519,7 @@ static void print_bit(FILE *f, bit_t b) {
     fprintf(f, "ff");
   } else {
     if (bit_is_neg(b)) fprintf(f, "~");
-    fprintf(f, "b!%"PRId32, node_of_bit(b));
+    fprintf(f, "b!%" PRId32, node_of_bit(b));
   }
 }
 
@@ -667,7 +667,7 @@ static void print_select_term(FILE *f, term_table_t *tbl, term_kind_t tag, selec
   }
   fprintf(f, "(%s ", tag2string[tag]);
   print_term_recur(f, tbl, d->arg, level);
-  fprintf(f, " %"PRIu32")", idx);
+  fprintf(f, " %" PRIu32 ")", idx);
 }
 
 // root atom
@@ -693,7 +693,7 @@ static void print_root_atom_term(FILE *f, term_table_t *tbl, root_atom_t *r, int
     fprintf(f, ">");
     break;
   }
-  fprintf(f, " %"PRIu32" ", r->k);
+  fprintf(f, " %" PRIu32 " ", r->k);
   print_term_recur(f, tbl, r->x, level);
   fprintf(f, " ");
   print_term_recur(f, tbl, r->p, level);
@@ -844,13 +844,13 @@ static void print_power_product_term(FILE *f, term_table_t *tbl, pprod_t *r, int
   assert(n > 0);
   print_term_recur(f, tbl, r->prod[0].var, level);
   if (r->prod[0].exp > 1) {
-    fprintf(f, "^%"PRIu32, r->prod[0].exp);
+    fprintf(f, "^%" PRIu32, r->prod[0].exp);
   }
   for (i=1; i<n; i++) {
     fputc('*', f);
     print_term_recur(f, tbl, r->prod[i].var, level);
     if (r->prod[i].exp > 1) {
-    fprintf(f, "^%"PRIu32, r->prod[i].exp);
+    fprintf(f, "^%" PRIu32, r->prod[i].exp);
     }
   }
 }
@@ -873,7 +873,7 @@ static void print_term_idx_recur(FILE *f, term_table_t *tbl, int32_t i, int32_t 
     if (name != NULL) {
       fputs(name, f);
     } else {
-      fprintf(f, "(const %"PRId32" of type ", integer_value_for_idx(tbl, i));
+      fprintf(f, "(const %" PRId32 " of type ", integer_value_for_idx(tbl, i));
       print_type_name(f, tbl->types, type_for_idx(tbl, i));
       fputc(')', f);
     }
@@ -893,7 +893,7 @@ static void print_term_idx_recur(FILE *f, term_table_t *tbl, int32_t i, int32_t 
     if (name != NULL) {
       fputs(name, f);
     } else {
-      fprintf(f, "(var %"PRId32" of type ", integer_value_for_idx(tbl, i));
+      fprintf(f, "(var %" PRId32 " of type ", integer_value_for_idx(tbl, i));
       print_type_name(f, tbl->types, type_for_idx(tbl, i));
       fputc(')', f);
     }
@@ -1042,7 +1042,7 @@ static void print_term_idx_recur(FILE *f, term_table_t *tbl, int32_t i, int32_t 
   case UNUSED_TERM:
   case RESERVED_TERM:
   default:
-    fprintf(f, "bad-term-%"PRIu32, i);
+    fprintf(f, "bad-term-%" PRIu32, i);
     break;
   }
 }
@@ -1276,7 +1276,7 @@ static void print_select(FILE *f, term_table_t *tbl, term_kind_t tag, select_ter
   }
   fprintf(f, "(%s ", tag2string[tag]);
   print_id_or_constant(f, tbl, d->arg);
-  fprintf(f, " %"PRIu32")", idx);
+  fprintf(f, " %" PRIu32 ")", idx);
 }
 
 
@@ -1303,7 +1303,7 @@ static void print_root_atom(FILE *f, term_table_t *tbl, root_atom_t *r) {
     fprintf(f, ">");
     break;
   }
-  fprintf(f, " %"PRIu32" ", r->k);
+  fprintf(f, " %" PRIu32 " ", r->k);
   print_id_or_constant(f, tbl, r->x);
   fprintf(f, " ");
   print_id_or_constant(f, tbl, r->p);
@@ -1321,14 +1321,14 @@ static void print_named_varexp_array(FILE *f, term_table_t *tbl, varexp_t *a, ui
   d = a[0].exp;
   print_id_or_constant(f, tbl, a[0].var);
   if (d != 1) {
-    fprintf(f, "^%"PRIu32, d);
+    fprintf(f, "^%" PRIu32, d);
   }
   for (i=1; i<n; i++) {
     d = a[i].exp;
     fputc('*', f);
     print_id_or_constant(f, tbl, a[i].var);
     if (d != 1) {
-      fprintf(f, "^%"PRIu32, d);
+      fprintf(f, "^%" PRIu32, d);
     }
   }
 }
@@ -1500,7 +1500,7 @@ void print_term_table(FILE *f, term_table_t *tbl) {
   for (i=0; i<n; i++) {
     if (unchecked_kind_for_idx(tbl, i) != UNUSED_TERM) {
       // id + name
-      fprintf(f, "%4"PRIu32" ", i);
+      fprintf(f, "%4" PRIu32 " ", i);
       print_padded_string(f, term_name(tbl, pos_term(i)), name_size);
 
       // definition
@@ -1513,7 +1513,7 @@ void print_term_table(FILE *f, term_table_t *tbl) {
         if (i == bool_const) {
           fprintf(f, "true");
         } else {
-          fprintf(f, "(const %"PRId32" of type ", integer_value_for_idx(tbl, i));
+          fprintf(f, "(const %" PRId32 " of type ", integer_value_for_idx(tbl, i));
           print_type_name(f, tbl->types, type_for_idx(tbl, i));
           fputc(')', f);
         }
@@ -1526,7 +1526,7 @@ void print_term_table(FILE *f, term_table_t *tbl) {
         break;
 
       case VARIABLE:
-        fprintf(f, "(var %"PRId32" of type ", integer_value_for_idx(tbl, i));
+        fprintf(f, "(var %" PRId32 " of type ", integer_value_for_idx(tbl, i));
         print_type_name(f, tbl->types, type_for_idx(tbl, i));
         fputc(')', f);
         break;
@@ -1624,7 +1624,7 @@ void print_term_table(FILE *f, term_table_t *tbl) {
         break;
 
       default:
-        fprintf(f, "bad-term-%"PRIu32, i);
+        fprintf(f, "bad-term-%" PRIu32, i);
         break;
       }
 
@@ -1646,7 +1646,7 @@ static void print_term_idx_desc(FILE *f, term_table_t *tbl, int32_t i) {
   switch (unchecked_kind_for_idx(tbl, i)) {
   case UNUSED_TERM:
   case RESERVED_TERM:
-    fprintf(f, "bad-term%"PRId32, i);
+    fprintf(f, "bad-term%" PRId32, i);
     break;
 
   case CONSTANT_TERM:
@@ -1751,7 +1751,7 @@ static void print_term_idx_desc(FILE *f, term_table_t *tbl, int32_t i) {
     break;
 
   default:
-    fprintf(f, "bad-term%"PRId32, i);
+    fprintf(f, "bad-term%" PRId32, i);
     break;
   }
 }
@@ -1809,16 +1809,16 @@ void pp_term_name(yices_pp_t *printer, term_table_t *tbl, term_t t) {
  * (Note this is ok, since 0 is PP_OPEN).
  */
 static const pp_open_type_t term_kind2block[NUM_TERM_KINDS] = {
-  0,                 //  UNUSED_TERM
-  0,                 //  RESERVED_TERM
+  PP_OPEN,           //  UNUSED_TERM
+  PP_OPEN,           //  RESERVED_TERM
 
-  0,                 //  CONSTANT_TERM
-  0,                 //  ARITH_CONSTANT
-  0,                 //  BV64_CONSTANT
-  0,                 //  BV_CONSTANT
+  PP_OPEN,           //  CONSTANT_TERM
+  PP_OPEN,           //  ARITH_CONSTANT
+  PP_OPEN,           //  BV64_CONSTANT
+  PP_OPEN,           //  BV_CONSTANT
 
-  0,                 //  VARIABLE
-  0,                 //  UNINTERPRETED_TERM
+  PP_OPEN,           //  VARIABLE
+  PP_OPEN,           //  UNINTERPRETED_TERM
 
   PP_OPEN_EQ,        //  ARITH_EQ_ATOM
   PP_OPEN_GE,        //  ARITH_GE_ATOM
@@ -2783,7 +2783,7 @@ void pp_term_table(FILE *f, term_table_t *tbl) {
     kind = unchecked_kind_for_idx(tbl, i);
     if (kind != UNUSED_TERM && kind != RESERVED_TERM) {
       t = pos_term(i);
-      fprintf(f, "term[%"PRId32"]: ", i);
+      fprintf(f, "term[%" PRId32 "]: ", i);
       if (i < 10) fputc(' ', f);
       if (i < 100) fputc(' ', f);
       if (i < 1000) fputc(' ', f);

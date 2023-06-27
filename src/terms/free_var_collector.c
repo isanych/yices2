@@ -108,7 +108,7 @@ static harray_t *lookup_free_vars(fvar_collector_t *collect, int32_t i) {
   a = NULL;
   p = ptr_hmap_find(&collect->map, i);
   if (p != NULL) {
-    a = p->val;
+    a = (harray_t*)p->val;
     assert(a != NULL && good_var_set(collect->terms, a));
   }
   return a;
@@ -425,7 +425,7 @@ bool term_is_ground(fvar_collector_t *collect, term_t t) {
  * - aux is a pointer to the term table
  */
 static bool fvar_dead_hmap_pair(void *aux, const ptr_hmap_pair_t *r) {
-  return !live_term(aux, r->key);
+  return !live_term((term_table_t*)aux, r->key);
 }
 
 
@@ -440,7 +440,7 @@ static bool fvar_dead_harray(void *aux, const harray_t *a) {
 
   n = a->nelems;
   for (i=0; i<n; i++) {
-    if (!live_term(aux, a->data[i])) {
+    if (!live_term((term_table_t*)aux, a->data[i])) {
       return true;
     }
   }

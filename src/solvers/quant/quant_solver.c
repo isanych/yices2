@@ -20,13 +20,6 @@
  * SOLVER FOR QUANTIFIERS
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include <inttypes.h>
 
 #include "io/tracer.h"
@@ -48,12 +41,7 @@
 #include "utils/prng.h"
 #include "frontend/common/parameters.h"
 
-#define EM_VERBOSE 0
-
-#define TRACE 0
-#define TRACE_LIGHT 0
-
-#if TRACE || TRACE_LIGHT
+#if YICES_TRACE || YICES_TRACE_LIGHT
 
 #include <stdio.h>
 
@@ -67,7 +55,7 @@
  *  PRINTING SUPPORT  *
  *********************/
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
 static void quant_solver_print_pattern(FILE *f, quant_solver_t *solver, uint32_t i) {
   pattern_t *pat;
   uint32_t n;
@@ -154,7 +142,7 @@ static void quant_infer_patterns(quant_solver_t *solver, term_t t, ivector_t *pa
   term_t x;
   uint32_t i, n;
 
-#if TRACE
+#if YICES_TRACE
   printf("  Inferring pattern for ");
   yices_pp_term(stdout, t, 120, 1, 0);
 #endif
@@ -170,7 +158,7 @@ static void quant_infer_patterns(quant_solver_t *solver, term_t t, ivector_t *pa
 
   n = prospectives.size;
   if (n != 0) {
-#if TRACE
+#if YICES_TRACE
     printf("    found #%d prospectives: ", n);
     yices_pp_term_array(stdout, n, prospectives.data, 120, 1, 0, 1);
 #endif
@@ -181,7 +169,7 @@ static void quant_infer_patterns(quant_solver_t *solver, term_t t, ivector_t *pa
       ivector_push(patterns, x);
     }
 
-#if TRACE
+#if YICES_TRACE
     printf("    added #%d patterns\n", n);
 #endif
   }
@@ -306,7 +294,7 @@ static int32_t quant_preprocess_assertion_with_pattern(quant_solver_t *solver, t
 
   valid = quant_table_check_cnstr(qtbl, &solver->ptbl, i);
   if (!valid) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
     printf("\nError in assertion + pattern for:\n");
     quant_solver_print_cnstr(stdout, solver, i);
 #endif
@@ -319,7 +307,7 @@ static int32_t quant_preprocess_assertion_with_pattern(quant_solver_t *solver, t
     cnstr->patterns = make_index_vector(v.data, v.size);
 
     valid = quant_table_check_cnstr(qtbl, &solver->ptbl, i);
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
     printf("\nNew assertion + pattern for:\n");
     quant_solver_print_cnstr(stdout, solver, i);
 #endif
@@ -332,7 +320,7 @@ static int32_t quant_preprocess_assertion_with_pattern(quant_solver_t *solver, t
   delete_ivector(&fa);
   delete_ivector(&c);
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   quant_solver_print_cnstr(stdout, solver, i);
 #endif
 
@@ -355,7 +343,7 @@ static void quant_preprocess_prob(quant_solver_t *solver) {
     for (r = ptr_hmap_first_record(patterns);
          r != NULL;
          r = ptr_hmap_next_record(patterns, r)) {
-      quant_preprocess_assertion_with_pattern(solver, r->key, r->val);
+      quant_preprocess_assertion_with_pattern(solver, r->key, (ivector_t*)r->val);
     }
   }
 
@@ -395,15 +383,15 @@ static void quant_solver_attach_parameters(quant_solver_t *solver, ef_prob_t *pr
   solver->em.exec.max_fapps = prob->parameters->ematch_exec_max_fapps;
   solver->em.exec.max_matches = prob->parameters->ematch_exec_max_matches;
 
-  solver->cnstr_learner.iter_mode = prob->parameters->ematch_cnstr_mode;
-  solver->term_learner.iter_mode = prob->parameters->ematch_term_mode;
+  solver->cnstr_learner.iter_mode = (iterate_kind_t)prob->parameters->ematch_cnstr_mode;
+  solver->term_learner.iter_mode = (iterate_kind_t)prob->parameters->ematch_term_mode;
 
   solver->cnstr_learner.min_epsilon = prob->parameters->ematch_cnstr_epsilon;
   solver->term_learner.min_epsilon = prob->parameters->ematch_term_epsilon;
   uint_learner_set_alpha(&solver->cnstr_learner.learner, prob->parameters->ematch_cnstr_alpha);
   uint_learner_set_alpha(&solver->term_learner.learner, prob->parameters->ematch_term_alpha);
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
   printf("EMATCH CNSTR mode: %d (%s)\n", solver->cnstr_learner.iter_mode, ematchmode2string[solver->cnstr_learner.iter_mode]);
   printf("EMATCH TERM mode: %d (%s)\n", solver->term_learner.iter_mode, ematchmode2string[solver->term_learner.iter_mode]);
 #endif
@@ -596,7 +584,7 @@ static bool ematch_cnstr_instantiate(quant_solver_t *solver, uint32_t cidx, patt
 
   instances = &cnstr->instances;
   if (int_hset_member(instances, midx)) {
-#if TRACE
+#if YICES_TRACE
     printf("\n  already done with match%d\n", midx);
 #endif
     return false;
@@ -612,7 +600,7 @@ static bool ematch_cnstr_instantiate(quant_solver_t *solver, uint32_t cidx, patt
   assert(midx < instbl->ninstances);
   inst = instbl->data + midx;
 
-#if TRACE
+#if YICES_TRACE
   printf("S%d:R%d EMATCHED: #%d cnstr%d::match%d\n",
 	 solver->stats.num_search,
 	 solver->stats.num_rounds_per_search,
@@ -660,7 +648,7 @@ static bool ematch_cnstr_instantiate(quant_solver_t *solver, uint32_t cidx, patt
   safe_free(keys);
   safe_free(values);
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
   printf("EMATCH Instance: ");
   yices_pp_term(stdout, t, 120, 1, 0);
   printf("\n");
@@ -700,7 +688,7 @@ static void ematch_add_quant_cnstr(quant_solver_t *solver, uint32_t cidx, term_t
 //  }
 
   if (cnstr->enable_lit == null_literal) {
-    cnstr->enable_lit = not(context_internalize(ctx, cnstr->enable));
+    cnstr->enable_lit = not_(context_internalize(ctx, cnstr->enable));
 //    cnstr->enable_lit = context_internalize(ctx, cnstr->enable);
   }
 
@@ -714,7 +702,7 @@ static void ematch_add_quant_cnstr(quant_solver_t *solver, uint32_t cidx, term_t
 
   ivector_reset(units);
 
-#if TRACE
+#if YICES_TRACE
   printf("(BEGIN): decision level = %d (base level = %d)\n", solver->decision_level, solver->base_level);
 #endif
 
@@ -723,7 +711,7 @@ static void ematch_add_quant_cnstr(quant_solver_t *solver, uint32_t cidx, term_t
     cnstr_learner_update_lemma_reward(&solver->cnstr_learner, lemma_cost, cidx);
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("(END): decision level = %d (base level = %d)\n", solver->decision_level, solver->base_level);
 #endif
 
@@ -741,7 +729,7 @@ static void ematch_add_quant_cnstr(quant_solver_t *solver, uint32_t cidx, term_t
         implied_literal(solver->core, l, mk_literal_antecedent(cnstr->enable_lit));
       }
     } else {
-#if TRACE
+#if YICES_TRACE
       printf("EMATCH: Delaying unit base clause: { ");
       print_literal(stdout, l);
       printf(" }\n");
@@ -779,7 +767,7 @@ static void ematch_process_cnstr(quant_solver_t *solver, uint32_t cidx) {
   oldcount = solver->stats.num_instances_per_round;
   nadded = 0;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("-------------------\n");
   printf("Trying matching cnstr @%d: ", cidx);
   yices_pp_term(stdout, cnstr->t, 120, 1, 0);
@@ -791,7 +779,7 @@ static void ematch_process_cnstr(quant_solver_t *solver, uint32_t cidx) {
     for (j=0; j<npat; j++) {
       pat = ptbl->data + patterns[j];
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
       printf("\n  Matching pattern @%d: ", patterns[j]);
       yices_pp_term(stdout, pat->p, 120, 1, 0);
 #endif
@@ -804,13 +792,13 @@ static void ematch_process_cnstr(quant_solver_t *solver, uint32_t cidx) {
       for (i=0; i<n; i++) {
         status = smt_status(solver->core);
         if (status != STATUS_SEARCHING) {
-#if TRACE
+#if YICES_TRACE
           printf("\nSMT status: %d\n", status);
 #endif
           assert(status == STATUS_UNSAT);
           goto done;
         } else if (ematch_reached_instance_limit(solver)) {
-#if TRACE
+#if YICES_TRACE
           printf("\nReached max round limit after learning #%d instances\n", solver->stats.num_instances_per_round);
 #endif
           goto done;
@@ -832,7 +820,7 @@ static void ematch_process_cnstr(quant_solver_t *solver, uint32_t cidx) {
     cnstr_learner_add_cnstr(&solver->cnstr_learner, cidx);
   }
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   if (nadded != 0) {
     printf("Found #%d instances for cnstr @%d\n", nadded, cidx);
   }
@@ -848,7 +836,7 @@ static void ematch_process_cnstr_all(quant_solver_t *solver) {
   quant_table_t *qtbl;
   uint32_t i, n;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("\nInstantiation mode: All\n");
 #endif
 
@@ -873,7 +861,7 @@ static void ematch_process_cnstr_random(quant_solver_t *solver) {
   int_hmap_pair_t *p;
   uint32_t *seed;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("\nInstantiation mode: Explore\n");
 #endif
 
@@ -914,7 +902,7 @@ static void ematch_process_cnstr_greedy(quant_solver_t *solver) {
   generic_heap_t *heap;
   ivector_t *aux;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("\nInstantiation mode: Exploit\n");
 #endif
 
@@ -977,7 +965,7 @@ static void ematch_process_all_cnstr(quant_solver_t *solver) {
 
   cnstr_learner_update_last_round(&solver->cnstr_learner, true);
 
-#if TRACE
+#if YICES_TRACE
   uint_learner_print_indices_priority(&solver->cnstr_learner.learner, "(cnstr: begin)");
   uint_learner_print_indices_priority(&solver->term_learner.learner, "(term: begin)");
 #endif
@@ -1007,7 +995,7 @@ static void ematch_process_all_cnstr(quant_solver_t *solver) {
   for(i=0; i<n; i++) {
     status = smt_status(solver->core);
     if (status != STATUS_SEARCHING) {
-#if TRACE
+#if YICES_TRACE
       printf("\nSMT status: %d\n", status);
 #endif
       assert(status == STATUS_UNSAT);
@@ -1028,7 +1016,7 @@ static void ematch_process_all_cnstr(quant_solver_t *solver) {
     term_learner_decay_epsilon(&solver->term_learner);
   }
 
-#if TRACE
+#if YICES_TRACE
   uint_learner_print_indices_priority(&solver->cnstr_learner.learner, "(cnstr: end)");
   uint_learner_print_indices_priority(&solver->term_learner.learner, "(term: end)");
 #endif
@@ -1142,7 +1130,7 @@ void quant_solver_increase_decision_level(quant_solver_t *solver) {
   cnstr_learner_update_decision_reward(&solver->cnstr_learner);
   term_learner_update_decision_reward(&solver->term_learner);
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("---> QUANTSOLVER:   Increasing decision level to %d\n", k);
   fflush(stdout);
 #endif
@@ -1159,7 +1147,7 @@ void quant_solver_backtrack(quant_solver_t *solver, uint32_t back_level) {
   term_learner_update_backtrack_reward(&solver->term_learner, (solver->decision_level - back_level));
   solver->decision_level = back_level;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("---> QUANTSOLVER:   Backtracking to level %d\n", back_level);
   fflush(stdout);
 #endif
@@ -1201,7 +1189,7 @@ void quant_solver_start_internalization(quant_solver_t *solver) {
  * Start search
  */
 void quant_solver_start_search(quant_solver_t *solver) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("\n=== START SEARCH ===\n");
   printf("\n\n");
 #endif
@@ -1230,13 +1218,13 @@ bool quant_solver_propagate(quant_solver_t *solver) {
 
   // add all delayed base literals (with antecedents)
   if (n != 0) {
-#if TRACE
+#if YICES_TRACE
     printf("EMATCH: Propagating %d delayed unit base clauses\n", n);
 #endif
 
     for (i=0; i<n; i++) {
       l = lits->data[i];
-#if TRACE
+#if YICES_TRACE
       printf("EMATCH: Propagating literal: ");
       print_literal(stdout, l);
       printf("\n");
@@ -1272,7 +1260,7 @@ bool quant_solver_propagate(quant_solver_t *solver) {
  */
 fcheck_code_t quant_solver_final_check(quant_solver_t *solver) {
   if (solver->stats.num_search == 1) {
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
     printf("\nEMATCH: initial search\n\n");
 #endif
 
@@ -1281,7 +1269,7 @@ fcheck_code_t quant_solver_final_check(quant_solver_t *solver) {
     solver->em.exec.fdepth = solver->term_learner.max_depth;
     solver->em.exec.vdepth = 0.5*solver->term_learner.max_depth;
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
     printf("EMATCH TERM learner max depth: %d\n", solver->term_learner.max_depth);
 #endif
 
@@ -1291,20 +1279,20 @@ fcheck_code_t quant_solver_final_check(quant_solver_t *solver) {
  }
 
   if (ematch_reached_round_limit(solver)) {
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
     printf("\nEMATCH: reached round limit (%d rounds)\n\n", solver->stats.num_rounds_per_search);
 #endif
     return FCHECK_SAT;
  }
 
   if (ematch_reached_search_limit(solver)) {
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
     printf("\nEMATCH: reached search limit (%d searches)\n\n", solver->stats.num_search);
 #endif
     return FCHECK_SAT;
  }
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
   printf("\n**** QUANTSOLVER: FINAL CHECK ***\n\n");
 #endif
 
@@ -1362,7 +1350,7 @@ fcheck_code_t quant_solver_final_check(quant_solver_t *solver) {
   print_lemmas(stdout, solver->core);
 #endif
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
   printf("S%d:R%d EMATCH: learnt total %d instances (%d new, %d in current search)\n",
       solver->stats.num_search,
       solver->stats.num_rounds_per_search,
@@ -1382,13 +1370,13 @@ fcheck_code_t quant_solver_final_check(quant_solver_t *solver) {
     if (solver->em.exec.vdepth < solver->em.exec.max_vdepth)
       solver->em.exec.vdepth += 1;
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
     printf("(re-running ematching)\n");
 #endif
 
     ematch_process_all_cnstr(solver);
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
   printf("S%d:R%d EMATCH (re-run): learnt total %d instances (%d new, %d in current search)\n",
       solver->stats.num_search,
       solver->stats.num_rounds_per_search,
@@ -1406,7 +1394,7 @@ fcheck_code_t quant_solver_final_check(quant_solver_t *solver) {
   solver->stats.num_rounds_per_search++;
   solver->stats.num_rounds++;
 
-#if EM_VERBOSE
+#if YICES_EM_VERBOSE
   printf("\n**** QUANTSOLVER: FINAL CHECK DONE ***\n\n");
 #endif
 

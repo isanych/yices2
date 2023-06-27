@@ -45,11 +45,11 @@ static void test_bv64(uint64_t x, uint64_t y, uint32_t n) {
   srem = bvconst64_srem2z(x, y, n);
   smod = bvconst64_smod2z(x, y, n);
 
-  printf("udiv(%"PRIu64", %"PRIu64") = %"PRIu64", ", x, y, udiv);
-  printf("urem(%"PRIu64", %"PRIu64") = %"PRIu64", ", x, y, urem);
-  printf("sdiv(%"PRIu64", %"PRIu64") = %"PRIu64", ", x, y, sdiv);
-  printf("srem(%"PRIu64", %"PRIu64") = %"PRIu64", ", x, y, srem);
-  printf("smod(%"PRIu64", %"PRIu64") = %"PRIu64"\n", x, y, smod);
+  printf("udiv(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", x, y, udiv);
+  printf("urem(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", x, y, urem);
+  printf("sdiv(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", x, y, sdiv);
+  printf("srem(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", x, y, srem);
+  printf("smod(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", x, y, smod);
 }
 
 
@@ -88,17 +88,17 @@ static void test_bv(uint32_t *x, uint32_t *y, uint32_t n) {
   bvconst_normalize(smod, n);
 
   if (n <= 32) {
-    printf("udiv(%"PRIu32", %"PRIu32") = %"PRIu32", ", bv32(x), bv32(y), bv32(udiv));
-    printf("urem(%"PRIu32", %"PRIu32") = %"PRIu32", ", bv32(x), bv32(y), bv32(urem));
-    printf("sdiv(%"PRIu32", %"PRIu32") = %"PRIu32", ", bv32(x), bv32(y), bv32(sdiv));
-    printf("srem(%"PRIu32", %"PRIu32") = %"PRIu32", ", bv32(x), bv32(y), bv32(srem));
-    printf("smod(%"PRIu32", %"PRIu32") = %"PRIu32"\n", bv32(x), bv32(y), bv32(smod));
+    printf("udiv(%" PRIu32 ", %" PRIu32 ") = %" PRIu32 ", ", bv32(x), bv32(y), bv32(udiv));
+    printf("urem(%" PRIu32 ", %" PRIu32 ") = %" PRIu32 ", ", bv32(x), bv32(y), bv32(urem));
+    printf("sdiv(%" PRIu32 ", %" PRIu32 ") = %" PRIu32 ", ", bv32(x), bv32(y), bv32(sdiv));
+    printf("srem(%" PRIu32 ", %" PRIu32 ") = %" PRIu32 ", ", bv32(x), bv32(y), bv32(srem));
+    printf("smod(%" PRIu32 ", %" PRIu32 ") = %" PRIu32 "\n", bv32(x), bv32(y), bv32(smod));
   } else {
-    printf("udiv(%"PRIu64", %"PRIu64") = %"PRIu64", ", bv64(x), bv64(y), bv64(udiv));
-    printf("urem(%"PRIu64", %"PRIu64") = %"PRIu64", ", bv64(x), bv64(y), bv64(urem));
-    printf("sdiv(%"PRIu64", %"PRIu64") = %"PRIu64", ", bv64(x), bv64(y), bv64(sdiv));
-    printf("srem(%"PRIu64", %"PRIu64") = %"PRIu64", ", bv64(x), bv64(y), bv64(srem));
-    printf("smod(%"PRIu64", %"PRIu64") = %"PRIu64"\n", bv64(x), bv64(y), bv64(smod));
+    printf("udiv(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", bv64(x), bv64(y), bv64(udiv));
+    printf("urem(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", bv64(x), bv64(y), bv64(urem));
+    printf("sdiv(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", bv64(x), bv64(y), bv64(sdiv));
+    printf("srem(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 ", ", bv64(x), bv64(y), bv64(srem));
+    printf("smod(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", bv64(x), bv64(y), bv64(smod));
   }
 }
 
@@ -126,11 +126,11 @@ int main(void) {
   for (i=1; i<=64; i++) {
     a = min_signed64(i); // 2^(i-1)
     b = mask64(i);       // 2^i - 1 
-    printf("udiv(%"PRIu64", %"PRIu64") = %"PRIu64"\n", a, b, bvconst64_udiv2z(a, b, i));
-    printf("urem(%"PRIu64", %"PRIu64") = %"PRIu64"\n", a, b, bvconst64_urem2z(a, b, i));
-    printf("sdiv(%"PRIu64", %"PRIu64") = %"PRIu64"\n", a, b, bvconst64_sdiv2z(a, b, i));
-    printf("srem(%"PRIu64", %"PRIu64") = %"PRIu64"\n", a, b, bvconst64_srem2z(a, b, i));
-    printf("smod(%"PRIu64", %"PRIu64") = %"PRIu64"\n", a, b, bvconst64_smod2z(a, b, i));
+    printf("udiv(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", a, b, bvconst64_udiv2z(a, b, i));
+    printf("urem(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", a, b, bvconst64_urem2z(a, b, i));
+    printf("sdiv(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", a, b, bvconst64_sdiv2z(a, b, i));
+    printf("srem(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", a, b, bvconst64_srem2z(a, b, i));
+    printf("smod(%" PRIu64 ", %" PRIu64 ") = %" PRIu64 "\n", a, b, bvconst64_smod2z(a, b, i));
     printf("---\n");
   }
 

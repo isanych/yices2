@@ -38,16 +38,16 @@
  *    Called in explicitly in yices_init.
  *
  */
-extern void init_yices_error(void);
+YICES_EXTERN void init_yices_error(void);
 
 /*
  * Thread local clean up. Called explicitly in yices_exit.
  */
-extern void free_yices_error(void);
+YICES_EXTERN void free_yices_error(void);
 
 /*
  * Returns the error report objrct (of the calling thread).
  */
-extern error_report_t* get_yices_error(void);
+YICES_EXTERN error_report_t* get_yices_error(void);
 
 #endif

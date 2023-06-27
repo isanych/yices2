@@ -59,6 +59,6 @@ typedef struct yices_globals_s {
 
 } yices_globals_t;
 
-extern YICES_PTS_LOCAL yices_globals_t __yices_globals;
+YICES_EXTERN YICES_PTS_LOCAL yices_globals_t __yices_globals;
 
 #endif /* __YICES_GLOBALS_H */

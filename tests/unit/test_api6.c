@@ -69,7 +69,7 @@ static void show_error(void) {
   error_report_t *error;
 
   error = yices_error_report();
-  printf("parser error: line %"PRIu32", column %"PRIu32"\n", error->line, error->column);
+  printf("parser error: line %" PRIu32 ", column %" PRIu32 "\n", error->line, error->column);
   yices_print_error(stdout);
   fflush(stdout);
 }

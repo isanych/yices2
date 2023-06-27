@@ -20,13 +20,6 @@
  * ALL SMT-LIB 2 COMMANDS
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <inttypes.h>
@@ -153,7 +146,7 @@ static void dump_bv_solver(FILE *f, bv_solver_t *solver) {
   print_bv_solver_vars(f, solver);
   fprintf(f, "\n--- Bitvector Atoms ---\n");
   print_bv_solver_atoms(f, solver);
-  fprintf(f, "\ntotal: %"PRIu32" atoms\n", solver->atbl.natoms);
+  fprintf(f, "\ntotal: %" PRIu32 " atoms\n", solver->atbl.natoms);
   fprintf(f, "\n--- Bitvector Bounds ---\n");
   print_bv_solver_bounds(f, solver);
   fprintf(f, "\n--- DAG ---\n");
@@ -492,7 +485,7 @@ static void delete_smt2_pattern_map(ptr_hmap_t *m) {
   for (p = ptr_hmap_first_record(m);
        p != NULL;
        p = ptr_hmap_next_record(m, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t*)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -765,7 +758,7 @@ smt2_globals_t __smt2_globals;
  * If something goes wrong while writing to the output channel
  * or when closing it
  */
-static void __attribute__((noreturn)) failed_output(void) {
+ATTRIBUTE_NORETURN static void failed_output(void) {
   fprintf(stderr, "\n**************************************\n");
   fprintf(stderr, "FATAL ERROR\n");
   perror(__smt2_globals.out_name);
@@ -782,7 +775,7 @@ static void __attribute__((noreturn)) failed_output(void) {
 /*
  * Formatted output: like printf but use __smt2_globals.out
  */
-static void __attribute__((format(printf, 1, 2))) print_out(const char *format, ...)  {
+ATTRIBUTE_FORMAT(printf, 1, 2) static void print_out(const char *format, ...) {
   va_list p;
 
   va_start(p, format);
@@ -830,7 +823,7 @@ static void report_success(void) {
  * - close_error() prints '")' and a newline then flush the output channel
  */
 static void start_error(uint32_t line, uint32_t column) {
-  print_out("(error \"at line %"PRIu32", column %"PRIu32": ", line, column);
+  print_out("(error \"at line %" PRIu32 ", column %" PRIu32 ": ", line, column);
 }
 
 static void open_error(void) {
@@ -846,7 +839,7 @@ static void close_error(void) {
 /*
  * Formatted error: like printf but add the prefix and close
  */
-static void __attribute__((format(printf, 1, 2))) print_error(const char *format, ...) {
+ATTRIBUTE_FORMAT(printf, 1, 2) static void print_error(const char *format, ...) {
   va_list p;
 
   open_error();
@@ -879,7 +872,7 @@ void smt2_syntax_error(lexer_t *lex, int32_t expected_token) {
   reader_t *rd;
   smt2_token_t tk;
 
-  tk = current_token(lex);
+  tk = (smt2_token_t)current_token(lex);
   rd = &lex->reader;
 
   start_error(rd->line, rd->column);
@@ -919,7 +912,7 @@ void smt2_syntax_error(lexer_t *lex, int32_t expected_token) {
 
   default:
     if (expected_token >= 0) {
-      print_out("syntax error: %s expected", smt2_token_to_string(expected_token));
+      print_out("syntax error: %s expected", smt2_token_to_string((smt2_token_t)expected_token));
     } else if (expected_token == SMT2_COMMAND_EXPECTED && tk == SMT2_TK_SYMBOL) {
       print_out("syntax error: %s is not a command", tkval(lex));
     } else if (expected_token == SMT2_NOT_EXPECTED) {
@@ -967,13 +960,13 @@ static void print_yices_error(bool full) {
     print_out("invalid indices in bit-vector extract");
     break;
   case TOO_MANY_ARGUMENTS:
-    print_out("too many arguments. Function arity is at most %"PRIu32, YICES_MAX_ARITY);
+    print_out("too many arguments. Function arity is at most %" PRIu32, YICES_MAX_ARITY);
     break;
   case TOO_MANY_VARS:
-    print_out("too many variables in quantifier. Max is %"PRIu32, YICES_MAX_VARS);
+    print_out("too many variables in quantifier. Max is %" PRIu32, YICES_MAX_VARS);
     break;
   case MAX_BVSIZE_EXCEEDED:
-    print_out("bit-vector size too large. Max is %"PRIu32, YICES_MAX_BVSIZE);
+    print_out("bit-vector size too large. Max is %" PRIu32, YICES_MAX_BVSIZE);
     break;
   case DEGREE_OVERFLOW:
     print_out("maximal polynomial degree exceeded");
@@ -1015,7 +1008,7 @@ static void print_yices_error(bool full) {
     print_out("argument is not an arithmetic constant");
     break;
   case TOO_MANY_MACRO_PARAMS:
-    print_out("too many arguments in sort constructor. Max is %"PRIu32, TYPE_MACRO_MAX_ARITY);
+    print_out("too many arguments in sort constructor. Max is %" PRIu32, TYPE_MACRO_MAX_ARITY);
     break;
 
   case CTX_FREE_VAR_IN_FORMULA:
@@ -1525,7 +1518,7 @@ void smt2_tstack_error(tstack_t *tstack, int32_t exception) {
 /*
  * Bug report: unexpected status
  */
-static void __attribute__((noreturn)) bad_status_bug(FILE *f) {
+ATTRIBUTE_NORETURN static void bad_status_bug(FILE *f) {
   print_error("Internal error: unexpected context status");
   flush_out();
   freport_bug(f, "Internal error: unexpected context status");
@@ -1587,7 +1580,7 @@ static void report_ef_status(smt2_globals_t *g, ef_client_t *efc) {
   case EF_STATUS_UNKNOWN:
   case EF_STATUS_UNSAT:
   case EF_STATUS_INTERRUPTED:
-    trace_printf(g->tracer, 3, "(exist/forall solver: %"PRIu32" iterations)\n", efsolver->iters);
+    trace_printf(g->tracer, 3, "(exist/forall solver: %" PRIu32 " iterations)\n", efsolver->iters);
     print_out("%s\n", ef_status2string[stat]);
     flush_out();
     break;
@@ -1776,26 +1769,26 @@ static void show_ctx_stats(int fd, print_buffer_t *b, context_t *ctx) {
   }
 
   if (context_has_fun_solver(ctx)) {
-    show_funsolver_stats(fd, b, ctx->fun_solver);
+    show_funsolver_stats(fd, b, (fun_solver_t*)ctx->fun_solver);
   }
 
   if (context_has_quant_solver(ctx)) {
-    show_quantsolver_stats(fd, b, ctx->quant_solver);
+    show_quantsolver_stats(fd, b, (quant_solver_t*)ctx->quant_solver);
   }
 
   if (context_has_arith_solver(ctx)) {
     if (context_has_simplex_solver(ctx)) {
-      show_simplex_stats(fd, b, ctx->arith_solver);
+      show_simplex_stats(fd, b, (simplex_solver_t*)ctx->arith_solver);
     } else if (context_has_idl_solver(ctx)) {
-      show_idl_fw_stats(fd, b, ctx->arith_solver);
+      show_idl_fw_stats(fd, b, (idl_solver_t*)ctx->arith_solver);
     } else {
       assert(context_has_rdl_solver(ctx));
-      show_rdl_fw_stats(fd, b, ctx->arith_solver);
+      show_rdl_fw_stats(fd, b, (rdl_solver_t*)ctx->arith_solver);
     }
   }
 
   if (context_has_bv_solver(ctx)) {
-    show_bvsolver_stats(fd, b, ctx->bv_solver);
+    show_bvsolver_stats(fd, b, (bv_solver_t*)ctx->bv_solver);
   }
 
   if (ctx->mcsat != NULL) {
@@ -1976,7 +1969,7 @@ static strmap_t *get_info_table(smt2_globals_t *g) {
  */
 static void info_finalizer(void *aux, strmap_rec_t *r) {
   if (r->val >= 0) {
-    aval_decref(aux, r->val);
+    aval_decref((attr_vtbl_t*)aux, r->val);
   }
 }
 
@@ -2006,11 +1999,11 @@ static void delete_info_table(smt2_globals_t *g) {
 static void add_info(smt2_globals_t *g, const char *name, aval_t val) {
   strmap_t *info;
   strmap_rec_t *r;
-  bool new;
+  bool new_;
 
   info = get_info_table(g);
-  r = strmap_get(info, name, &new);
-  if (!new && r->val >= 0) {
+  r = strmap_get(info, name, &new_);
+  if (!new_ && r->val >= 0) {
     aval_decref(g->avtbl, r->val);
   }
   r->val = val;
@@ -2152,7 +2145,7 @@ static void set_uint32_option(smt2_globals_t *g, const char *name, aval_t value,
       *result = (uint32_t) x;
       report_success();
     } else {
-      print_error("integer overflow: value must be at most %"PRIu32, UINT32_MAX);
+      print_error("integer overflow: value must be at most %" PRIu32, UINT32_MAX);
     }
   } else {
     print_error("option %s requires an integer value", name);
@@ -2252,7 +2245,7 @@ static void set_verbosity(smt2_globals_t *g, const char *name, aval_t value) {
       update_trace_verbosity(g);
       report_success();
     } else {
-      print_error("integer overflow: %s must be at most %"PRIu32, name, UINT32_MAX);
+      print_error("integer overflow: %s must be at most %" PRIu32, name, UINT32_MAX);
     }
   } else {
     print_error("option %s requires an integer value", name);
@@ -2325,7 +2318,7 @@ static void print_kw_symbol_pair(const char *keyword, const char *value) {
 }
 
 static void print_kw_uint64_pair(const char *keyword, uint64_t value) {
-  print_out("(%s %"PRIu64")\n", keyword, value);
+  print_out("(%s %" PRIu64 ")\n", keyword, value);
 }
 
 static const char * const string_bool[2] = { "false", "true" };
@@ -2355,11 +2348,11 @@ static void print_boolean_value(bool value) {
 }
 
 static void print_int32_value(uint32_t value) {
-  print_out("%"PRIi32"\n", value);
+  print_out("%" PRIi32 "\n", value);
 }
 
 static void print_uint32_value(uint32_t value) {
-  print_out("%"PRIu32"\n", value);
+  print_out("%" PRIu32 "\n", value);
 }
 
 static void print_float_value(double value) {
@@ -2583,7 +2576,7 @@ static void init_smt2_context(smt2_globals_t *g) {
   if (g->timeout > 0) {
     mode = CTX_MODE_INTERACTIVE;
   }
-  arch = arch_for_logic(logic);
+  arch = (context_arch_t)arch_for_logic(logic);
   iflag = iflag_for_logic(logic);
   qflag = qflag_for_logic(logic);
 
@@ -2661,7 +2654,7 @@ static void timeout_handler(void *data) {
      global data. */
 #endif /* THREAD_SAFE */
   
-  g = data;
+  g = (smt2_globals_t*)data;
   if (g->efmode && g->ef_client.efsolver != NULL && g->ef_client.efsolver->status == EF_STATUS_SEARCHING) {
     ef_solver_stop_search(g->ef_client.efsolver);
   } else if (g->ctx != NULL && context_status(g->ctx) == STATUS_SEARCHING) {
@@ -3326,7 +3319,7 @@ static void efsolve_cmd(smt2_globals_t *g) {
     }
 
     ef_solve(efc, g->assertions.size, g->assertions.data, &g->parameters,
-	     qf_fragment(g->logic_code), ef_arch_for_logic(g->logic_code),
+	     qf_fragment(g->logic_code), (context_arch_t)ef_arch_for_logic(g->logic_code),
              g->tracer, &g->term_patterns);
     if (g-> timeout != 0) clear_timeout(g->to);
 
@@ -3961,7 +3954,7 @@ static void print_smt2_model(smt2_pp_t *printer, smt2_model_t *sm) {
      */
     if (good_object(vtbl, v)) {
       tau = term_type(terms, t);
-      smt2_pp_def(printer, vtbl, sm->names.data[i], tau, v);
+      smt2_pp_def(printer, vtbl, (char*)sm->names.data[i], tau, v);
     }
   }
   pp_close_block(&printer->pp, true);
@@ -3996,7 +3989,7 @@ static void build_smt2_model(smt2_globals_t *g, smt2_model_t *sm) {
   saved = &g->model_term_names;
   n = saved->size;
   for (i=0; i<n; i++) {
-    name = saved->data[i];
+    name = (char*)saved->data[i];
     t = yices_get_term_by_name(name);
     assert(term_is_uninterpreted(t));
     smt2_model_push(sm, name, t);
@@ -4436,7 +4429,7 @@ static void reset_string_vector(pvector_t *v) {
 
   n = v->size;
   for (i=0; i<n; i++) {
-    string_decref(v->data[i]);
+    string_decref((char*)v->data[i]);
   }
   pvector_reset(v);
 }
@@ -4721,7 +4714,7 @@ void init_smt2(bool benchmark, uint32_t timeout, bool print_success) {
 void init_mt2(bool benchmark, uint32_t timeout, uint32_t nthreads, bool print_success){
   init_smt2(benchmark, timeout, print_success);
   __smt2_globals.nthreads = nthreads;
-  //fprintf(stderr, "nthreads = %"PRIu32"\n", nthreads);
+  //fprintf(stderr, "nthreads = %" PRIu32 "\n", nthreads);
 }
 
 
@@ -4826,7 +4819,7 @@ static void tprint_calls(const char *cmd, uint32_t calls) {
   if (calls == 1) {
     trace_printf(__smt2_globals.tracer, 12, "\n(%s: 1 call)\n", cmd);
   } else {
-    trace_printf(__smt2_globals.tracer, 12, "\n(%s: %"PRIu32" calls)\n", cmd, calls);
+    trace_printf(__smt2_globals.tracer, 12, "\n(%s: %" PRIu32 " calls)\n", cmd, calls);
   }
 }
 
@@ -4898,13 +4891,13 @@ static void print_named_assertions(named_term_stack_t *s) {
   const char *name;
 
   n = s->top;
-  printf("=== %"PRIu32" named assertions ===\n", n);
+  printf("=== %" PRIu32 " named assertions ===\n", n);
   for (i=0; i<n; i++) {
     name = s->data[i].name;
     if (symbol_needs_quotes(name)) {
-      printf("   assertion[%"PRIu32"]: name = |%s|, term = %"PRId32"\n", i, name, s->data[i].term);
+      printf("   assertion[%" PRIu32 "]: name = |%s|, term = %" PRId32 "\n", i, name, s->data[i].term);
     } else {
-      printf("   assertion[%"PRIu32"]: name = %s, term = %"PRId32"\n", i, name, s->data[i].term);
+      printf("   assertion[%" PRIu32 "]: name = %s, term = %" PRId32 "\n", i, name, s->data[i].term);
     }
   }
   printf("\n");
@@ -6143,7 +6136,7 @@ static void yices_set_option(smt2_globals_t *g, const char *param, const param_v
     unsupported_option();
     flush_out();
   } else if (reason != NULL) {
-    print_error("in (set-option "YICES_SMT2_PREFIX"%s ...): %s", param, reason);
+    print_error("in (set-option " YICES_SMT2_PREFIX "%s ...): %s", param, reason);
   } else {
     report_success();
   }
@@ -6334,10 +6327,10 @@ void smt2_set_logic(const char *name) {
 
   if (logic_is_supported_by_ef(code)) {
     __smt2_globals.efmode = true;
-    arch = ef_arch_for_logic(code);
+    arch = (context_arch_t)ef_arch_for_logic(code);
   } else if (logic_is_supported(code)) {
     __smt2_globals.efmode = false;
-    arch = arch_for_logic(code);
+    arch = (context_arch_t)arch_for_logic(code);
   } else {
     print_error("logic %s is not supported", name);
     return;
@@ -6480,7 +6473,7 @@ void smt2_pop(uint32_t n) {
     } else {
       if (n > g->stack.levels) {
         if (g->stack.levels > 1) {
-          print_error("can't pop more than %"PRIu64" levels", g->stack.levels);
+          print_error("can't pop more than %" PRIu64 " levels", g->stack.levels);
         } else if (g->stack.levels > 0) {
           print_error("can't pop more than one level");
         } else {
@@ -7128,7 +7121,7 @@ void smt2_add_pattern(int32_t op, term_t t, term_t *p, uint32_t n) {
   r = ptr_hmap_get(&__smt2_globals.term_patterns, t);
   if (r->val == NULL) {
     r->val = safe_malloc(sizeof(ivector_t));
-    init_ivector(r->val, 0);
+    init_ivector((ivector_t*)r->val, 0);
   }
 
 #if 0
@@ -7144,7 +7137,7 @@ void smt2_add_pattern(int32_t op, term_t t, term_t *p, uint32_t n) {
   } else {
     x = yices_tuple(n, p);
   }
-  ivector_push(r->val, x);
+  ivector_push((ivector_t*)r->val, x);
 }
 
 /*

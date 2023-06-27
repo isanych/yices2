@@ -31,10 +31,10 @@ static void print_hmap(xq_hmap_t *map) {
   uint32_t i, n;
 
   printf("map %p\n", map);
-  printf("  size = %"PRIu32"\n", map->size);
-  printf("  nelems = %"PRIu32"\n", map->nelems);
-  printf("  nentries = %"PRIu32"\n", map->nentries);
-  printf("  ndeleted = %"PRIu32"\n", map->ndeleted);
+  printf("  size = %" PRIu32 "\n", map->size);
+  printf("  nelems = %" PRIu32 "\n", map->nelems);
+  printf("  nentries = %" PRIu32 "\n", map->nentries);
+  printf("  ndeleted = %" PRIu32 "\n", map->ndeleted);
   printf("  content:\n");
 
   r = map->data;
@@ -43,7 +43,7 @@ static void print_hmap(xq_hmap_t *map) {
     if (r->value != 0 && r->value != UINT32_MAX) {
       printf("    [key = ");
       xq_print(stdout, &r->key);
-      printf(", value = %"PRIu32"]\n", r->value);
+      printf(", value = %" PRIu32 "]\n", r->value);
     }
     r ++;
   }

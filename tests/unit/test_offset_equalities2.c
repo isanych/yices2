@@ -30,7 +30,7 @@
 
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -778,9 +778,9 @@ static void equality_queue_backtrack(equality_queue_t *queue) {
 static void notify_equality(void *aux, int32_t x, int32_t y) {
   equality_queue_t *queue;
 
-  queue = aux;
+  queue = (equality_queue_t*)aux;
   assert(1 <= x && x <= queue->nvars && 0 <= y && y <= queue->nvars);
-  printf("[%"PRIu32"]: Received equality: x%"PRId32" == x%"PRId32"\n", ctr, x, y);
+  printf("[%" PRIu32 "]: Received equality: x%" PRId32 " == x%" PRId32 "\n", ctr, x, y);
   if (root_of_var(queue, x) == root_of_var(queue, y)) {
     printf("---> redundant\n");
   }
@@ -797,7 +797,7 @@ static void notify_equality(void *aux, int32_t x, int32_t y) {
 static bool prop_same_class(void *aux, int32_t x, int32_t y) {
   equality_queue_t *queue;
 
-  queue = aux;
+  queue = (equality_queue_t*)aux;
   return root_of_var(queue, x) == root_of_var(queue, y);
 }
 
@@ -805,7 +805,7 @@ static bool prop_same_class(void *aux, int32_t x, int32_t y) {
 static uint32_t prop_hash_var(void * aux, int32_t x) {
   equality_queue_t *queue;
 
-  queue = aux;
+  queue = (equality_queue_t*)aux;
   return jenkins_hash_int32(root_of_var(queue, x));
 }
 
@@ -1327,7 +1327,7 @@ static void normalize_all(test_bench_t *bench) {
 static uint32_t exp_hash_var(void *aux, int32_t i) {
   test_bench_t *bench;
 
-  bench = aux;
+  bench = (test_bench_t*)aux;
   assert(0 <= i && i < bench->act.npolys);
   return bench->act.norm[i]->hash;
 }
@@ -1336,7 +1336,7 @@ static uint32_t exp_hash_var(void *aux, int32_t i) {
 static bool exp_equal_var(void *aux, int32_t i, int32_t j) {
   test_bench_t *bench;
 
-  bench = aux;
+  bench = (test_bench_t*)aux;
   assert(0 <= i && i < bench->act.npolys);
   assert(0 <= j && j < bench->act.npolys);
   return equal_normal_forms(bench->act.norm[i], bench->act.norm[j]);
@@ -1438,7 +1438,7 @@ static void print_mono(const char *prefix, rational_t *coeff, int32_t x, bool fi
       q_print_abs(stdout, coeff);
       printf(" * ");
     }
-    printf("%s%"PRId32, prefix, x);
+    printf("%s%" PRId32, prefix, x);
   }
 }
 
@@ -1501,7 +1501,7 @@ static void print_poly_table(poly_table_t *table) {
   for (i=0; i<n; i++) {
     p = table->poly[i];
     if (p != NULL) {
-      printf("  x%"PRIu32" := ", i);
+      printf("  x%" PRIu32 " := ", i);
       print_poly(p);
       printf("\n");
     }
@@ -1515,7 +1515,7 @@ static void print_poly_def(poly_table_t *table, int32_t id) {
 
   p = table->poly[id];
   if (p != NULL) {
-    printf("    x%"PRId32" := ", id);
+    printf("    x%" PRId32 " := ", id);
     print_poly(p);
     printf("\n");
   }
@@ -1529,7 +1529,7 @@ static void print_active_polys(test_bench_t *bench) {
   n = bench->act.npolys;
   for (i=0; i<n; i++) {
     idx = bench->act.id[i];
-    printf("  act[%"PRIu32"]: x%"PRId32, i, idx);
+    printf("  act[%" PRIu32 "]: x%" PRId32, i, idx);
     p = bench->ptable->poly[idx];
     if (p != NULL) {
       printf(" = ");
@@ -1548,7 +1548,7 @@ static void print_normal_forms(test_bench_t *bench) {
   n = bench->act.npolys;
   for (i=0; i<n; i++) {
     idx = bench->act.id[i];
-    printf("  norm(x%"PRId32") = ", idx);
+    printf("  norm(x%" PRId32 ") = ", idx);
     print_normal_form(bench->act.norm[i]);
     printf("\n");
   }
@@ -1559,17 +1559,17 @@ static void print_offset_eq(offset_equality_t *eq) {
   if (eq->lhs < 0) {
     printf("0");
   } else {
-    printf("x%"PRId32, eq->lhs);
+    printf("x%" PRId32, eq->lhs);
   }
   printf(" == ");
   if (eq->rhs < 0) {
-    printf("%"PRId32, eq->offset);
+    printf("%" PRId32, eq->offset);
   } else {
-    printf("x%"PRId32, eq->rhs);
+    printf("x%" PRId32, eq->rhs);
     if (eq->offset > 0) {
-      printf(" + %"PRId32, eq->offset);
+      printf(" + %" PRId32, eq->offset);
     } else if (eq->offset < 0) {
-      printf(" - %"PRId32, -eq->offset);
+      printf(" - %" PRId32, -eq->offset);
     }
   }
 }
@@ -1580,7 +1580,7 @@ static void print_all_equalities(test_bench_t *bench) {
   n = bench->stack.top;
   for (i=0; i<n; i++) {
     if (bench->stack.data[i].tag == ASSERT_EQ) {
-      printf("  eq[%"PRIu32"]: ", i);
+      printf("  eq[%" PRIu32 "]: ", i);
       print_offset_eq(&bench->stack.data[i].arg.eq);
       printf("\n");
     }
@@ -1593,9 +1593,9 @@ static void print_class(int32_t *v) {
 
   n = iv_size(v);
   assert(n >= 2);
-  printf("{ x%"PRId32, v[0]);
+  printf("{ x%" PRId32, v[0]);
   for (i=1; i<n; i++) {
-    printf(", x%"PRId32, v[i]);
+    printf(", x%" PRId32, v[i]);
   }
   printf(" }");
 }
@@ -1611,7 +1611,7 @@ static void print_infered_classes(test_bench_t *bench) {
   n = int_partition_nclasses(&partition);
   for (i=0; i<n; i++) {
     v = partition.classes[i];
-    printf("  class[%"PRIu32"]: ", i);
+    printf("  class[%" PRIu32 "]: ", i);
     print_class(v);
     printf("\n");
   }
@@ -1628,11 +1628,11 @@ static void print_active_class(active_poly_table_t *table, int32_t *v) {
 
   k = v[0];
   assert(0 <= k && k < table->npolys);
-  printf("{ x%"PRId32, table->id[k]);
+  printf("{ x%" PRId32, table->id[k]);
   for (i=1; i<n; i++) {
     k = v[i];
     assert(0 <= k && k < table->npolys);
-    printf(", x%"PRId32, table->id[k]);
+    printf(", x%" PRId32, table->id[k]);
   }
   printf(" }");
 }
@@ -1648,7 +1648,7 @@ static void print_expected_classes(test_bench_t *bench) {
   n = int_partition_nclasses(&partition);
   for (i=0; i<n; i++) {
     v = partition.classes[i];
-    printf("  check[%"PRIu32"]: ", i);
+    printf("  check[%" PRIu32 "]: ", i);
     print_active_class(&bench->act, v);;
     printf("\n");
   }
@@ -1665,7 +1665,7 @@ static void print_explanation(test_bench_t *bench, ivector_t *v) {
   for (i=0; i<n; i++) {
     id = v->data[i];
     assert(bench->stack.data[id].tag == ASSERT_EQ);
-    printf("    eq[%"PRId32"]: ", id);
+    printf("    eq[%" PRId32 "]: ", id);
     print_offset_eq(&bench->stack.data[id].arg.eq);
     printf("\n");
   }
@@ -1739,15 +1739,15 @@ static void check_equality(test_bench_t *bench, int32_t x, int32_t y, ivector_t 
 
   // check that the normal forms are the same
   if (! equal_poly_buffers(&bx, &by)) {
-    printf("Explanation for x%"PRId32" == x%"PRId32":\n", x, y);
+    printf("Explanation for x%" PRId32 " == x%" PRId32 ":\n", x, y);
     print_poly_def(bench->ptable, x);
     print_poly_def(bench->ptable, y);
     print_explanation(bench, expl);
-    printf("BUG: explanation does not imply x%"PRId32" == x%"PRId32"\n", x, y);
-    printf("  subst for x%"PRId32" --> ", x);
+    printf("BUG: explanation does not imply x%" PRId32 " == x%" PRId32 "\n", x, y);
+    printf("  subst for x%" PRId32 " --> ", x);
     print_buffer(&bx);
     printf("\n");
-    printf("  subst for x%"PRId32" --> ", y);
+    printf("  subst for x%" PRId32 " --> ", y);
     print_buffer(&by);
     printf("\n");
 
@@ -1779,7 +1779,7 @@ static void check_propagation(test_bench_t *bench) {
       offset_manager_explain_equality(&bench->manager, x, y, &expl);
       check_equality(bench, x, y, &expl);
       if (bench->show_details) {
-	printf("Explanation for x%"PRId32" == x%"PRId32":\n", x, y);
+	printf("Explanation for x%" PRId32 " == x%" PRId32 ":\n", x, y);
 	print_poly_def(bench->ptable, x);
 	print_poly_def(bench->ptable, y);
 	print_explanation(bench, &expl);
@@ -1816,15 +1816,15 @@ static void check_good_class(test_bench_t *bench, int32_t *v) {
     y = table->id[k];
 
     if (root_of_var(queue, x) != root_of_var(queue, y)) {
-      printf("BUG: MISSED Propagation: x%"PRId32" and x%"PRId32" should be equal\n\n", x, y);
-      printf("  act[%"PRId32"]: x%"PRId32, v[0], x);
+      printf("BUG: MISSED Propagation: x%" PRId32 " and x%" PRId32 " should be equal\n\n", x, y);
+      printf("  act[%" PRId32 "]: x%" PRId32, v[0], x);
       p = bench->ptable->poly[x];
       if (p != NULL) {
 	printf(" = ");
 	print_poly(p);
       }
       printf("\n");
-      printf("  act[%"PRId32"]: x%"PRId32, k, y);
+      printf("  act[%" PRId32 "]: x%" PRId32, k, y);
       p = bench->ptable->poly[y];
       if (p != NULL) {
 	printf(" = ");
@@ -1832,10 +1832,10 @@ static void check_good_class(test_bench_t *bench, int32_t *v) {
       }
       printf("\n\n");
       print_all_equalities(bench);
-      printf("  norm(x%"PRId32") = ", x);
+      printf("  norm(x%" PRId32 ") = ", x);
       print_normal_form(bench->act.norm[v[0]]);
       printf("\n");
-      printf("  norm(x%"PRId32") = ", y);
+      printf("  norm(x%" PRId32 ") = ", y);
       print_normal_form(bench->act.norm[k]);
       printf("\n\n");
       fflush(stdout);
@@ -1869,7 +1869,7 @@ static void check_all_propagated(test_bench_t *bench) {
 static void test_activate(test_bench_t *bench, int32_t id) {
   polynomial_t *p;
 
-  printf("[%"PRIu32"]: TEST_ACTIVATE: x%"PRId32"\n", ctr, id);
+  printf("[%" PRIu32 "]: TEST_ACTIVATE: x%" PRId32 "\n", ctr, id);
 
   add_active_poly(&bench->act, bench->ptable, id);
   push_record_poly(&bench->stack, id);
@@ -1891,7 +1891,7 @@ static void test_assert_eq(test_bench_t *bench, int32_t x, int32_t y, int32_t of
   e.rhs = y;
   e.offset = offset;
 
-  printf("[%"PRIu32"]: TEST_ASSERT_EQ: eq[%"PRId32"]: ", ctr, id);
+  printf("[%" PRIu32 "]: TEST_ASSERT_EQ: eq[%" PRId32 "]: ", ctr, id);
   print_offset_eq(&e);
   printf("\n");
 
@@ -1929,7 +1929,7 @@ static void test_assert_eq(test_bench_t *bench, int32_t x, int32_t y, int32_t of
 static void test_propagate(test_bench_t *bench) {
   ivector_t expl;
 
-  printf("[%"PRIu32"]: TEST_PROPAGATE: decision level = %"PRIu32", base level = %"PRIu32"\n", ctr, bench->decision_level, bench->base_level);
+  printf("[%" PRIu32 "]: TEST_PROPAGATE: decision level = %" PRIu32 ", base level = %" PRIu32 "\n", ctr, bench->decision_level, bench->base_level);
   push_propagate(&bench->stack);
   normalize_all(bench);
 
@@ -1983,7 +1983,7 @@ static void test_propagate(test_bench_t *bench) {
 static void test_push(test_bench_t *bench) {
   assert(bench->decision_level == bench->base_level);
 
-  printf("[%"PRIu32"]: TEST_PUSH to base level %"PRIu32"\n", ctr, bench->base_level + 1);
+  printf("[%" PRIu32 "]: TEST_PUSH to base level %" PRIu32 "\n", ctr, bench->base_level + 1);
   push_push(&bench->stack);
   push_mark(&bench->equeue);
   subst_queue_push_mark(&bench->squeue);
@@ -1995,7 +1995,7 @@ static void test_push(test_bench_t *bench) {
 }
 
 static void test_increase_dlevel(test_bench_t *bench) {
-  printf("[%"PRIu32"]: INCREASE DECISION LEVEL to decision level %"PRIu32"\n", ctr, bench->decision_level + 1);
+  printf("[%" PRIu32 "]: INCREASE DECISION LEVEL to decision level %" PRIu32 "\n", ctr, bench->decision_level + 1);
   push_increase_dlevel(&bench->stack);
   push_mark(&bench->equeue);
   subst_queue_push_mark(&bench->squeue);
@@ -2010,7 +2010,7 @@ static void test_increase_dlevel(test_bench_t *bench) {
 static void test_backtrack(test_bench_t *bench) {
   assert(bench->decision_level > bench->base_level);
 
-  printf("[%"PRIu32"]: TEST BACKTRACK to decision level %"PRIu32"\n", ctr, bench->decision_level - 1);
+  printf("[%" PRIu32 "]: TEST BACKTRACK to decision level %" PRIu32 "\n", ctr, bench->decision_level - 1);
   equality_queue_backtrack(&bench->equeue);
   test_bench_undo_subst(bench);
   op_stack_backtrack(bench);
@@ -2019,7 +2019,7 @@ static void test_backtrack(test_bench_t *bench) {
 
   if (bench->show_details) {
     // print state after backtracking
-    printf("AFTER BACKTRACK: decision level = %"PRIu32", base level = %"PRIu32"\n", bench->decision_level, bench->base_level);
+    printf("AFTER BACKTRACK: decision level = %" PRIu32 ", base level = %" PRIu32 "\n", bench->decision_level, bench->base_level);
     normalize_all(bench);
     printf("Active polys\n");
     print_active_polys(bench);
@@ -2038,7 +2038,7 @@ static void test_backtrack(test_bench_t *bench) {
 static void test_pop(test_bench_t *bench) {
   assert(bench->base_level > 0);
 
-  printf("[%"PRIu32"]: TEST POP to base level %"PRIu32"\n", ctr, bench->base_level - 1);
+  printf("[%" PRIu32 "]: TEST POP to base level %" PRIu32 "\n", ctr, bench->base_level - 1);
 
   if (bench->decision_level > bench->base_level) {
     // backtrack in the test_bench
@@ -2062,7 +2062,7 @@ static void test_pop(test_bench_t *bench) {
 
   if (bench->show_details) {
     // print state after pop
-    printf("AFTER POP: decision level = %"PRIu32", base level = %"PRIu32"\n", bench->decision_level, bench->base_level);
+    printf("AFTER POP: decision level = %" PRIu32 ", base level = %" PRIu32 "\n", bench->decision_level, bench->base_level);
     normalize_all(bench);
     printf("Active polys\n");
     print_active_polys(bench);

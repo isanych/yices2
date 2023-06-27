@@ -49,9 +49,9 @@ static void sign2string(char aux[30], int32_t sign) {
   default:
     assert(sign >= 0);
     if ((sign & 1) == 0) {
-      snprintf(aux, 30, "p!%"PRId32, (sign >> 1));
+      snprintf(aux, 30, "p!%" PRId32, (sign >> 1));
     } else {
-      snprintf(aux, 30, "~p!%"PRId32, (sign >> 1));
+      snprintf(aux, 30, "~p!%" PRId32, (sign >> 1));
     }
     break;
   } 
@@ -61,7 +61,7 @@ static void show_interval(FILE *f, const bv64_abs_t *a) {
   char aux[30];
 
   sign2string(aux, a->sign);
-  fprintf(f, "[%"PRId64", %"PRId64"] (%"PRIu32" bits, sign = %s)\n",
+  fprintf(f, "[%" PRId64 ", %" PRId64 "] (%" PRIu32 " bits, sign = %s)\n",
 	  a->low, a->high, a->nbits, aux);
 }
 
@@ -271,7 +271,7 @@ static void test_power(const bv64_abs_t *a, uint32_t d) {
   printf("test power:\n");
   printf("  input = ");
   show_interval(stdout, a);
-  printf("  exponent = %"PRIu32"\n", d);
+  printf("  exponent = %" PRIu32 "\n", d);
 
   aux = *a;
   bv64_abs_power(&aux, d);

@@ -37,11 +37,9 @@
 #include "solvers/floyd_warshall/idl_floyd_warshall.h"
 #include "utils/hash_functions.h"
 #include "utils/memalloc.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-
-#if TRACE || !defined(NDEBUG)
+#if YICES_TRACE || !defined(NDEBUG)
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -442,12 +440,12 @@ static void idl_graph_add_edge(idl_graph_t *graph, int32_t x, int32_t y, int32_t
   int32_t *aux;
   uint32_t i, n;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> IDL: adding edge: ");
   print_idl_vertex(stdout, x);
   printf(" ---> ");
   print_idl_vertex(stdout, y);
-  printf(" cost: %"PRId32"\n", c);
+  printf(" cost: %" PRId32 "\n", c);
 #endif
 
   m = &graph->matrix;
@@ -1249,12 +1247,12 @@ static bvar_t bvar_for_atom(idl_solver_t *solver, int32_t x, int32_t y, int32_t 
 literal_t idl_make_atom(idl_solver_t *solver, int32_t x, int32_t y, int32_t d) {
   assert(0 <= x && x < solver->nvertices && 0 <= y && y < solver->nvertices);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> IDL: creating atom: ");
   print_idl_vertex(stdout, x);
   printf(" - ");
   print_idl_vertex(stdout, y);
-  printf(" <= %"PRId32"\n", d);
+  printf(" <= %" PRId32 "\n", d);
   if (x == y) {
     if (d >= 0) {
       printf("---> true atom\n");
@@ -1275,23 +1273,23 @@ literal_t idl_make_atom(idl_solver_t *solver, int32_t x, int32_t y, int32_t d) {
 
     cell = idl_cell(&solver->graph.matrix, x, y);
     if (cell->id >= 0 && cell->dist <= d) {
-#if TRACE
+#if YICES_TRACE
       printf("---> true atom: dist[");
       print_idl_vertex(stdout, x);
       printf(", ");
       print_idl_vertex(stdout, y);
-      printf("] = %"PRId32"\n",  cell->dist);
+      printf("] = %" PRId32 "\n",  cell->dist);
 #endif
       return true_literal;
     }
     cell = idl_cell(&solver->graph.matrix, y, x);
     if (cell->id >= 0 && cell->dist < -d) {
-#if TRACE
+#if YICES_TRACE
       printf("---> false atom: dist[");
       print_idl_vertex(stdout, y);
       printf(", ");
       print_idl_vertex(stdout, x);
-      printf("] = %"PRId32"\n",  cell->dist);
+      printf("] = %" PRId32 "\n",  cell->dist);
 #endif
       return false_literal;
     }
@@ -1400,7 +1398,7 @@ static bool idl_add_edge(idl_solver_t *solver, int32_t x, int32_t y, int32_t d, 
      */
     n = v->size;
     for (i=0; i<n; i++) {
-      v->data[i] = not(v->data[i]);
+      v->data[i] = not_(v->data[i]);
     }
     ivector_push(v, null_literal); // end marker
     record_theory_conflict(solver->core, v->data);
@@ -1481,14 +1479,14 @@ static void check_atom_for_propagation(idl_solver_t *solver, int32_t i) {
     mark_atom_assigned(&solver->atoms, i);
     push_atom_index(&solver->astack, pos_index(i));
     propagate_literal(solver->core, pos_lit(a->boolvar), expl);
-#if TRACE
+#if YICES_TRACE
     printf("---> IDL propagation: ");
     print_idl_atom(stdout, a);
     printf(" is true: dist[");
     print_idl_vertex(stdout, x);
     printf(", ");
     print_idl_vertex(stdout, y);
-    printf("] = %"PRId32"\n", cell->dist);
+    printf("] = %" PRId32 "\n", cell->dist);
 #endif
     return;
   }
@@ -1500,14 +1498,14 @@ static void check_atom_for_propagation(idl_solver_t *solver, int32_t i) {
     mark_atom_assigned(&solver->atoms, i);
     push_atom_index(&solver->astack, neg_index(i));
     propagate_literal(solver->core, neg_lit(a->boolvar), expl);
-#if TRACE
+#if YICES_TRACE
     printf("---> IDL propagation: ");
     print_idl_atom(stdout, a);
     printf(" is false: dist[");
     print_idl_vertex(stdout, y);
     printf(", ");
     print_idl_vertex(stdout, x);
-    printf("] = %"PRId32"\n", cell->dist);
+    printf("] = %" PRId32 "\n", cell->dist);
 #endif
   }
 }
@@ -1883,7 +1881,7 @@ literal_t idl_select_polarity(idl_solver_t *solver, void *a, literal_t l) {
 /*
  * Raise exception or abort
  */
-static __attribute__ ((noreturn)) void idl_exception(idl_solver_t *solver, int code) {
+ATTRIBUTE_NORETURN static void idl_exception(idl_solver_t *solver, int code) {
   if (solver->env != NULL) {
     longjmp(*solver->env, code);
   }
@@ -2090,7 +2088,7 @@ static void idl_assert_triple_eq(idl_solver_t *solver, dl_triple_t *d, bool tt) 
 
     l1 = idl_make_atom(solver, y, x, c);   // atom (y - x <= c)
     l2 = idl_make_atom(solver, x, y, -c);  // atom (x - y <= -c)
-    add_binary_clause(solver->core, not(l1), not(l2));
+    add_binary_clause(solver->core, not_(l1), not_(l2));
   }
 }
 
@@ -2418,7 +2416,7 @@ void idl_assert_cond_vareq_axiom(idl_solver_t *solver, literal_t c, thvar_t v, t
   if (x == y) {
     if (q_is_nonzero(&triple->constant)) {
       // (x - y + constant) == 0 is false
-      add_unit_clause(solver->core, not(c));
+      add_unit_clause(solver->core, not_(c));
     }
     return;
   }
@@ -2445,8 +2443,8 @@ void idl_assert_cond_vareq_axiom(idl_solver_t *solver, literal_t c, thvar_t v, t
 
   l1 = idl_make_atom(solver, y, x, d);  // (y - x <= d)
   l2 = idl_make_atom(solver, x, y, -d); // (x - y <= -d)
-  add_binary_clause(solver->core, not(c), l1);
-  add_binary_clause(solver->core, not(c), l2);
+  add_binary_clause(solver->core, not_(c), l1);
+  add_binary_clause(solver->core, not_(c), l2);
 }
 
 
@@ -2600,15 +2598,15 @@ static bool good_model(idl_solver_t *solver) {
         printf("---> BUG: invalid IDL model\n");
         printf("   val[");
         print_idl_vertex(stdout, x);
-        printf("] = %"PRId32"\n", val[x]);
+        printf("] = %" PRId32 "\n", val[x]);
         printf("   val[");
         print_idl_vertex(stdout, y);
-        printf("] = %"PRId32"\n", val[y]);
+        printf("] = %" PRId32 "\n", val[y]);
         printf("   dist[");
         print_idl_vertex(stdout, x);
         printf(", ");
         print_idl_vertex(stdout, y);
-        printf("] = %"PRId32"\n", cell->dist);
+        printf("] = %" PRId32 "\n", cell->dist);
         fflush(stdout);
 
         return false;

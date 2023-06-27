@@ -30,7 +30,7 @@ void perror_fatal(const char *s) {
 void perror_fatal_code(const char *s, int err) {
   char buffer[64];
   
-#ifdef MINGW
+#ifdef _WIN32
   fprintf(stderr, "%s: %s\n", s, strerror(err));
 #else
   strerror_r(err, buffer, sizeof(buffer));

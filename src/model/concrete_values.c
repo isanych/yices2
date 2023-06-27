@@ -753,10 +753,10 @@ static void vtbl_delete_descriptors(value_table_t *table, uint32_t k) {
 #endif
       break;
     case UNINTERPRETED_VALUE:
-      delete_value_unint(table->desc[i].ptr);
+      delete_value_unint((value_unint_t *)table->desc[i].ptr);
       break;
     case FUNCTION_VALUE:
-      delete_value_fun(table->desc[i].ptr);
+      delete_value_fun((value_fun_t *)table->desc[i].ptr);
       break;
     case BITVECTOR_VALUE:
     case TUPLE_VALUE:
@@ -1440,7 +1440,7 @@ static bool equal_const_value(const_hobj_t *o, value_t i) {
   if (table->kind[i] != UNINTERPRETED_VALUE) {
     return false;
   }
-  d = table->desc[i].ptr;
+  d = (value_unint_t *)table->desc[i].ptr;
   return d->type == o->tau && d->index == o->id;
 }
 
@@ -1452,7 +1452,7 @@ static bool equal_bv_value(bv_hobj_t *o, value_t i) {
   if (table->kind[i] != BITVECTOR_VALUE) {
     return false;
   }
-  d = table->desc[i].ptr;
+  d = (value_bv_t *)table->desc[i].ptr;
   return d->nbits == o->nbits && bvconst_eq(d->data, o->data, d->width);
 }
 
@@ -1465,7 +1465,7 @@ static bool equal_tuple_value(tuple_hobj_t *o, value_t i) {
   if (table->kind[i] != TUPLE_VALUE) {
     return false;
   }
-  d = table->desc[i].ptr;
+  d = (value_tuple_t*)table->desc[i].ptr;
   return d->nelems == o->nelems && equal_arrays(o->elem, d->elem, d->nelems);
 }
 
@@ -1477,7 +1477,7 @@ static bool equal_map_value(map_hobj_t *o, value_t i) {
   if (table->kind[i] != MAP_VALUE) {
     return false;
   }
-  d = table->desc[i].ptr;
+  d = (value_map_t*)table->desc[i].ptr;
   return d->val == o->val && d->arity == o->arity && equal_arrays(o->arg, d->arg, d->arity);
 }
 
@@ -1971,7 +1971,7 @@ value_t vtbl_mk_const(value_table_t *table, type_t tau, int32_t id, char *name) 
 
   // set the name if needed
   assert(table->kind[v] == UNINTERPRETED_VALUE);
-  d = table->desc[v].ptr;
+  d = (value_unint_t*)table->desc[v].ptr;
   if (name != NULL && d->name == NULL) {
     d->name = (char *) safe_malloc(strlen(name) + 1);
     strcpy(d->name, name);
@@ -3200,7 +3200,7 @@ void vtbl_set_function_name(value_table_t *table, value_t f, char *name) {
   value_fun_t *fun;
 
   assert(table->kind[f] == FUNCTION_VALUE);
-  fun = table->desc[f].ptr;
+  fun = (value_fun_t*)table->desc[f].ptr;
   if (fun->name != NULL) {
     safe_free(fun->name);
     fun->name = NULL;
@@ -3219,7 +3219,7 @@ void vtbl_set_constant_name(value_table_t *table, value_t c, char *name) {
   value_unint_t *d;
 
   assert(table->kind[c] == UNINTERPRETED_VALUE);
-  d = table->desc[c].ptr;
+  d = (value_unint_t*)table->desc[c].ptr;
   if (d->name != NULL) {
     safe_free(d->name);
     d->name = NULL;
@@ -3492,7 +3492,7 @@ value_t vtbl_eval_application(value_table_t *table, value_t f, uint32_t n, value
 
   // unroll all updates
   while (object_is_update(table, f)) {
-    u = table->desc[f].ptr;
+    u = (value_update_t*)table->desc[f].ptr;
     assert(u->arity == n);
     j = u->map;
     if (mapping_matches_array(table, j, n, a)) {

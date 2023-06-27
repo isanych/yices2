@@ -29,7 +29,7 @@
 #include "utils/cputime.h"
 #include "utils/memalloc.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -317,7 +317,7 @@ static void print_array(int32_t *a, int32_t n) {
       l = 20;
     }
     l --;
-    printf(" %4"PRId32, a[i]);
+    printf(" %4" PRId32, a[i]);
   }
   printf("\n");
 }
@@ -468,7 +468,7 @@ int main(void) {
     time4var2 = 0.0;
     itime = 0.0;
 
-    printf("size %"PRId32"\n", n);
+    printf("size %" PRId32 "\n", n);
     fflush(stdout);
     for (j=0; j<100; j++) {
       random_array(a, n);

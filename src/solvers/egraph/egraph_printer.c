@@ -68,7 +68,7 @@ void print_etype(FILE *f, etype_t tau) {
   // the cast to (int) prevents annoying warnings
   // when compiling with Clang
   if ((int) tau < 0 || tau > NUM_ETYPES) {
-    tau = NUM_ETYPES;
+    tau = (etype_t)NUM_ETYPES;
   }
   fputs(etype2string[tau], f);
 }
@@ -81,7 +81,7 @@ void print_theory_id(FILE *f, etype_t tau) {
   // the cast to (int) prevents annoying warnings
   // when compiling with Clang
   if ((int) tau < 0 || tau > NUM_ETYPES) {
-    tau = NUM_ETYPES;
+    tau = (etype_t)NUM_ETYPES;
   }
   fputs(etype2theory[tau], f);
 }
@@ -95,7 +95,7 @@ static void print_eterm_name(FILE *f, eterm_t t) {
   if (t < name_size && name[t] != NULL) {
     fputs(name[t], f);
   } else {
-    fprintf(f, "g!%"PRId32, t);
+    fprintf(f, "g!%" PRId32, t);
   }
 }
 
@@ -106,7 +106,7 @@ void print_eterm_id(FILE *f, eterm_t t) {
     } else if (t == true_eterm) {
       fputs("tt", f);
     } else {
-      fprintf(f, "ETERM%"PRId32, t);
+      fprintf(f, "ETERM%" PRId32, t);
     }
   } else {
     print_eterm_name(f, t);
@@ -121,10 +121,10 @@ void print_thvar(FILE *f, thvar_t v) {
     if (v == null_thvar) {
       fputs("null_thvar", f);
     } else {
-      fprintf(f, "THVAR%"PRId32, v);
+      fprintf(f, "THVAR%" PRId32, v);
     }
   } else {
-    fprintf(f, "v!%"PRId32, v);
+    fprintf(f, "v!%" PRId32, v);
   }
 }
 
@@ -137,7 +137,7 @@ void print_occurrence(FILE *f, occ_t t) {
     if (t == null_occurrence) {
       fputs("null", f);
     } else {
-      fprintf(f, "OCC%"PRId32, t);
+      fprintf(f, "OCC%" PRId32, t);
     }
   } else if (t == true_occ) {
     fputs("tt", f);
@@ -157,10 +157,10 @@ void print_class_id(FILE *f, class_t c) {
     if (c == null_class) {
       fputs("null_class", f);
     } else {
-      fprintf(f, "CLASS%"PRId32, c);
+      fprintf(f, "CLASS%" PRId32, c);
     }
   } else {
-    fprintf(f, "C!%"PRId32, c);
+    fprintf(f, "C!%" PRId32, c);
   }
 }
 
@@ -174,10 +174,10 @@ void print_label(FILE *f, elabel_t l) {
     if (l == null_label) {
       fputs("null_label", f);
     } else {
-      fprintf(f, "LABEL%"PRId32, l);
+      fprintf(f, "LABEL%" PRId32, l);
     }
   } else {
-    fprintf(f, "C!%"PRId32, class_of(l));
+    fprintf(f, "C!%" PRId32, class_of(l));
     sgn = is_pos_label(l) ? '+' : '-';
     fputc(sgn, f);
   }
@@ -207,7 +207,7 @@ void print_dmask(FILE *f, uint32_t d) {
 static void print_kind(FILE *f, composite_kind_t k) {
   // cast to (int) to prevent compilation warnings with clang
   if ((int) k < 0 || k > COMPOSITE_LAMBDA) {
-    k = COMPOSITE_LAMBDA + 1;
+    k = (composite_kind_t)(COMPOSITE_LAMBDA + 1);
   }
   fputs(cmpkind2string[k], f);
 }
@@ -231,7 +231,7 @@ void print_composite(FILE *f, composite_t *c) {
 
   case COMPOSITE_LAMBDA:
     print_kind(f, COMPOSITE_LAMBDA);
-    fprintf(f, "[%"PRId32"] ", c->child[2]); // print the lambda tag
+    fprintf(f, "[%" PRId32 "] ", c->child[2]); // print the lambda tag
     print_occurrence(f, c->child[0]);
     break;
 
@@ -254,7 +254,7 @@ void print_signature(FILE *f, signature_t *s) {
   fputc('[', f);
   print_kind(f, tag_kind(s->tag));
   if (tag_kind(s->tag) == COMPOSITE_LAMBDA) {
-    fprintf(f, "[%"PRId32"]", s->sigma[1]); // print the lambda tag
+    fprintf(f, "[%" PRId32 "]", s->sigma[1]); // print the lambda tag
   }
   for (i=0; i<n; i++) {
     fputc(' ', f);
@@ -276,7 +276,7 @@ void print_parents(FILE *f, use_vector_t *v) {
 
   n = v->last;
   for (i=0; i<n; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     if (valid_entry(p)) {
       fputs("  ", f);
       print_composite(f, p);
@@ -292,14 +292,14 @@ void print_parents_details(FILE *f, use_vector_t *v) {
 
   n = v->last;
   for (i=0; i<n; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     if (valid_entry(p)) {
       fputs("  ", f);
       print_composite(f, p);
       fputc('\n', f);
     } else if (marked_entry(p)) {
       fputs("  ", f);
-      print_composite(f, unmark_entry(p));
+      print_composite(f, (composite_t*)unmark_entry(p));
       fputs(" [hidden]\n", f);
     }
   }
@@ -668,26 +668,26 @@ void print_egraph_terms(FILE *f, egraph_t *egraph) {
       fputs("\t\t", f);
       switch(egraph_term_type(egraph, i)) {
       case ETYPE_INT:
-        fprintf(f, "arith(i!%"PRId32")\t\t", x);
+        fprintf(f, "arith(i!%" PRId32 ")\t\t", x);
         break;
       case ETYPE_REAL:
-        fprintf(f, "arith(z!%"PRId32")\t\t", x);
+        fprintf(f, "arith(z!%" PRId32 ")\t\t", x);
         break;
       case ETYPE_BV:
-        fprintf(f, "bv(u!%"PRId32")\t\t", x);
+        fprintf(f, "bv(u!%" PRId32 ")\t\t", x);
         break;
       case ETYPE_FUNCTION:
-        fprintf(f, "fun(f!%"PRId32")", x);
+        fprintf(f, "fun(f!%" PRId32 ")", x);
         break;
       case ETYPE_BOOL:
-        fprintf(f, "lit(p!%"PRId32")\t\t", x);
+        fprintf(f, "lit(p!%" PRId32 ")\t\t", x);
         print_bval(f, bvar_value(egraph->core, x));
         break;
       case ETYPE_TUPLE:
-        fprintf(f, "tup(g!%"PRId32")", x);
+        fprintf(f, "tup(g!%" PRId32 ")", x);
         break;
       default:
-        fprintf(f, "BADTHVAR(%"PRId32")", x);
+        fprintf(f, "BADTHVAR(%" PRId32 ")", x);
         break;
       }
     } else {
@@ -775,7 +775,7 @@ void print_egraph_atoms(FILE *f, egraph_t *egraph) {
     for (v=0; v<n; v++) {
       atm = bvar_atom(core, v);
       if (atm != NULL && atom_tag(atm) == EGRAPH_ATM_TAG) {
-        print_egraph_atom(f, egraph, untag_atom(atm));
+        print_egraph_atom(f, egraph, (atom_t*)untag_atom(atm));
         fputc('\n', f);
       }
     }
@@ -895,7 +895,7 @@ void print_egraph_congruence_roots(FILE *f, egraph_t *egraph) {
   if (n > 0) {
     fputs("--- Congruence roots ---\n", f);
     for (i=0; i<n; i++) {
-      print_congruence_root(f, v.data[i]);
+      print_congruence_root(f, (composite_t*)v.data[i]);
     }
   } else {
     fputs("--- Empty congruence table ---\n", f);

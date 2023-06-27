@@ -46,12 +46,12 @@ static void print_bag(int32_t *b) {
     printf("  null bag\n");
   } else {
     bag = ibag_header(b);
-    printf("  capacity = %"PRIu32"\n", bag->capacity);
-    printf("  size = %"PRIu32"\n", bag->size);
-    printf("  nelems = %"PRIu32"\n", bag->nelems);
-    printf("  free = %"PRId32, bag->free);
+    printf("  capacity = %" PRIu32 "\n", bag->capacity);
+    printf("  size = %" PRIu32 "\n", bag->size);
+    printf("  nelems = %" PRIu32 "\n", bag->nelems);
+    printf("  free = %" PRId32, bag->free);
     if (bag->free < -1) {
-      printf(" (index %"PRId32")\n", flip_sign_bit(bag->free));
+      printf(" (index %" PRId32 ")\n", flip_sign_bit(bag->free));
     } else {
       printf("\n");
     }
@@ -59,9 +59,9 @@ static void print_bag(int32_t *b) {
     n = ibag_size(b);
     for (i=0; i<n; i++) {
       x = b[i];
-      printf("   data[%"PRIu32"] = %"PRId32, i, x);
+      printf("   data[%" PRIu32 "] = %" PRId32, i, x);
       if (x < -1) {
-	printf(" (index %"PRId32")\n", flip_sign_bit(x));
+	printf(" (index %" PRId32 ")\n", flip_sign_bit(x));
       } else {
 	printf("\n");
       }
@@ -105,7 +105,7 @@ int main(void) {
   for (i=0; i<NUMTESTS; i += 2) {
     k = ibag_add(&bag, data[i]);
     index[i] = k;
-    printf("Adding %"PRId32": index = %"PRId32"\n", data[i], k);
+    printf("Adding %" PRId32 ": index = %" PRId32 "\n", data[i], k);
   }
   print_bag(bag);
   printf("\n");
@@ -113,7 +113,7 @@ int main(void) {
   for (i=0; i<NUMTESTS; i += 4) {
     k = index[i];
     if (k >= 0) {
-      printf("Removing %"PRId32" at index %"PRId32"\n", data[i], k);
+      printf("Removing %" PRId32 " at index %" PRId32 "\n", data[i], k);
       ibag_clear_elem(bag, k);
       index[i] = -1;
     }
@@ -126,7 +126,7 @@ int main(void) {
     if (k < 0) {
       k = ibag_add(&bag, data[i]);
       index[i] = k;
-      printf("Adding %"PRId32": index = %"PRId32"\n", data[i], k);
+      printf("Adding %" PRId32 ": index = %" PRId32 "\n", data[i], k);
       print_bag(bag);
     }
   }
@@ -134,7 +134,7 @@ int main(void) {
   for (i=20; i<NUMTESTS; i += 3) {
     k = index[i];
     if (k >= 0) {
-      printf("Removing %"PRId32" at index %"PRId32"\n", data[i], k);
+      printf("Removing %" PRId32 " at index %" PRId32 "\n", data[i], k);
       ibag_clear_elem(bag, k);
       print_bag(bag);
       index[i] = -1;

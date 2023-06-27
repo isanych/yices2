@@ -36,16 +36,7 @@
 #include "utils/uint_array_sort.h"
 #include "utils/uint_array_sort2.h"
 
-
-/*
- * Set these flags to 1 for debugging, trace, data collection
- */
-#define DEBUG 0
-#define TRACE 0
-#define DATA  0
-
-
-#if DEBUG
+#if YICES_DEBUG
 
 /*
  * The following functions check internal consistency. They are defined
@@ -99,7 +90,7 @@ static int pol(literal_t l) {
 }
 
 
-#if DATA
+#if YICES_DATA
 
 /*
  * DATA COLLECTION/STATISTICS
@@ -109,7 +100,7 @@ static int pol(literal_t l) {
  * Open the internal data file
  * - if this fails, solver->data stays NULL and no data is collected
  */
-void nsat_open_datafile(sat_solver_t *solver, const char *name) {
+YICES_EXTERN void nsat_open_datafile(sat_solver_t *solver, const char *name) {
   solver->data = fopen(name, "w");
 }
 
@@ -191,7 +182,7 @@ static void export_conflict_data(sat_solver_t *solver, uint32_t lbd) {
  write_error:
   // close and reset solver->data to zero
   perror("export_conflict_data");
-  fprintf(stderr, "export_conflict_data: write failed at conflict %"PRIu64"\n", solver->stats.conflicts);
+  fprintf(stderr, "export_conflict_data: write failed at conflict %" PRIu64 "\n", solver->stats.conflicts);
   fclose(solver->data);
   solver->data = NULL;
 }
@@ -221,7 +212,7 @@ static void export_last_conflict(sat_solver_t *solver) {
  write_error:
   // close and reset solver->data to zero
   perror("export_last_conflict");
-  fprintf(stderr, "export_last_conflict: write failed at conflict %"PRIu64"\n", solver->stats.conflicts);
+  fprintf(stderr, "export_last_conflict: write failed at conflict %" PRIu64 "\n", solver->stats.conflicts);
   fclose(solver->data);
   solver->data = NULL;
 }
@@ -231,7 +222,7 @@ static void export_last_conflict(sat_solver_t *solver) {
 /*
  * Placeholders: they do nothing
  */
-void nsat_open_datafile(sat_solver_t *solver, const char *name) { }
+YICES_EXTERN void nsat_open_datafile(sat_solver_t *solver, const char *name) { }
 
 static inline void close_datafile(sat_solver_t *solver) { }
 static inline void reset_datafile(sat_solver_t *solver) { }
@@ -1568,7 +1559,7 @@ static void clause_vector_add_block_length(nclause_vector_t *v, uint32_t s) {
 
 /*
  * Store block for a variable eliminated by substitution:
- * - for l := l0, we store l0, not(l), 2.
+ * - for l := l0, we store l0, not_(l), 2.
  */
 static void clause_vector_save_subst_clause(nclause_vector_t *v, literal_t l0, literal_t l) {
   uint32_t j;
@@ -1578,7 +1569,7 @@ static void clause_vector_save_subst_clause(nclause_vector_t *v, literal_t l0, l
 
   j = v->top;
   v->data[j] = l0;
-  v->data[j+1] = not(l);
+  v->data[j+1] = not_(l);
   v->data[j+2] = 2;
   v->top = j + 3;
 }
@@ -1869,13 +1860,13 @@ static inline literal_t *stacked_clause_literals(const clause_stack_t *s, cidx_t
 }
 
 
-#if DEBUG
+#if YICES_DEBUG
 static inline cidx_t next_stacked_clause(const clause_stack_t *s, cidx_t idx) {
   return idx + full_length(stacked_clause_length(s, idx)); // length + 2 rounded up to a multiple of four
 }
 #endif
 
-#if DEBUG || !defined(NDEBUG)
+#if YICES_DEBUG || !defined(NDEBUG)
 static inline literal_t first_literal_of_stacked_clause(const clause_stack_t *s, cidx_t idx) {
   assert(good_stacked_clause_idx(s, idx));
   return s->data[idx + 2];
@@ -2476,7 +2467,7 @@ static inline void var_list_add_active_var(nvar_list_t *list, bvar_t x) {
 // ordering: aux = rank, i and j are two variables
 static bool lower_rank(void *aux, uint32_t i, uint32_t j) {
   uint32_t *rank;
-  rank = aux;
+  rank = (uint32_t*)aux;
   return rank[i] < rank[j];
 }
 
@@ -2820,7 +2811,7 @@ static void init_params(solver_param_t *params) {
  * - if sz is zero, the default size is used.
  * - the solver is initialized with one variable (the reserved variable 0).
  */
-void init_nsat_solver(sat_solver_t *solver, uint32_t sz, bool pp) {
+YICES_EXTERN void init_nsat_solver(sat_solver_t *solver, uint32_t sz, bool pp) {
   uint32_t n;
 
   if (sz > MAX_VARIABLES) {
@@ -2919,14 +2910,14 @@ void init_nsat_solver(sat_solver_t *solver, uint32_t sz, bool pp) {
 /*
  * Set the verbosity level
  */
-void nsat_set_verbosity(sat_solver_t *solver, uint32_t level) {
+YICES_EXTERN void nsat_set_verbosity(sat_solver_t *solver, uint32_t level) {
   solver->verbosity = level;
 }
 
 /*
  * Free memory
  */
-void delete_nsat_solver(sat_solver_t *solver) {
+YICES_EXTERN void delete_nsat_solver(sat_solver_t *solver) {
   safe_free(solver->value);
   safe_free(solver->ante_tag);
   safe_free(solver->ante_data);
@@ -2991,7 +2982,7 @@ void delete_nsat_solver(sat_solver_t *solver) {
  * Reset: remove all variables and clauses
  * - reset heuristics parameters
  */
-void reset_nsat_solver(sat_solver_t *solver) {
+YICES_EXTERN void reset_nsat_solver(sat_solver_t *solver) {
   solver->status = STAT_UNKNOWN;
   solver->decision_level = 0;
   solver->backtrack_level = 0;
@@ -3058,7 +3049,7 @@ void reset_nsat_solver(sat_solver_t *solver) {
  * Variable activity decay: must be between 0 and 1.0
  * - smaller number means faster decay
  */
-void nsat_set_var_decay_factor(sat_solver_t *solver, double factor) {
+YICES_EXTERN void nsat_set_var_decay_factor(sat_solver_t *solver, double factor) {
   assert(0.0 < factor && factor < 1.0);
   //  solver->heap.inv_act_decay = 1/factor;
 }
@@ -3067,7 +3058,7 @@ void nsat_set_var_decay_factor(sat_solver_t *solver, double factor) {
  * Clause activity decay: must be between 0 and 1.0
  * - smaller means faster decay
  */
-void nsat_set_clause_decay_factor(sat_solver_t *solver, float factor) {
+YICES_EXTERN void nsat_set_clause_decay_factor(sat_solver_t *solver, float factor) {
   assert(0.0F < factor && factor < 1.0F);
   solver->params.inv_cla_decay = 1/factor;
 }
@@ -3078,7 +3069,7 @@ void nsat_set_clause_decay_factor(sat_solver_t *solver, float factor) {
  * - randomness = 0: no random decisions
  * - randomness = 1.0: all decisions are random
  */
-void nsat_set_randomness(sat_solver_t *solver, float randomness) {
+YICES_EXTERN void nsat_set_randomness(sat_solver_t *solver, float randomness) {
   assert(0.0F <= randomness && randomness <= 1.0F);
   solver->params.randomness = (uint32_t)(randomness * VAR_RANDOM_SCALE);
 }
@@ -3086,14 +3077,14 @@ void nsat_set_randomness(sat_solver_t *solver, float randomness) {
 /*
  * Set the prng seed
  */
-void nsat_set_random_seed(sat_solver_t *solver, uint32_t seed) {
+YICES_EXTERN void nsat_set_random_seed(sat_solver_t *solver, uint32_t seed) {
   solver->params.seed = seed;
 }
 
 /*
  * LBD threshold for clause deletion. Clauses of lbd <= keep_lbd are not deleted.
  */
-void nsat_set_keep_lbd(sat_solver_t *solver, uint32_t threshold) {
+YICES_EXTERN void nsat_set_keep_lbd(sat_solver_t *solver, uint32_t threshold) {
   solver->params.keep_lbd = threshold;
 }
 
@@ -3101,7 +3092,7 @@ void nsat_set_keep_lbd(sat_solver_t *solver, uint32_t threshold) {
  * Reduce fraction for clause deletion. f must be between 0 and 32.
  * Each call to reduce_learned_clause_set removes a fraction (f/32) of the clauses
  */
-void nsat_set_reduce_fraction(sat_solver_t *solver, uint32_t f) {
+YICES_EXTERN void nsat_set_reduce_fraction(sat_solver_t *solver, uint32_t f) {
   assert(f <= 32);
   solver->params.reduce_fraction = f;
 }
@@ -3109,21 +3100,21 @@ void nsat_set_reduce_fraction(sat_solver_t *solver, uint32_t f) {
 /*
  * Interval between two calls to reduce (number of conflicts)
  */
-void nsat_set_reduce_interval(sat_solver_t *solver, uint32_t n) {
+YICES_EXTERN void nsat_set_reduce_interval(sat_solver_t *solver, uint32_t n) {
   solver->params.reduce_interval = n;
 }
 
 /*
  * Adjustment to the reduce interval (check init_reduce and done_reduce).
  */
-void nsat_set_reduce_delta(sat_solver_t *solver, uint32_t d) {
+YICES_EXTERN void nsat_set_reduce_delta(sat_solver_t *solver, uint32_t d) {
   solver->params.reduce_delta = d;
 }
 
 /*
  * Minimal number of conflicts between two calls to restart
  */
-void nsat_set_restart_interval(sat_solver_t *solver, uint32_t n) {
+YICES_EXTERN void nsat_set_restart_interval(sat_solver_t *solver, uint32_t n) {
   solver->params.restart_interval = n;
 }
 
@@ -3131,7 +3122,7 @@ void nsat_set_restart_interval(sat_solver_t *solver, uint32_t n) {
  * Stack clause threshold: learned clauses of LBD greater than threshold are
  * treated as temporary clauses (not stored in the clause database).
  */
-void nsat_set_stack_threshold(sat_solver_t *solver, uint32_t f) {
+YICES_EXTERN void nsat_set_stack_threshold(sat_solver_t *solver, uint32_t f) {
   solver->params.stack_threshold = f;
 }
 
@@ -3145,7 +3136,7 @@ void nsat_set_stack_threshold(sat_solver_t *solver, uint32_t f) {
  * Subsumption limit: skip subsumption checks for a clause cls if that
  * would require visiting more than subsume_skip clauses.
  */
-void nsat_set_subsume_skip(sat_solver_t *solver, uint32_t limit) {
+YICES_EXTERN void nsat_set_subsume_skip(sat_solver_t *solver, uint32_t limit) {
   solver->params.subsume_skip = limit;
 }
 
@@ -3153,7 +3144,7 @@ void nsat_set_subsume_skip(sat_solver_t *solver, uint32_t limit) {
  * Var-elimination limit: if x has too many positive and negative occurrences,
  * we don't try to eliminate x.
  */
-void nsat_set_var_elim_skip(sat_solver_t *solver, uint32_t limit) {
+YICES_EXTERN void nsat_set_var_elim_skip(sat_solver_t *solver, uint32_t limit) {
   solver->params.var_elim_skip = limit;
 }
 
@@ -3161,7 +3152,7 @@ void nsat_set_var_elim_skip(sat_solver_t *solver, uint32_t limit) {
  * Resolvent limit: if eliminating x would create a clause larger than
  * res_clause_limit, we keep x.
  */
-void nsat_set_res_clause_limit(sat_solver_t *solver, uint32_t limit) {
+YICES_EXTERN void nsat_set_res_clause_limit(sat_solver_t *solver, uint32_t limit) {
   solver->params.res_clause_limit = limit;
 }
 
@@ -3170,7 +3161,7 @@ void nsat_set_res_clause_limit(sat_solver_t *solver, uint32_t limit) {
  * x is not eliminated if that would create more than res_extra new clauses
  * (so if x occurs in n clauses, it's not eliminated if it has more than n + res_extra non-trivial resolvants).
  */
-void nsat_set_res_extra(sat_solver_t *solver, uint32_t extra) {
+YICES_EXTERN void nsat_set_res_extra(sat_solver_t *solver, uint32_t extra) {
   solver->params.res_extra = extra;
 }
 
@@ -3179,15 +3170,15 @@ void nsat_set_res_extra(sat_solver_t *solver, uint32_t extra) {
 /*
  * SIMPLIFY PARAMETERS
  */
-void nsat_set_simplify_interval(sat_solver_t *solver, uint32_t n) {
+YICES_EXTERN void nsat_set_simplify_interval(sat_solver_t *solver, uint32_t n) {
   solver->params.simplify_interval = n;
 }
 
-void nsat_set_simplify_bin_delta(sat_solver_t *solver, uint32_t d) {
+YICES_EXTERN void nsat_set_simplify_bin_delta(sat_solver_t *solver, uint32_t d) {
   solver->params.simplify_bin_delta = d;
 }
 
-void nsat_set_simplify_subst_delta(sat_solver_t *solver, uint32_t d) {
+YICES_EXTERN void nsat_set_simplify_subst_delta(sat_solver_t *solver, uint32_t d) {
   solver->params.simplify_subst_delta = d;
 }
 
@@ -3228,7 +3219,7 @@ static void sat_solver_extend(sat_solver_t *solver, uint32_t new_size) {
 /*
  * Add n variables
  */
-void nsat_solver_add_vars(sat_solver_t *solver, uint32_t n) {
+YICES_EXTERN void nsat_solver_add_vars(sat_solver_t *solver, uint32_t n) {
   uint32_t i, nv, new_size;
 
   nv = solver->nvars + n;
@@ -3295,7 +3286,7 @@ bvar_t nsat_solver_new_var(sat_solver_t *solver) {
  * - polarity: true means true is preferred
  * - act = activity score
  */
-void nsat_solver_activate_var(sat_solver_t *solver, bvar_t x, double act, bool polarity) {
+YICES_EXTERN void nsat_solver_activate_var(sat_solver_t *solver, bvar_t x, double act, bool polarity) {
   nvar_heap_t *heap;
 
   assert(0 <= x && x < solver->nvars);
@@ -3314,7 +3305,7 @@ void nsat_solver_activate_var(sat_solver_t *solver, bvar_t x, double act, bool p
     solver->value[neg_lit(x)] = VAL_UNDEF_TRUE;
   }
 
-  fprintf(stderr, "activate %"PRId32", polarity = %d\n", x, polarity);
+  fprintf(stderr, "activate %" PRId32 ", polarity = %d\n", x, polarity);
 }
 
 #endif
@@ -3324,7 +3315,7 @@ void nsat_solver_activate_var(sat_solver_t *solver, bvar_t x, double act, bool p
  * preprocessing. By default, all variables are considered candidates for
  * elimination.
  */
-void nsat_solver_keep_var(sat_solver_t *solver, bvar_t x) {
+YICES_EXTERN void nsat_solver_keep_var(sat_solver_t *solver, bvar_t x) {
   assert(0 <= x && x < solver->nvars);
   add_descriptor(&solver->descriptors, x, DTAG_TO_KEEP, 0);
   assert(bvar_to_keep(&solver->descriptors, x));
@@ -3381,7 +3372,7 @@ static literal_t nsat_base_literal(const sat_solver_t *solver, literal_t l) {
  * The truth table is defined by the  8 low-order bit of parameter b.
  * The conventions are the same as in new_gates.h.
  */
-void nsat_solver_add_def2(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2) {
+YICES_EXTERN void nsat_solver_add_def2(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2) {
   ttbl_t tt;
   uint32_t i;
 
@@ -3402,7 +3393,7 @@ void nsat_solver_add_def2(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t 
   }
 }
 
-void nsat_solver_add_def3(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2, literal_t l3) {
+YICES_EXTERN void nsat_solver_add_def3(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2, literal_t l3) {
   ttbl_t tt;
   uint32_t i;
 
@@ -3517,8 +3508,8 @@ static void add_clause_all_watch(sat_solver_t *solver, uint32_t n, const literal
 static void assign_literal(sat_solver_t *solver, literal_t l) {
   bvar_t v;
 
-#if TRACE
-  printf("---> Assigning literal %"PRIu32"\n", l);
+#if YICES_TRACE
+  printf("---> Assigning literal %" PRIu32 "\n", l);
   fflush(stdout);
 #endif
 
@@ -3529,9 +3520,9 @@ static void assign_literal(sat_solver_t *solver, literal_t l) {
   push_literal(&solver->stack, l);
 
   solver->value[l] = VAL_TRUE;
-  solver->value[not(l)] = VAL_FALSE;
+  solver->value[not_(l)] = VAL_FALSE;
 
-  v = var_of(not(l));
+  v = var_of(not_(l));
   // value of v = VAL_TRUE if l = pos_lit(v) or VAL_FALSE if l = neg_lit(v)
   //  solver->value[v] = VAL_TRUE ^ sign_of_lit(l);
   solver->ante_tag[v] = ATAG_UNIT;
@@ -3570,17 +3561,17 @@ static void nsat_decide_literal(sat_solver_t *solver, literal_t l) {
   push_literal(&solver->stack, l);
 
   solver->value[l] = VAL_TRUE;
-  solver->value[not(l)] = VAL_FALSE;
+  solver->value[not_(l)] = VAL_FALSE;
 
-  v = var_of(not(l));
+  v = var_of(not_(l));
   solver->ante_tag[v] = ATAG_DECISION;
   solver->ante_data[v] = 0; // not used
   solver->level[v] = k;
 
   assert(lit_is_true(solver, l));
 
-#if TRACE
-  printf("Decision: literal %"PRIu32", level = %"PRIu32"\n", l, k);
+#if YICES_TRACE
+  printf("Decision: literal %" PRIu32 ", level = %" PRIu32 "\n", l, k);
   fflush(stdout);
 #endif
 }
@@ -3600,9 +3591,9 @@ static void implied_literal(sat_solver_t *solver, literal_t l, antecedent_tag_t 
   push_literal(&solver->stack, l);
 
   solver->value[l] = VAL_TRUE;
-  solver->value[not(l)] = VAL_FALSE;
+  solver->value[not_(l)] = VAL_FALSE;
 
-  v = var_of(not(l));
+  v = var_of(not_(l));
   solver->ante_tag[v] = tag;
   solver->ante_data[v] = data;
   solver->level[v] = solver->decision_level;
@@ -3619,8 +3610,8 @@ static void clause_propagation(sat_solver_t *solver, literal_t l, cidx_t cidx) {
 
   implied_literal(solver, l, ATAG_CLAUSE, cidx);
 
-#if TRACE
-  printf("\n---> DPLL:   Implied literal %"PRIu32", by clause %"PRIu32", decision level = %"PRIu32"\n", l, cidx, solver->decision_level);
+#if YICES_TRACE
+  printf("\n---> DPLL:   Implied literal %" PRIu32 ", by clause %" PRIu32 ", decision level = %" PRIu32 "\n", l, cidx, solver->decision_level);
   fflush(stdout);
 #endif
 }
@@ -3635,8 +3626,8 @@ static void binary_clause_propagation(sat_solver_t *solver, literal_t l, literal
 
   implied_literal(solver, l, ATAG_BINARY, l0);
 
-#if TRACE
-  printf("\n---> DPLL:   Implied literal %"PRIu32", by literal %"PRIu32", decision level = %"PRIu32"\n", l, l0, solver->decision_level);
+#if YICES_TRACE
+  printf("\n---> DPLL:   Implied literal %" PRIu32 ", by literal %" PRIu32 ", decision level = %" PRIu32 "\n", l, l0, solver->decision_level);
   fflush(stdout);
 #endif
 }
@@ -3648,8 +3639,8 @@ static void binary_clause_propagation(sat_solver_t *solver, literal_t l, literal
 static void stacked_clause_propagation(sat_solver_t *solver, literal_t l, cidx_t cidx) {
   implied_literal(solver, l, ATAG_STACKED, cidx);
 
-#if TRACE
-  printf("\n---> DPLL:   Implied literal %"PRIu32", by stacked clause %"PRIu32", decision level = %"PRIu32"\n", l, cidx, solver->decision_level);
+#if YICES_TRACE
+  printf("\n---> DPLL:   Implied literal %" PRIu32 ", by stacked clause %" PRIu32 ", decision level = %" PRIu32 "\n", l, cidx, solver->decision_level);
   fflush(stdout);
 #endif
 }
@@ -3742,7 +3733,7 @@ static void add_large_clause(sat_solver_t *solver, uint32_t n, const literal_t *
  * - l = array of n literals
  * - the array is modified
  */
-void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, literal_t *lit) {
+YICES_EXTERN void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, literal_t *lit) {
   uint32_t i, j;
   literal_t l, l_aux;
 
@@ -3752,8 +3743,8 @@ void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, liter
   }
 
   /*
-   * Remove duplicates and check for opposite literals l, not(l)
-   * (sorting ensure that not(l) is just after l)
+   * Remove duplicates and check for opposite literals l, not_(l)
+   * (sorting ensure that not_(l) is just after l)
    */
   int_array_sort(lit, n);
   l = lit[0];
@@ -3761,7 +3752,7 @@ void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, liter
   for (i=1; i<n; i++) {
     l_aux = lit[i];
     if (l_aux != l) {
-      if (l_aux == not(l)) return; // true clause
+      if (l_aux == not_(l)) return; // true clause
       lit[j] = l_aux;
       l = l_aux;
       j ++;
@@ -3846,7 +3837,7 @@ static inline bool lit_is_active(const sat_solver_t *solver, literal_t l) {
  * Literal that replaces l.
  * - var_of(l) must be marked as substituted variable.
  * - if l is pos_lit(x) then subst(l) is ante_data[x]
- * - if l is neg_lit(x) then subst(l) is not(ante_data[x])
+ * - if l is neg_lit(x) then subst(l) is not_(ante_data[x])
  * In both cases, subst(l) is ante_data[x] ^ sign_of_lit(l)
  */
 #ifndef NDEBUG
@@ -4304,15 +4295,15 @@ static void report(sat_solver_t *solver, const char *code) {
 
     if (solver->decision_level == 0) {
       vars = num_active_vars(solver);
-      fprintf(stderr, "c %4s %8"PRIu64" %7"PRIu32" %6.2f %6"PRIu32" | %7"PRIu32" %8"PRIu32" %8"PRIu32" | %8"PRIu32" %6.2f %6.2f\n",
-	      code, solver->stats.conflicts, solver->stats.starts, lev, solver->max_depth,
-	      vars, solver->binaries, solver->pool.num_prob_clauses,
-	      solver->pool.num_learned_clauses, slow, lits_per_clause);
+      fprintf(stderr, "c %4s %8" PRIu64 " %7" PRIu32 " %6.2f %6" PRIu32 " | %7" PRIu32 " %8" PRIu32 " %8" PRIu32 " | %8" PRIu32 " %6.2f %6.2f\n",
+              code, solver->stats.conflicts, solver->stats.starts, lev, solver->max_depth,
+              vars, solver->binaries, solver->pool.num_prob_clauses,
+              solver->pool.num_learned_clauses, slow, lits_per_clause);
     } else {
-      fprintf(stderr, "c %4s %8"PRIu64" %7"PRIu32" %6.2f %6"PRIu32" |         %8"PRIu32" %8"PRIu32" | %8"PRIu32" %6.2f %6.2f\n",
-	      code, solver->stats.conflicts, solver->stats.starts, lev, solver->max_depth,
-	      solver->binaries, solver->pool.num_prob_clauses,
-	      solver->pool.num_learned_clauses, slow, lits_per_clause);
+      fprintf(stderr, "c %4s %8" PRIu64 " %7" PRIu32 " %6.2f %6" PRIu32 " |         %8" PRIu32 " %8" PRIu32 " | %8" PRIu32 " %6.2f %6.2f\n",
+              code, solver->stats.conflicts, solver->stats.starts, lev, solver->max_depth,
+              solver->binaries, solver->pool.num_prob_clauses,
+              solver->pool.num_learned_clauses, slow, lits_per_clause);
     }
     solver->max_depth = 0;
   }
@@ -4408,7 +4399,7 @@ static bool less_active(void *aux, cidx_t c1, cidx_t c2) {
   sat_solver_t *solver;
   float act1, act2;
 
-  solver = aux;
+  solver = (sat_solver_t*)aux;
   act1 = get_learned_clause_activity(&solver->pool, c1);
   act2 = get_learned_clause_activity(&solver->pool, c2);
   return act1 < act2 || (act1 == act2 && c1 < c2);
@@ -4428,7 +4419,7 @@ static void nsat_reduce_learned_clause_set(sat_solver_t *solver) {
 
   if (solver->verbosity >= 4) {
     fprintf(stderr, "\nc Reduce learned clause set\n");
-    fprintf(stderr, "c  on entry: %"PRIu32" clauses, %"PRIu32" literals\n",
+    fprintf(stderr, "c  on entry: %" PRIu32 " clauses, %" PRIu32 " literals\n",
             solver->pool.num_learned_clauses, solver->pool.num_learned_literals);
   }
   n = collect_learned_clauses(solver);
@@ -4438,7 +4429,7 @@ static void nsat_reduce_learned_clause_set(sat_solver_t *solver) {
   check_candidate_clauses_to_delete(solver, a, n); // DEBUG
 
   if (solver->verbosity >= 4) {
-    fprintf(stderr, "c  possible deletion: %"PRIu32" clauses\n", n);
+    fprintf(stderr, "c  possible deletion: %" PRIu32 " clauses\n", n);
   }
 
   // a contains the clauses that can be deleted
@@ -4457,7 +4448,7 @@ static void nsat_reduce_learned_clause_set(sat_solver_t *solver) {
   check_watch_vectors(solver);
 
   if (solver->verbosity >= 4) {
-    fprintf(stderr, "c  on exit: %"PRIu32" clauses, %"PRIu32" literals\n",
+    fprintf(stderr, "c  on exit: %" PRIu32 " clauses, %" PRIu32 " literals\n",
             solver->pool.num_learned_clauses, solver->pool.num_learned_literals);
   }
 
@@ -4670,7 +4661,7 @@ static void simplify_clause_database(sat_solver_t *solver) {
 
   if (solver->verbosity >= 4) {
     fprintf(stderr, "\nc Simplify clause database\n");
-    fprintf(stderr, "c  on entry: prob: %"PRIu32" cls/%"PRIu32" lits, learned: %"PRIu32" cls/%"PRIu32" lits\n",
+    fprintf(stderr, "c  on entry: prob: %" PRIu32 " cls/%" PRIu32 " lits, learned: %" PRIu32 " cls/%" PRIu32 " lits\n",
             solver->pool.num_prob_clauses, solver->pool.num_prob_literals,
             solver->pool.num_learned_clauses, solver->pool.num_learned_literals);
   }
@@ -4695,7 +4686,7 @@ static void simplify_clause_database(sat_solver_t *solver) {
   check_watch_vectors(solver);
 
   if (solver->verbosity >= 4) {
-    fprintf(stderr, "c  on exit: prob: %"PRIu32" cls/%"PRIu32" lits, learned: %"PRIu32" cls/%"PRIu32" lits\n\n",
+    fprintf(stderr, "c  on exit: prob: %" PRIu32 " cls/%" PRIu32 " lits, learned: %" PRIu32 " cls/%" PRIu32 " lits\n\n",
             solver->pool.num_prob_clauses, solver->pool.num_prob_literals,
             solver->pool.num_learned_clauses, solver->pool.num_learned_literals);
   }
@@ -4747,15 +4738,15 @@ static void show_scc(FILE *f, const sat_solver_t *solver, literal_t l) {
   if (l0 != l) {
     // interesting SCC: not reduced to { l }
     fprintf(f, "c ");
-    if (solver->label[not(l)] == UINT32_MAX) {
+    if (solver->label[not_(l)] == UINT32_MAX) {
       fprintf(f, "dual ");
     }
-    fprintf(f, "SCC: { %"PRId32" ", dimacs(l0));
+    fprintf(f, "SCC: { %" PRId32 " ", dimacs(l0));
     do {
       assert(i > 0);
       i --;
       l0 = v->data[i];
-      fprintf(f, "%"PRId32" ", dimacs(l0));
+      fprintf(f, "%" PRId32 " ", dimacs(l0));
     } while (l0 != l);
     fprintf(f, "}\n");
   }
@@ -4821,10 +4812,10 @@ static literal_t scc_representative(sat_solver_t *solver, literal_t l) {
  * Otherwise, we select a representative 'rep' in C. For every other
  * literal l0 in C, we record subst[l0] := rep.
  * - the antecedent tag for var_of(l0) is set to ATAG_SUBST
- * - the antecedent data for var_of(l0) is set to rep or not(rep)
+ * - the antecedent data for var_of(l0) is set to rep or not_(rep)
  *   depending on l0's polarity.
  *
- * If we detect that C contains complementary literals l0 and not(l0),
+ * If we detect that C contains complementary literals l0 and not_(l0),
  * we add the empty clause and exit.
  */
 static void process_scc(sat_solver_t *solver, literal_t l) {
@@ -4837,10 +4828,10 @@ static void process_scc(sat_solver_t *solver, literal_t l) {
     show_scc(stderr, solver, l);
   }
 
-  if (solver->label[not(l)] == UINT32_MAX) {
+  if (solver->label[not_(l)] == UINT32_MAX) {
     /*
      * This SCC is of the form { l_0 ..., l }. The complementary SCC {
-     * not(l_0) ... not(l) } has been processed before.  We mark l0,
+     * not_(l_0) ... not_(l) } has been processed before.  We mark l0,
      * ..., l as fully explored and remove C from the
      * vertex_stack.
      */
@@ -4860,8 +4851,8 @@ static void process_scc(sat_solver_t *solver, literal_t l) {
       l0 = vector_pop(&solver->vertex_stack);
       solver->label[l0] = UINT32_MAX; // mark l0 as fully explored/SCC known
       if (lit_is_eliminated(solver, l0)) {
-	// both l0 and not(l0) are in the SCC
-	assert(base_subst(solver, l0) == not(rep));
+	// both l0 and not_(l0) are in the SCC
+	assert(base_subst(solver, l0) == not_(rep));
 	unsat = true;
 	add_empty_clause(solver);
 	break;
@@ -4889,7 +4880,7 @@ static bool next_successor(const sat_solver_t *solver, literal_t l0, uint32_t *i
   uint32_t k, idx, n;
   watch_t *w;
 
-  w = solver->watch[not(l0)];
+  w = solver->watch[not_(l0)];
   if (w != NULL) {
     n = w->size;
     k = *i;
@@ -4904,7 +4895,7 @@ static bool next_successor(const sat_solver_t *solver, literal_t l0, uint32_t *i
 	idx = w->data[k];
 	if (clause_is_live(&solver->pool, idx) && clause_length(&solver->pool, idx) == 2) {
 	  *i = k+1;
-	  *successor = other_watched_literal_of_clause(&solver->pool, idx, not(l0));
+	  *successor = other_watched_literal_of_clause(&solver->pool, idx, not_(l0));
 	  return true;
 	}
 	k ++;
@@ -4924,7 +4915,7 @@ static bool next_successor(const sat_solver_t *solver, literal_t l0, uint32_t *i
 	  return true;
 	} else if (clause_is_live(&solver->pool, idx) && clause_length(&solver->pool, idx) == 2) {
 	  *i = k+2;
-	  *successor = other_watched_literal_of_clause(&solver->pool, idx, not(l0));
+	  *successor = other_watched_literal_of_clause(&solver->pool, idx, not_(l0));
 	  return true;
 	}
 	k += 2;
@@ -4949,7 +4940,7 @@ static void dfs_explore(sat_solver_t *solver, literal_t l) {
   uint32_t k;
   literal_t x, y;
 
-  //  fprintf(stderr, "dfs: root = %"PRId32"\n", dimacs(l));
+  //  fprintf(stderr, "dfs: root = %" PRId32 "\n", dimacs(l));
 
   assert(solver->visit[l] == 0 &&
          gstack_is_empty(&solver->dfs_stack) &&
@@ -5051,7 +5042,7 @@ static void compute_sccs(sat_solver_t *solver) {
  * Trick to detect duplicates and complementary literals in a clause:
  * - when literal l is added to a clause, we temporarily set its
  *   truth value to false.
- * - so the next occurrence of l is ignored and an occurrence of not(l)
+ * - so the next occurrence of l is ignored and an occurrence of not_(l)
  *   makes the clause true.
  */
 // make l false and not l true (temporarily)
@@ -5064,8 +5055,8 @@ static void mark_false_lit(sat_solver_t *solver, literal_t l) {
 
   v = solver->value[l];
   solver->value[l] = (v<<2) | VAL_FALSE;
-  v = solver->value[not(l)];
-  solver->value[not(l)] = (v<<2) | VAL_TRUE;
+  v = solver->value[not_(l)];
+  solver->value[not_(l)] = (v<<2) | VAL_TRUE;
 }
 
 // remove the mark on l and restore the preferred polarity
@@ -5212,7 +5203,7 @@ static void subst_and_simplify_binary_clause(sat_solver_t *solver, literal_t l0,
 
     if (a[0] == a[1]) {
       add_unit_clause(solver, a[0]);
-    } else if (a[0] != not(a[1])) {
+    } else if (a[0] != not_(a[1])) {
       add_binary_clause(solver, a[0], a[1]);
     }
   }
@@ -5344,21 +5335,21 @@ static void apply_substitution(sat_solver_t *solver) {
 static void show_preprocessing_stats(sat_solver_t *solver, double time) {
   fprintf(stderr, "c\n"
 	          "c After preprocessing\n");
-  fprintf(stderr, "c  unit literals        : %"PRIu32"\n", solver->stats.pp_unit_lits);
-  fprintf(stderr, "c  pure literals        : %"PRIu32"\n", solver->stats.pp_pure_lits);
-  fprintf(stderr, "c  substitutions        : %"PRIu32"\n", solver->stats.pp_subst_vars);
-  fprintf(stderr, "c  unit equiv           : %"PRIu32"\n", solver->stats.pp_subst_units);
-  fprintf(stderr, "c  literal equiv        : %"PRIu32"\n", solver->stats.pp_equivs);
-  fprintf(stderr, "c  cheap var elims      : %"PRIu32"\n", solver->stats.pp_cheap_elims);
-  fprintf(stderr, "c  less cheap var elims : %"PRIu32"\n", solver->stats.pp_var_elims);
-  fprintf(stderr, "c  active vars          : %"PRIu32"\n", num_active_vars(solver));
-  fprintf(stderr, "c  deleted clauses      : %"PRIu32"\n", solver->stats.pp_clauses_deleted);
-  fprintf(stderr, "c  subsumed clauses     : %"PRIu32"\n", solver->stats.pp_subsumptions);
-  fprintf(stderr, "c  strengthenings       : %"PRIu32"\n", solver->stats.pp_strengthenings);
-  fprintf(stderr, "c  unit strengthenings  : %"PRIu32"\n", solver->stats.pp_unit_strengthenings);
-  fprintf(stderr, "c  unit clauses         : %"PRIu32"\n", solver->units);           // should be zero
-  fprintf(stderr, "c  bin clauses          : %"PRIu32"\n", solver->binaries);
-  fprintf(stderr, "c  big clauses          : %"PRIu32"\n", solver->pool.num_prob_clauses);
+  fprintf(stderr, "c  unit literals        : %" PRIu32 "\n", solver->stats.pp_unit_lits);
+  fprintf(stderr, "c  pure literals        : %" PRIu32 "\n", solver->stats.pp_pure_lits);
+  fprintf(stderr, "c  substitutions        : %" PRIu32 "\n", solver->stats.pp_subst_vars);
+  fprintf(stderr, "c  unit equiv           : %" PRIu32 "\n", solver->stats.pp_subst_units);
+  fprintf(stderr, "c  literal equiv        : %" PRIu32 "\n", solver->stats.pp_equivs);
+  fprintf(stderr, "c  cheap var elims      : %" PRIu32 "\n", solver->stats.pp_cheap_elims);
+  fprintf(stderr, "c  less cheap var elims : %" PRIu32 "\n", solver->stats.pp_var_elims);
+  fprintf(stderr, "c  active vars          : %" PRIu32 "\n", num_active_vars(solver));
+  fprintf(stderr, "c  deleted clauses      : %" PRIu32 "\n", solver->stats.pp_clauses_deleted);
+  fprintf(stderr, "c  subsumed clauses     : %" PRIu32 "\n", solver->stats.pp_subsumptions);
+  fprintf(stderr, "c  strengthenings       : %" PRIu32 "\n", solver->stats.pp_strengthenings);
+  fprintf(stderr, "c  unit strengthenings  : %" PRIu32 "\n", solver->stats.pp_unit_strengthenings);
+  fprintf(stderr, "c  unit clauses         : %" PRIu32 "\n", solver->units);           // should be zero
+  fprintf(stderr, "c  bin clauses          : %" PRIu32 "\n", solver->binaries);
+  fprintf(stderr, "c  big clauses          : %" PRIu32 "\n", solver->pool.num_prob_clauses);
   fprintf(stderr, "c\n"
 	          "c Preprocessing time    : %.4f\nc\n", time);
   if (solver->has_empty_clause) {
@@ -5808,8 +5799,8 @@ static void pp_restore_watch_vectors(sat_solver_t *solver) {
  * Garbage collection
  */
 static void pp_collect_garbage(sat_solver_t *solver) {
-#if TRACE
-  fprintf(stderr, "gc: pool size = %"PRIu32", literals = %"PRIu32", padding = %"PRIu32"\n",
+#if YICES_TRACE
+  fprintf(stderr, "gc: pool size = %" PRIu32 ", literals = %" PRIu32 ", padding = %" PRIu32 "\n",
           solver->pool.size, solver->pool.num_prob_literals, solver->pool.padding);
 #endif
   check_clause_pool_counters(&solver->pool);
@@ -5817,8 +5808,8 @@ static void pp_collect_garbage(sat_solver_t *solver) {
   pp_compact_clause_pool(solver);
   pp_restore_watch_vectors(solver);
   check_clause_pool_counters(&solver->pool);
-#if TRACE
-  fprintf(stderr, "done: pool size = %"PRIu32", literals = %"PRIu32", padding = %"PRIu32"\n",
+#if YICES_TRACE
+  fprintf(stderr, "done: pool size = %" PRIu32 ", literals = %" PRIu32 ", padding = %" PRIu32 "\n",
           solver->pool.size, solver->pool.num_prob_literals, solver->pool.padding);
 #endif
 }
@@ -5857,9 +5848,9 @@ static void pp_push_literal(sat_solver_t *solver, literal_t l, antecedent_tag_t 
   queue_push(&solver->lqueue, l);
 
   solver->value[l] = VAL_TRUE;
-  solver->value[not(l)] = VAL_FALSE;
+  solver->value[not_(l)] = VAL_FALSE;
 
-  v = var_of(not(l));
+  v = var_of(not_(l));
   solver->ante_tag[v] = tag;
   solver->ante_data[v] = 0;
   solver->level[v] = 0;
@@ -5882,14 +5873,14 @@ static inline void pp_push_unit_literal(sat_solver_t *solver, literal_t l) {
 
 /*
  * Decrement the occurrence counter of l.
- * - if occ[l] goes to zero, add not(l) to the queue as a pure literal (unless
+ * - if occ[l] goes to zero, add not_(l) to the queue as a pure literal (unless
  *   l is already assigned or eliminated).
  */
 static void pp_decrement_occ(sat_solver_t *solver, literal_t l) {
   assert(solver->occ[l] > 0);
   solver->occ[l] --;
   if (solver->occ[l] == 0 && !lit_is_assigned(solver, l)) {
-    pp_push_pure_literal(solver, not(l));
+    pp_push_pure_literal(solver, not_(l));
   }
 }
 
@@ -6115,7 +6106,7 @@ static bool pp_empty_queue(sat_solver_t *solver) {
            solver->ante_tag[var_of(l)] == ATAG_PURE);
     pp_remove_true_clauses(solver, l);
     if (solver->ante_tag[var_of(l)] == ATAG_UNIT) {
-      pp_visit_clauses_of_lit(solver, not(l));
+      pp_visit_clauses_of_lit(solver, not_(l));
       if (solver->has_empty_clause) {
         reset_queue(&solver->lqueue);
         return false;
@@ -6140,10 +6131,10 @@ static void process_lit_equiv(sat_solver_t *solver, literal_t l1, literal_t l2) 
   if (var_of(l1) == const_bvar) {
     assert(l1 == true_literal || l1 == false_literal);
     // either l2 := true or l2 := false
-    if (l1 == false_literal) l2 = not(l2);
-    if (solver->verbosity >= 5) fprintf(stderr, "c   lit equiv: unit literal %"PRId32"\n", l2);
+    if (l1 == false_literal) l2 = not_(l2);
+    if (solver->verbosity >= 5) fprintf(stderr, "c   lit equiv: unit literal %" PRId32 "\n", l2);
     vector_push(&solver->subst_units, l2);
-  } else if (l1 == not(l2)) {
+  } else if (l1 == not_(l2)) {
     add_empty_clause(solver);
   } else {
     // subst[l2] := l1
@@ -6153,14 +6144,14 @@ static void process_lit_equiv(sat_solver_t *solver, literal_t l1, literal_t l2) 
       swap_lit_ranks(solver, l1, l2);
     }
     if (solver->verbosity >= 6) {
-      fprintf(stderr, "c   lit equiv: subst[%"PRId32"] := %"PRId32"\n", l2, l1);
+      fprintf(stderr, "c   lit equiv: subst[%" PRId32 "] := %" PRId32 "\n", l2, l1);
     }
   }
 }
 
 /*
  * Process equivalence: l1 == l2
- * - if l1 == not(l2): mark the whole thing unsat (empty clause)
+ * - if l1 == not_(l2): mark the whole thing unsat (empty clause)
  * - if l1 or l2 is true or false literal, store an entry in solver->subst_units
  * - otherwise add subst[l1] := l2 or subst[l2] := l1
  */
@@ -6170,7 +6161,7 @@ static void literal_equiv(sat_solver_t *solver, literal_t l1, literal_t l2) {
   if (l1 == l2) return;
 
   solver->stats.equivs ++;
-  if (l1 == not(l2)) {
+  if (l1 == not_(l2)) {
     add_empty_clause(solver);
     if (solver->verbosity >= 1) {
       fprintf(stderr, "c   lit equiv: empty clause\n");
@@ -6348,7 +6339,7 @@ static void process_lit_eq_ttbl(sat_solver_t *solver, gate_hmap_t *map, literal_
   literal_t l;
 
   if (solver->verbosity >= 6) {
-    fprintf(stderr, "c   %s: %c%"PRId32" == ", w, pol(l0), var_of(l0));
+    fprintf(stderr, "c   %s: %c%" PRId32 " == ", w, pol(l0), var_of(l0));
     show_tt(tt);
   }
 
@@ -6356,7 +6347,7 @@ static void process_lit_eq_ttbl(sat_solver_t *solver, gate_hmap_t *map, literal_
   if (l != null_literal) {
     if (l != l0) {
       if (solver->verbosity >= 2) {
-	fprintf(stderr, "c   %s: %"PRId32" == %"PRId32"\n", w, l, l0);
+	fprintf(stderr, "c   %s: %" PRId32 " == %" PRId32 "\n", w, l, l0);
       }
       literal_equiv(solver, l, l0);
     }
@@ -6419,9 +6410,9 @@ static void show_all_gates(const gate_hmap_t *map) {
   while (g != NULL) {
     printf("G(");
     for (i=0; i<3; i++) {
-      printf("%"PRId32", ", g->var[i]);
+      printf("%" PRId32 ", ", g->var[i]);
     }
-    printf("0x%02x) mapped to %"PRId32"\n", g->ttbl, l);
+    printf("0x%02x) mapped to %" PRId32 "\n", g->ttbl, l);
     g = gate_hmap_next_gate(map, g, &l);
   }
 }
@@ -6458,7 +6449,7 @@ static void try_equivalent_vars(sat_solver_t *solver, uint32_t level) {
 	if (level >= 1) {
 	  l1 = literal_of_ttbl0(&tt);
 	  if (solver->verbosity >= 5) {
-	    fprintf(stderr, "c  var %"PRId32" simplifies to constant: %"PRId32" == %"PRId32"\n", i, l0, l1);
+	    fprintf(stderr, "c  var %" PRId32 " simplifies to constant: %" PRId32 " == %" PRId32 "\n", i, l0, l1);
 	  }
 	  literal_equiv(solver, l0, l1);
 	}
@@ -6469,7 +6460,7 @@ static void try_equivalent_vars(sat_solver_t *solver, uint32_t level) {
 	  l1 = literal_of_ttbl1(&tt);
 	  if (l0 != l1 && !lit_is_eliminated(solver, l1)) {
 	    if (solver->verbosity >= 5) {
-	      fprintf(stderr, "c  var %"PRId32" simplifies to literal: %"PRId32" == %"PRId32"\n", i, l0, l1);
+	      fprintf(stderr, "c  var %" PRId32 " simplifies to literal: %" PRId32 " == %" PRId32 "\n", i, l0, l1);
 	    }
 	    literal_equiv(solver, l0, l1);
 	  }
@@ -6509,7 +6500,7 @@ static bool process_lit_eq_ttbl(sat_solver_t *solver, gmap_t *gmap, literal_t l0
   literal_t l;
 
   if (solver->verbosity >= 6) {
-    fprintf(stderr, "c   %s: %c%"PRId32" == ", w, pol(l0), var_of(l0));
+    fprintf(stderr, "c   %s: %c%" PRId32 " == ", w, pol(l0), var_of(l0));
     show_tt(tt);
   }
 
@@ -6521,7 +6512,7 @@ static bool process_lit_eq_ttbl(sat_solver_t *solver, gmap_t *gmap, literal_t l0
 
   if (l != null_literal && l != l0) {
     if (solver->verbosity >= 2) {
-      fprintf(stderr, "c   %s: %"PRId32" == %"PRId32"\n", w, l, l0);
+      fprintf(stderr, "c   %s: %" PRId32 " == %" PRId32 "\n", w, l, l0);
     }
     literal_equiv(solver, l, l0);
     return true;
@@ -6575,11 +6566,11 @@ static void learned_binary_clause(sat_solver_t *solver, literal_t l1, literal_t 
 
   assert(solver->preprocess);
 
-  if (l1 == not(l2)) return;
+  if (l1 == not_(l2)) return;
   if (l1 == l2) return; // Handle this later
 
   if (solver->verbosity >= 2) {
-    fprintf(stderr, "c add clause %"PRId32" %"PRId32"\n", l1, l2);
+    fprintf(stderr, "c add clause %" PRId32 " %" PRId32 "\n", l1, l2);
   }
   if (l1 < l2) {
     aux[0] = l1;
@@ -6596,11 +6587,11 @@ static void test_binary_clause(sat_solver_t *solver, const gmap_entry_t *a, cons
   if ((a->ttbl | b->ttbl) == 0xffff) {
     learned_binary_clause(solver, a->lit, b->lit);
   } else if ((a->ttbl | ~b->ttbl) == 0xffff) {
-    learned_binary_clause(solver, a->lit, not(b->lit));
+    learned_binary_clause(solver, a->lit, not_(b->lit));
   } else if ((~a->ttbl | b->ttbl) == 0xffff) {
-    learned_binary_clause(solver, not(a->lit), b->lit);
+    learned_binary_clause(solver, not_(a->lit), b->lit);
   } else if ((~a->ttbl | ~b->ttbl) == 0xffff) {
-    learned_binary_clause(solver, not(a->lit), not(b->lit));
+    learned_binary_clause(solver, not_(a->lit), not_(b->lit));
   }
 }
 
@@ -6617,12 +6608,12 @@ static void small_clauses_from_vector(sat_solver_t *solver, const gmap_elem_t *e
   if (solver->verbosity >= 3) {
     fprintf(stderr, "c vars: [");
     for (i=0; i<4; i++)  {
-      fprintf(stderr, " %"PRId32, e->var[i]);
+      fprintf(stderr, " %" PRId32, e->var[i]);
     }
     fprintf(stderr, " ]\n");
     for (i=0; i<n; i++) {
       l = e->data[i].lit;
-      fprintf(stderr, "c    0x%04x --> %c%"PRId32"\n", e->data[i].ttbl, pol(l), var_of(l));
+      fprintf(stderr, "c    0x%04x --> %c%" PRId32 "\n", e->data[i].ttbl, pol(l), var_of(l));
     }
     fprintf(stderr, "\n");
   }
@@ -6665,7 +6656,7 @@ static bool try_lit_equiv_cut(sat_solver_t *solver, literal_t l0, const wide_ttb
 
   if (l != l0) {
     if (solver->verbosity >= 2) {
-      fprintf(stderr, "c   cut-equiv: %"PRId32" == %"PRId32"\n", l, l0);
+      fprintf(stderr, "c   cut-equiv: %" PRId32 " == %" PRId32 "\n", l, l0);
     }
     literal_equiv(solver, l, l0);
     return true;
@@ -6746,7 +6737,7 @@ static bool expand_and_test_equiv(sat_solver_t *solver, literal_t l0, const wide
 
   found = false;
 
-  //  printf("c exp-and-test-equiv: literal %"PRId32", n_sub = %"PRIu32", max = %"PRIu32"\n", l0, n_sub, max_expand);
+  //  printf("c exp-and-test-equiv: literal %" PRId32 ", n_sub = %" PRIu32 ", max = %" PRIu32 "\n", l0, n_sub, max_expand);
 
   init_wide_ttbl(&normal, 10);
   init_wide_ttbl(&aux, 10);
@@ -6861,7 +6852,7 @@ static void try_equivalent_vars(sat_solver_t *solver, uint32_t level) {
   solver->stats.try_equiv_calls ++;
 
   if (solver->verbosity >= 4) {
-    printf("c\nc cut sweeping: round %"PRIu32"\nc\n", solver->stats.try_equiv_calls);
+    printf("c\nc cut sweeping: round %" PRIu32 "\nc\n", solver->stats.try_equiv_calls);
     fflush(stdout);
   }
 
@@ -6882,7 +6873,7 @@ static void try_equivalent_vars(sat_solver_t *solver, uint32_t level) {
 	if (level >= 1) {
 	  l1 = literal_of_ttbl0(&tt);
 	  if (solver->verbosity >= 5) {
-	    fprintf(stderr, "c  var %"PRId32" simplifies to constant: %"PRId32" == %"PRId32"\n", i, l0, l1);
+	    fprintf(stderr, "c  var %" PRId32 " simplifies to constant: %" PRId32 " == %" PRId32 "\n", i, l0, l1);
 	  }
 	  literal_equiv(solver, l0, l1);
 	}
@@ -6893,7 +6884,7 @@ static void try_equivalent_vars(sat_solver_t *solver, uint32_t level) {
 	  l1 = literal_of_ttbl1(&tt);
 	  if (l0 != l1 && !lit_is_eliminated(solver, l1)) {
 	    if (solver->verbosity >= 5) {
-	      fprintf(stderr, "c  var %"PRId32" simplifies to literal: %"PRId32" == %"PRId32"\n", i, l0, l1);
+	      fprintf(stderr, "c  var %" PRId32 " simplifies to literal: %" PRId32 " == %" PRId32 "\n", i, l0, l1);
 	    }
 	    literal_equiv(solver, l0, l1);
 	  }
@@ -6941,7 +6932,7 @@ static void pp_decrement_occ_counts_after_subst(sat_solver_t *solver, literal_t 
     assert(solver->occ[l] > 0);
     solver->occ[l] --;
     if (solver->occ[l] == 0 && !lit_is_eliminated(solver, l)) {
-      vector_push(&solver->subst_pure, not(l));
+      vector_push(&solver->subst_pure, not_(l));
     }
   }
 }
@@ -7115,7 +7106,7 @@ static void pp_process_subst_pure(sat_solver_t *solver) {
   n = v->size;
   for (i=0; i<n; i++) {
     l = full_lit_subst(solver, v->data[i]);
-    if (lit_is_unassigned(solver, l) && solver->occ[not(l)] == 0) {
+    if (lit_is_unassigned(solver, l) && solver->occ[not_(l)] == 0) {
       pp_push_pure_literal(solver, l);
     }
   }
@@ -7148,7 +7139,7 @@ static bool pp_scc_simplification(sat_solver_t *solver) {
   if (n > 0) {
     n0 = n;
     if (solver->verbosity >= 3) {
-      fprintf(stderr, "c  scc %"PRIu32" variable substitutions\n", n);
+      fprintf(stderr, "c  scc %" PRIu32 " variable substitutions\n", n);
     }
     for (;;) {
       try_equivalent_vars(solver, 2);
@@ -7158,7 +7149,7 @@ static bool pp_scc_simplification(sat_solver_t *solver) {
 
     // equivalent_vars may add more variables to vector v
     if (solver->verbosity >= 3 && n > n0) {
-      fprintf(stderr, "c  eq  %"PRIu32" substitutions\n", n - n0);
+      fprintf(stderr, "c  eq  %" PRIu32 " substitutions\n", n - n0);
     }
 
     // process the substitutions
@@ -7345,16 +7336,16 @@ static bool try_subsumption(sat_solver_t *solver, uint32_t n, const literal_t *a
 
   /*
    * in this loop:
-   * - k < m => b[k] = not(a[i0]) for some 0 <= i0 < i
+   * - k < m => b[k] = not_(a[i0]) for some 0 <= i0 < i
    * - all literals in of a[0 ... i-1] occur in b,
    *   except possibly a[i0] which occurs negated.
    * - all elements of b[0 .. j-1] are < a[i]
    */
   for (i=0; i<n; i++) {
-    // search for a[i] or not(a[i]) in array b[j ... m-1]
+    // search for a[i] or not_(a[i]) in array b[j ... m-1]
     j = pp_search_for_var(var_of(a[i]), j, m, b);
     if (j == m) return true;  // a[i] not in cidx
-    assert(b[j] == a[i] || b[j] == not(a[i]));
+    assert(b[j] == a[i] || b[j] == not_(a[i]));
     if (a[i] != b[j]) {
       if (k < m) return true;
       k = j;
@@ -7402,12 +7393,12 @@ static literal_t pp_key_literal(sat_solver_t *solver, const literal_t *a, uint32
   assert(n >= 2);
 
   k = a[0];
-  c = solver->occ[k] + solver->occ[not(k)];
+  c = solver->occ[k] + solver->occ[not_(k)];
 
   for (i=1; i<n; i++) {
     l = a[i];
-    if (solver->occ[l] + solver->occ[not(l)] < c) {
-      c = solver->occ[l] + solver->occ[not(l)];
+    if (solver->occ[l] + solver->occ[not_(l)] < c) {
+      c = solver->occ[l] + solver->occ[not_(l)];
       k = l;
     }
   }
@@ -7416,7 +7407,7 @@ static literal_t pp_key_literal(sat_solver_t *solver, const literal_t *a, uint32
 }
 
 
-#if TRACE
+#if YICES_TRACE
 static uint32_t w_len(sat_solver_t *solver, literal_t l) {
   watch_t *w;
   uint32_t len;
@@ -7424,7 +7415,7 @@ static uint32_t w_len(sat_solver_t *solver, literal_t l) {
   len = 0;
   w = solver->watch[l];
   if (w != NULL) len += w->size;
-  w = solver->watch[not(l)];
+  w = solver->watch[not_(l)];
   if (w != NULL) len += w->size;
 
   return len;
@@ -7453,9 +7444,9 @@ static bool pp_clause_subsumption(sat_solver_t *solver, uint32_t cidx, uint32_t 
   a = clause_literals(&solver->pool, cidx);
   key = pp_key_literal(solver, a, n);
 
-#if TRACE
-  fprintf(stderr, "subsumption check: cidx = %"PRIu32", len = %"PRIu32", key = %"PRIu32", occs = %"PRIu32", watch size = %"PRIu32"\n",
-          cidx, n, key, solver->occ[key] + solver->occ[not(key)], w_len(solver, key));
+#if YICES_TRACE
+  fprintf(stderr, "subsumption check: cidx = %" PRIu32 ", len = %" PRIu32 ", key = %" PRIu32 ", occs = %" PRIu32 ", watch size = %" PRIu32 "\n",
+          cidx, n, key, solver->occ[key] + solver->occ[not_(key)], w_len(solver, key));
 #endif
 
   w = solver->watch[key];
@@ -7476,7 +7467,7 @@ static bool pp_clause_subsumption(sat_solver_t *solver, uint32_t cidx, uint32_t 
     }
   }
 
-  w = solver->watch[not(key)];
+  w = solver->watch[not_(key)];
   if (w != NULL) {
     m = w->size;
     if (m < solver->params.subsume_skip) {
@@ -7709,12 +7700,12 @@ static void pp_save_elim_clauses_for_var(sat_solver_t *solver, bvar_t x) {
 
   if (s == 0) {
     /*
-     * no clauses contain l so not(l) is a pure literal.
-     * we want not(l) to be true in the final assignment.
-     * To force that, we store the clause { not(l) } in the
+     * no clauses contain l so not_(l) is a pure literal.
+     * we want not_(l) to be true in the final assignment.
+     * To force that, we store the clause { not_(l) } in the
      * saved-clause vector.
      */
-    l = not(l);
+    l = not_(l);
     resize_clause_vector(&solver->saved_clauses, 1);
     clause_vector_save_clause(&solver->saved_clauses, 1, &l, l);
     clause_vector_add_block_length(&solver->saved_clauses, 1);
@@ -7760,7 +7751,7 @@ static bool non_trivial_resolvent(const sat_solver_t *solver, uint32_t c1, uint3
     } else if (var_of(a1[i1]) > var_of(a2[i2])) {
       i2 ++;
     } else if (a1[i1] != a2[i2] && a1[i1] != l) {
-      assert(a1[i1] == not(a2[i2])); // trivial resolvent
+      assert(a1[i1] == not_(a2[i2])); // trivial resolvent
       return false;
     } else {
       i1 ++;
@@ -7809,7 +7800,7 @@ static bool pp_build_resolvent(sat_solver_t *solver, uint32_t c1, uint32_t c2, l
       i1 ++;
       i2 ++;
     } else {
-      assert(a1[i1] == not(a2[i2]));
+      assert(a1[i1] == not_(a2[i2]));
       if (a1[i1] != l) return false;
       i1 ++;
       i2 ++;
@@ -8142,7 +8133,7 @@ static void eliminate_free_variables(sat_solver_t *solver) {
   solver->stats.pp_cheap_elims += c;
 
   if (solver->verbosity >= 1) {
-    fprintf(stderr, "c free var eliminations: %"PRIu32"\n", c);
+    fprintf(stderr, "c free var eliminations: %" PRIu32 "\n", c);
   }
 }
 
@@ -8293,13 +8284,13 @@ static void show_expanded_ttbl(bvar_t x, wide_ttbl_t *w) {
 
   fprintf(stderr, "c W(");
   for (i=0; i<w->nvars; i++) {
-    fprintf(stderr, "%"PRId32", ", w->var[i]);
+    fprintf(stderr, "%" PRId32 ", ", w->var[i]);
   }
   n = ((uint32_t) 1) << w->nvars;
   for (i=0; i<n; i++) {
     fputc((int)('0' + w->val[i]), stderr);
   }
-  fprintf(stderr, ") == %"PRId32"\n", x);
+  fprintf(stderr, ") == %" PRId32 "\n", x);
 }
 
 static void try_expand_all(const sat_solver_t *solver, bvar_t x, wide_ttbl_t *w) {
@@ -8342,7 +8333,7 @@ static void show_expanded_var_defs(const sat_solver_t *solver) {
   n = solver->descriptors.size;
   for (i=0; i<n; i++) {
     if (gate_for_bvar(solver, i, &base)) {
-      fprintf(stderr, "c cuts for %"PRIu32"\n", i);
+      fprintf(stderr, "c cuts for %" PRIu32 "\n", i);
       apply_subst_to_ttbl(solver, &base);
       wide_ttbl_import(&w, &base);
       try_expand_all(solver, i, &w);
@@ -8414,7 +8405,7 @@ static void nsat_preprocess(sat_solver_t *solver) {
   } while (max_rounds > 0 && !elim_heap_is_empty(solver));
 
   if (solver->verbosity >= 1) {
-    fprintf(stderr, "c Elim/subsumption: %"PRIu32" rounds\n", 20 - max_rounds);
+    fprintf(stderr, "c Elim/subsumption: %" PRIu32 " rounds\n", 20 - max_rounds);
   }
 
   if (! nsat_cheap_preprocess(solver)) goto done;
@@ -8445,8 +8436,8 @@ static void nsat_preprocess(sat_solver_t *solver) {
 static void record_binary_conflict(sat_solver_t *solver, literal_t l0, literal_t l1) {
   assert(lit_is_false(solver, l0) && lit_is_false(solver, l1));
 
-#if TRACE
-  printf("\n---> DPLL:   Binary conflict: %"PRIu32" %"PRIu32"\n", l0, l1);
+#if YICES_TRACE
+  printf("\n---> DPLL:   Binary conflict: %" PRIu32 " %" PRIu32 "\n", l0, l1);
   fflush(stdout);
 #endif
 
@@ -8481,8 +8472,8 @@ static bool clause_is_false(const sat_solver_t *solver, cidx_t cidx) {
 static void record_clause_conflict(sat_solver_t *solver, cidx_t cidx) {
   assert(clause_is_false(solver, cidx));
 
-#if TRACE
-  printf("\nClause conflict: cidx = %"PRIu32"\n", cidx);
+#if YICES_TRACE
+  printf("\nClause conflict: cidx = %" PRIu32 "\n", cidx);
   fflush(stdout);
 #endif
 
@@ -8615,7 +8606,7 @@ static void nsat_boolean_propagation(sat_solver_t *solver) {
   assert(solver->conflict_tag == CTAG_NONE);
 
   for (i = solver->stack.prop_ptr; i< solver->stack.top; i++) {
-    l = not(solver->stack.lit[i]);
+    l = not_(solver->stack.lit[i]);
     propagate_from_literal(solver, l);
     if (solver->conflict_tag != CTAG_NONE) {
       return;
@@ -9068,7 +9059,7 @@ static void analyze_conflict(sat_solver_t *solver) {
     if (literal_is_marked(solver, b)) {
       if (unresolved == 1) {
         // found UIP
-        solver->buffer.data[0] = not(b);
+        solver->buffer.data[0] = not_(b);
         break;
       } else {
         unresolved --;
@@ -9368,26 +9359,26 @@ static bool literal_is_redundant(sat_solver_t *solver, literal_t l) {
   x = var_of(l);
   assert(var_is_assigned(solver, x) && variable_is_marked(solver, x));
 
-  atag = solver->ante_tag[x] & 0x7F; // remove mark bit
+  atag = (antecedent_tag_t)(solver->ante_tag[x] & 0x7F); // remove mark bit
   switch (atag) {
   case ATAG_BINARY:
-    // ante_data[x] = literal that implies not(l)
+    // ante_data[x] = literal that implies not_(l)
     return implied_by_marked_literals(solver, solver->ante_data[x]);
 
   case ATAG_CLAUSE:
-    // ante_data[x] = clause that implies not(l)
+    // ante_data[x] = clause that implies not_(l)
     cidx = solver->ante_data[x];
     n = clause_length(&solver->pool, cidx);
     lit = clause_literals(&solver->pool, cidx);
-    assert(lit[0] == not(l));
+    assert(lit[0] == not_(l));
     return array_implied_by_marked_literals(solver, lit, n);
 
   case ATAG_STACKED:
-    // ante_data[x] = stacked clause that implies not(l)
+    // ante_data[x] = stacked clause that implies not_(l)
     cidx = solver->ante_data[x];
     n = stacked_clause_length(&solver->stash, cidx);
     lit = stacked_clause_literals(&solver->stash, cidx);
-    assert(lit[0] == not(l));
+    assert(lit[0] == not_(l));
     return array_implied_by_marked_literals(solver, lit, n);
 
   default:
@@ -9529,7 +9520,7 @@ static void update_level(sat_solver_t *solver) {
 }
 
 
-#if TRACE
+#if YICES_TRACE
 static void show_branch(const sat_solver_t *solver) {
   uint32_t i, n, k;
   literal_t l;
@@ -9539,7 +9530,7 @@ static void show_branch(const sat_solver_t *solver) {
   for (i=1; i<=n; i++) {
     k = solver->stack.level_index[i];
     l = solver->stack.lit[k];
-    printf(" %"PRId32, l);
+    printf(" %" PRId32, l);
   }
   printf("\n");
 }
@@ -9550,15 +9541,15 @@ static void show_conflict_clause(const sat_solver_t *solver) {
   cidx_t cidx;
 
   show_branch(solver);
-  printf("Conflict: %"PRIu64", level = %"PRIu32"\n", solver->stats.conflicts, solver->decision_level);
+  printf("Conflict: %" PRIu64 ", level = %" PRIu32 "\n", solver->stats.conflicts, solver->decision_level);
   if (solver->conflict_tag == CTAG_BINARY) {
-    printf(" %"PRId32" %"PRId32"\n", solver->conflict_buffer[0], solver->conflict_buffer[1]);
+    printf(" %" PRId32 " %" PRId32 "\n", solver->conflict_buffer[0], solver->conflict_buffer[1]);
   } else {
     cidx = solver->conflict_index;
     lit = clause_literals(&solver->pool, cidx);
     n = clause_length(&solver->pool, cidx);
     for (i=0; i<n; i++) {
-      printf(" %"PRId32, lit[i]);
+      printf(" %" PRId32, lit[i]);
     }
     printf("\n");
   }
@@ -9571,7 +9562,7 @@ static void show_learned_clause(const sat_solver_t *solver) {
   printf("Learned clause:\n");
   n = solver->buffer.size;
   for (i=0; i<n; i++) {
-    printf(" %"PRId32, solver->buffer.data[i]);
+    printf(" %" PRId32, solver->buffer.data[i]);
   }
   printf("\n\n");
   fflush(stdout);
@@ -9627,7 +9618,7 @@ static void delete_subsumed_clause(sat_solver_t *solver, cidx_t cidx) {
   if (var_is_assigned(solver, x0) && solver->ante_tag[x0] == ATAG_CLAUSE &&
       solver->ante_data[x0] == cidx) {
     // can't delete the clause yet
-    printf("can't deleted subsumed clause: last_level = %"PRIu32" current = %"PRIu32"\n",
+    printf("can't deleted subsumed clause: last_level = %" PRIu32 " current = %" PRIu32 "\n",
 	   solver->last_level, solver->decision_level);
     return;
   }
@@ -9684,7 +9675,7 @@ static void resolve_conflict(sat_solver_t *solver) {
   literal_t l;
   cidx_t cidx;
 
-#if TRACE
+#if YICES_TRACE
   show_conflict_clause(solver);
 #endif
 
@@ -9713,7 +9704,7 @@ static void resolve_conflict(sat_solver_t *solver) {
   // statistics
   update_level(solver);
 
-#if TRACE
+#if YICES_TRACE
   show_learned_clause(solver);
 #endif
 
@@ -9797,7 +9788,7 @@ static void try_scc_simplification(sat_solver_t *solver) {
   n0 = v->size;
   if (n0 > 0) {
     if (solver->verbosity >= 3) {
-      fprintf(stderr, "c  scc %"PRIu32" variable substitutions\n", n0);
+      fprintf(stderr, "c  scc %" PRIu32 " variable substitutions\n", n0);
     }
     if (solver->stats.subst_vars >= solver->simplify_subst_next) {
       try_equivalent_vars(solver, 2);
@@ -9808,9 +9799,9 @@ static void try_scc_simplification(sat_solver_t *solver) {
     // equivalent_vars may add more variables to vector v
     if (solver->verbosity >= 3) {
       if (n > n0)
-	fprintf(stderr, "c  eq  %"PRIu32" substitutions\n", n - n0);
+	fprintf(stderr, "c  eq  %" PRIu32 " substitutions\n", n - n0);
       if (solver->subst_units.size > 0)
-	fprintf(stderr, "c  eq  %"PRIu32" units\n", solver->subst_units.size);
+	fprintf(stderr, "c  eq  %" PRIu32 " units\n", solver->subst_units.size);
     }
 
     // save clause to extend the model later
@@ -9902,7 +9893,7 @@ static void extend_assignment_for_block(sat_solver_t *solver, uint32_t *a, uint3
   }
 
   solver->value[l] = val;
-  solver->value[not(l)] = opposite_val(val);
+  solver->value[not_(l)] = opposite_val(val);
 }
 
 
@@ -9932,7 +9923,7 @@ static void extend_assignment(sat_solver_t *solver) {
 /*
  * Preferred literal when x is selected as decision variable.
  * - we pick l := pos_lit(x) then check whether value[l] is 0b00 or 0b01
- * - in the first case, the preferred value for l is false so we return not(l)
+ * - in the first case, the preferred value for l is false so we return not_(l)
  */
  static inline literal_t preferred_literal(const sat_solver_t *solver, bvar_t x) {
   literal_t l;
@@ -9945,8 +9936,8 @@ static void extend_assignment(sat_solver_t *solver) {
    * or VAL_UNDEF_TRUE (i.e., 1).
    *
    * We return l if value[l] = VAL_UNDEF_TRUE = 1.
-   * We return not(l) if value[l] = VAL_UNDEF_FALSE = 0.
-   * Since not(l) is l^1, the returned value is (l ^ 1 ^ value[l]).
+   * We return not_(l) if value[l] = VAL_UNDEF_FALSE = 0.
+   * Since not_(l) is l^1, the returned value is (l ^ 1 ^ value[l]).
    */
   l ^= 1 ^ solver->value[l];
   assert((var_prefers_true(solver, x) && l == pos_lit(x)) ||
@@ -9991,9 +9982,9 @@ static void restore_assignment(sat_solver_t *solver) {
   n = solver->nvars;
   for (i=0; i<n; i++) {
     if (var_is_unassigned(solver, i)) {
-      assert(bval_is_undef(saved[i]));
+      assert(bval_is_undef((bval_t)saved[i]));
       solver->value[pos_lit(i)] = saved[i];
-      solver->value[neg_lit(i)] = opposite_val(saved[i]);
+      solver->value[neg_lit(i)] = opposite_val((bval_t)saved[i]);
     }
   }
 
@@ -10193,7 +10184,7 @@ static void failed_literal_probing(sat_solver_t *solver) {
   solver->probing = false;
 
   if (solver->verbosity >= 3) {
-    fprintf(stderr, "c prob: %"PRIu64" literals, %"PRIu32" failed, next = %"PRIu64"\n",
+    fprintf(stderr, "c prob: %" PRIu64 " literals, %" PRIu32 " failed, next = %" PRIu64 "\n",
 	    solver->stats.probed_literals - problits_before, solver->stats.failed_literals - failed_before, solver->probing_next);
   }
 }
@@ -10241,21 +10232,21 @@ static void build_assignment(sat_solver_t *solver) {
   for (i=1; i<n; i++) {
     if (var_is_active(solver, i)) {
       l = preferred_literal(solver, i);
-      if (empty_watch(solver->watch[not(l)])) {
+      if (empty_watch(solver->watch[not_(l)])) {
 	nsat_decide_literal(solver, l);
 	nsat_boolean_propagation(solver);
 	assert(solver->conflict_tag == CTAG_NONE);
 	continue;
       }
       if (empty_watch(solver->watch[l])) {
-	nsat_decide_literal(solver, not(l));
+	nsat_decide_literal(solver, not_(l));
 	nsat_boolean_propagation(solver);
 	assert(solver->conflict_tag == CTAG_NONE);
       }
     }
   }
 
-  printf("c base assignment: level = %"PRIu32", top = %"PRIu32"\n", solver->decision_level, solver->stack.top);
+  printf("c base assignment: level = %" PRIu32 ", top = %" PRIu32 "\n", solver->decision_level, solver->stack.top);
 
   solver->probing = true;
 
@@ -10264,7 +10255,7 @@ static void build_assignment(sat_solver_t *solver) {
   for (i=1; i<n; i++) {
     if (var_is_active(solver, i)) {
       l = preferred_literal(solver, i);
-      (void) (test_literal(solver, l) || test_literal(solver, not(l)));
+      (void) (test_literal(solver, l) || test_literal(solver, not_(l)));
     }
   }
 
@@ -10272,7 +10263,7 @@ static void build_assignment(sat_solver_t *solver) {
 
   solver->probing = false;
 
-  printf("c assignment: level = %"PRIu32", top = %"PRIu32"\n", solver->decision_level, solver->stack.top);
+  printf("c assignment: level = %" PRIu32 ", top = %" PRIu32 "\n", solver->decision_level, solver->stack.top);
 }
 
 
@@ -10683,7 +10674,7 @@ static bool naive_search(sat_solver_t *solver, naive_t *searcher, bool pol) {
       if (pol) {
 	nsat_decide_literal(solver, l);
       } else {
-	nsat_decide_literal(solver, not(l));
+	nsat_decide_literal(solver, not_(l));
       }
       nsat_boolean_propagation(solver);
       if (solver->conflict_tag != CTAG_NONE) {
@@ -10700,7 +10691,7 @@ static bool naive_search(sat_solver_t *solver, naive_t *searcher, bool pol) {
 }
 
 
-static void __attribute__((format(printf, 2, 3))) search_report(const sat_solver_t *solver, const char *format, ...) {
+ATTRIBUTE_FORMAT(printf, 2, 3) static void search_report(const sat_solver_t *solver, const char *format, ...) {
   va_list p;
 
   if (solver->verbosity >= 2) {
@@ -10724,38 +10715,38 @@ static void try_naive_search(sat_solver_t *solver) {
   solver->probing = true;
   save_assignment(solver);
 
-  search_report(solver, "c\nc starting naive search: decision_level = %"PRIu32"\n", dl);
+  search_report(solver, "c\nc starting naive search: decision_level = %" PRIu32 "\n", dl);
 
   init_naive_searcher(&searcher);
   prepare_naive_search(solver, &searcher);
 
-  search_report(solver, "c %"PRIu32" problem clauses + %"PRIu32" binary clauses to satisfy\n",
+  search_report(solver, "c %" PRIu32 " problem clauses + %" PRIu32 " binary clauses to satisfy\n",
 		searcher.cvector.size, searcher.bvector.size/2);
 
   if (naive_search(solver, &searcher, true)) {
-    search_report(solver, "c NAIVE SEARCH SUCCEEDED: %"PRIu64" conflicts, %"PRIu64" decisions\nc\n",
+    search_report(solver, "c NAIVE SEARCH SUCCEEDED: %" PRIu64 " conflicts, %" PRIu64 " decisions\nc\n",
 		  searcher.conflicts, searcher.decisions);
-    fprintf(stderr, "c NAIVE SEARCH SUCCEEDED: %"PRIu64" conflicts, %"PRIu64" decisions\nc\n",
+    fprintf(stderr, "c NAIVE SEARCH SUCCEEDED: %" PRIu64 " conflicts, %" PRIu64 " decisions\nc\n",
 		  searcher.conflicts, searcher.decisions);
     solver->status = STAT_SAT;
     goto done;
   }
 
-  search_report(solver, "c NAIVE SEARCH FAILED: %"PRIu64" conflicts, %"PRIu64" decisions\n",
+  search_report(solver, "c NAIVE SEARCH FAILED: %" PRIu64 " conflicts, %" PRIu64 " decisions\n",
 		searcher.conflicts, searcher.decisions);
 
   if (solver->decision_level > dl) backtrack(solver, dl);
 
   reset_naive_searcher(&searcher);
   if (naive_search(solver, &searcher, false)) {
-    search_report(solver, "c REVERSE NAIVE SEARCH SUCCEEDED: %"PRIu64" conflicts, %"PRIu64" decisions\nc\n",
+    search_report(solver, "c REVERSE NAIVE SEARCH SUCCEEDED: %" PRIu64 " conflicts, %" PRIu64 " decisions\nc\n",
 		  searcher.conflicts, searcher.decisions);
-    fprintf(stderr, "c NAIVE SEARCH SUCCEEDED: %"PRIu64" conflicts, %"PRIu64" decisions\nc\n",
+    fprintf(stderr, "c NAIVE SEARCH SUCCEEDED: %" PRIu64 " conflicts, %" PRIu64 " decisions\nc\n",
 		  searcher.conflicts, searcher.decisions);
     solver->status = STAT_SAT;
     goto done;
   }
-  search_report(solver, "c REVERSE NAIVE SEARCH FAILED: %"PRIu64" conflicts, %"PRIu64" decisions\nc\n",
+  search_report(solver, "c REVERSE NAIVE SEARCH FAILED: %" PRIu64 " conflicts, %" PRIu64 " decisions\nc\n",
 		searcher.conflicts, searcher.decisions);
 
   if (solver->decision_level > dl) backtrack(solver, dl);
@@ -11077,7 +11068,7 @@ static void bump_free_vars(sat_solver_t *solver, bool reverse) {
     }
   }
 
-  printf("c\nc bumped %"PRIu32" variables\nc\n", count);
+  printf("c\nc bumped %" PRIu32 " variables\nc\n", count);
 }
 
 
@@ -11267,28 +11258,28 @@ void nsat_show_statistics(FILE *f, const sat_solver_t *solver) {
 
   fprintf(f, "c\n");
   fprintf(f, "c Statistics\n");
-  fprintf(f, "c  starts                  : %"PRIu32"\n", stat->starts);
-  fprintf(f, "c  simplify db             : %"PRIu32"\n", stat->simplify_calls);
-  fprintf(f, "c  reduce db               : %"PRIu32"\n", stat->reduce_calls);
-  fprintf(f, "c  scc calls               : %"PRIu32"\n", stat->scc_calls);
-  fprintf(f, "c  apply subst calls       : %"PRIu32"\n", stat->subst_calls);
-  fprintf(f, "c  probings                : %"PRIu32"\n", stat->probe_calls);
-  fprintf(f, "c  substituted vars        : %"PRIu32"\n", stat->subst_vars);
-  fprintf(f, "c  unit equiv              : %"PRIu32"\n", stat->subst_units);
-  fprintf(f, "c  equivalences            : %"PRIu32"\n", stat->equivs);
-  fprintf(f, "c  decisions               : %"PRIu64"\n", stat->decisions);
-  fprintf(f, "c  random decisions        : %"PRIu64"\n", stat->random_decisions);
-  fprintf(f, "c  propagations            : %"PRIu64"\n", stat->propagations);
-  fprintf(f, "c  conflicts               : %"PRIu64"\n", stat->conflicts);
-  fprintf(f, "c  local subsumptions      : %"PRIu64"\n", stat->local_subsumptions);
-  fprintf(f, "c  probed literals         : %"PRIu64"\n", stat->probed_literals);
-  fprintf(f, "c  failed literals         : %"PRIu32"\n", stat->failed_literals);
-  fprintf(f, "c  probing progatations    : %"PRIu64"\n", stat->probing_propagations);
-  fprintf(f, "c  lits in pb. clauses     : %"PRIu32"\n", solver->pool.num_prob_literals);
-  fprintf(f, "c  lits in learned clauses : %"PRIu32"\n", solver->pool.num_learned_literals);
-  fprintf(f, "c  subsumed lits.          : %"PRIu64"\n", stat->subsumed_literals);
-  fprintf(f, "c  deleted pb. clauses     : %"PRIu64"\n", stat->prob_clauses_deleted);
-  fprintf(f, "c  deleted learned clauses : %"PRIu64"\n", stat->learned_clauses_deleted);
+  fprintf(f, "c  starts                  : %" PRIu32 "\n", stat->starts);
+  fprintf(f, "c  simplify db             : %" PRIu32 "\n", stat->simplify_calls);
+  fprintf(f, "c  reduce db               : %" PRIu32 "\n", stat->reduce_calls);
+  fprintf(f, "c  scc calls               : %" PRIu32 "\n", stat->scc_calls);
+  fprintf(f, "c  apply subst calls       : %" PRIu32 "\n", stat->subst_calls);
+  fprintf(f, "c  probings                : %" PRIu32 "\n", stat->probe_calls);
+  fprintf(f, "c  substituted vars        : %" PRIu32 "\n", stat->subst_vars);
+  fprintf(f, "c  unit equiv              : %" PRIu32 "\n", stat->subst_units);
+  fprintf(f, "c  equivalences            : %" PRIu32 "\n", stat->equivs);
+  fprintf(f, "c  decisions               : %" PRIu64 "\n", stat->decisions);
+  fprintf(f, "c  random decisions        : %" PRIu64 "\n", stat->random_decisions);
+  fprintf(f, "c  propagations            : %" PRIu64 "\n", stat->propagations);
+  fprintf(f, "c  conflicts               : %" PRIu64 "\n", stat->conflicts);
+  fprintf(f, "c  local subsumptions      : %" PRIu64 "\n", stat->local_subsumptions);
+  fprintf(f, "c  probed literals         : %" PRIu64 "\n", stat->probed_literals);
+  fprintf(f, "c  failed literals         : %" PRIu32 "\n", stat->failed_literals);
+  fprintf(f, "c  probing progatations    : %" PRIu64 "\n", stat->probing_propagations);
+  fprintf(f, "c  lits in pb. clauses     : %" PRIu32 "\n", solver->pool.num_prob_literals);
+  fprintf(f, "c  lits in learned clauses : %" PRIu32 "\n", solver->pool.num_learned_literals);
+  fprintf(f, "c  subsumed lits.          : %" PRIu64 "\n", stat->subsumed_literals);
+  fprintf(f, "c  deleted pb. clauses     : %" PRIu64 "\n", stat->prob_clauses_deleted);
+  fprintf(f, "c  deleted learned clauses : %" PRIu64 "\n", stat->learned_clauses_deleted);
   fprintf(f, "c\n");
 }
 
@@ -11548,16 +11539,16 @@ void nsat_export_to_dimacs(FILE *f, const sat_solver_t *solver) {
 
   fprintf(f, "c\n");
   fprintf(f, "c Generated by Yices 2\n");
-  fprintf(f, "c    %"PRIu32" variables\n", num_vars);
-  fprintf(f, "c    %"PRIu32" clauses (including %"PRIu32" unit clauses)\n", num_clauses, counts.num_unit_vars);
+  fprintf(f, "c    %" PRIu32 " variables\n", num_vars);
+  fprintf(f, "c    %" PRIu32 " clauses (including %" PRIu32 " unit clauses)\n", num_clauses, counts.num_unit_vars);
   fprintf(f, "c\n");
-  fprintf(f, "c Preprocessing eliminated %"PRIu32" variables\n", all_eliminated_vars(&counts));
-  fprintf(f, "c    %"PRIu32" eliminated by resolution\n", counts.num_elim_vars);
-  fprintf(f, "c    %"PRIu32" substitutions\n", counts.num_subst_vars);
-  fprintf(f, "c    %"PRIu32" pure literals\n", counts.num_pure_vars);
+  fprintf(f, "c Preprocessing eliminated %" PRIu32 " variables\n", all_eliminated_vars(&counts));
+  fprintf(f, "c    %" PRIu32 " eliminated by resolution\n", counts.num_elim_vars);
+  fprintf(f, "c    %" PRIu32 " substitutions\n", counts.num_subst_vars);
+  fprintf(f, "c    %" PRIu32 " pure literals\n", counts.num_pure_vars);
   fprintf(f, "c\n");
 
-  fprintf(f, "p cnf %"PRIu32" %"PRIu32"\n", num_vars, num_clauses);
+  fprintf(f, "p cnf %" PRIu32 " %" PRIu32 "\n", num_vars, num_clauses);
   if (solver->has_empty_clause) {
     write_empty_clause(f);
   } else {
@@ -11584,9 +11575,9 @@ static void show_var_def(const sat_solver_t *solver, bvar_t x) {
   i = bvar_get_gate(&solver->descriptors, x);
   get_bgate(&solver->gates, i, &tt);
 
-  fprintf(stderr, "c %"PRId32" = G(", x);
+  fprintf(stderr, "c %" PRId32 " = G(", x);
   for (i=0; i<tt.nvars; i++) {
-    fprintf(stderr, "%"PRId32", ", tt.label[i]);
+    fprintf(stderr, "%" PRId32 ", ", tt.label[i]);
   }
   fprintf(stderr, "0x%02x)\n", tt.mask);
 }
@@ -11596,7 +11587,7 @@ static void show_tt(const ttbl_t *tt) {
   uint32_t i;
   fprintf(stderr, "G(");
   for (i=0; i<tt->nvars; i++) {
-    fprintf(stderr, "%"PRId32", ", tt->label[i]);
+    fprintf(stderr, "%" PRId32 ", ", tt->label[i]);
   }
   fprintf(stderr, "0x%02x)\n", tt->mask);
 }
@@ -11621,12 +11612,12 @@ static void show_subst(const sat_solver_t *solver) {
       l0 = nsat_base_literal(solver, l);
       if (l0 != pos_lit(i)) {
 	if (l0 == true_literal) {
-	  fprintf(stderr, "c   subst(%"PRId32") = %c%"PRId32" --> true\n", i, sign, x);
+	  fprintf(stderr, "c   subst(%" PRId32 ") = %c%" PRId32 " --> true\n", i, sign, x);
 	} else if (l0 == false_literal) {
-	  fprintf(stderr, "c   subst(%"PRId32") = %c%"PRId32" --> false\n", i, sign, x);
+	  fprintf(stderr, "c   subst(%" PRId32 ") = %c%" PRId32 " --> false\n", i, sign, x);
 	} else {
 	  assert(l0 == l);
-	  fprintf(stderr, "c   subst(%"PRId32") = %c%"PRId32"\n", i, sign, x);
+	  fprintf(stderr, "c   subst(%" PRId32 ") = %c%" PRId32 "\n", i, sign, x);
 	}
       }
     }
@@ -11669,11 +11660,11 @@ static void show_assigned_vars(FILE *f, const sat_solver_t *solver) {
   for (i=0; i<n; i++) {
     switch (var_value(solver, i)) {
     case VAL_TRUE:
-      fprintf(f, "%"PRIu32" := true, %s, lev = %"PRIu32"\n", i, tag2string(solver->ante_tag[i]), solver->level[i]);
+      fprintf(f, "%" PRIu32 " := true, %s, lev = %" PRIu32 "\n", i, tag2string((antecedent_tag_t)solver->ante_tag[i]), solver->level[i]);
       break;
 
     case VAL_FALSE:
-      fprintf(f, "%"PRIu32" := false, %s, lev = %"PRIu32"\n", i, tag2string(solver->ante_tag[i]), solver->level[i]);
+      fprintf(f, "%" PRIu32 " := false, %s, lev = %" PRIu32 "\n", i, tag2string((antecedent_tag_t)solver->ante_tag[i]), solver->level[i]);
       break;
 
     default:
@@ -11691,9 +11682,9 @@ static void show_clause(FILE *f, const clause_pool_t *pool, cidx_t idx) {
   n = clause_length(pool, idx);
   lit = clause_literals(pool, idx);
 
-  fprintf(f, "%"PRIu32":", idx);
+  fprintf(f, "%" PRIu32 ":", idx);
   for (i=0; i<n; i++) {
-    fprintf(f, " %"PRIu32, lit[i]);
+    fprintf(f, " %" PRIu32, lit[i]);
   }
   fprintf(f, "\n");
 }
@@ -11714,7 +11705,7 @@ static void show_watch_vector(FILE *f, const sat_solver_t *solver, literal_t l) 
 
   assert(l < solver->nliterals);
   w = solver->watch[l];
-  fprintf(f, "watch[%"PRIu32"]:", l);
+  fprintf(f, "watch[%" PRIu32 "]:", l);
   if (w == NULL) {
     fprintf(f, " null\n");
   } else {
@@ -11727,7 +11718,7 @@ static void show_watch_vector(FILE *f, const sat_solver_t *solver, literal_t l) 
       while (i<n) {
 	k = w->data[i];
 	assert(idx_is_clause(k));
-	fprintf(f, " cl(%"PRIu32")", k);
+	fprintf(f, " cl(%" PRIu32 ")", k);
 	i ++;
       }
       fprintf(f, "\n");
@@ -11735,10 +11726,10 @@ static void show_watch_vector(FILE *f, const sat_solver_t *solver, literal_t l) 
       while (i<n) {
         k = w->data[i];
         if (idx_is_literal(k)) {
-          fprintf(f, " lit(%"PRIu32")", idx2lit(k));
+          fprintf(f, " lit(%" PRIu32 ")", idx2lit(k));
           i ++;
         } else {
-          fprintf(f, " cl(%"PRIu32")", k);
+          fprintf(f, " cl(%" PRIu32 ")", k);
           i += 2;
         }
       }
@@ -11756,10 +11747,10 @@ static void show_all_watch_vectors(FILE *f, const sat_solver_t *solver) {
 }
 
 void show_state(FILE *f, const sat_solver_t *solver) {
-  fprintf(f, "nvars: %"PRIu32"\n", solver->nvars);
-  fprintf(f, "nliterals: %"PRIu32"\n", solver->nliterals);
-  fprintf(f, "num prob. clauses: %"PRIu32"\n", solver->pool.num_prob_clauses);
-  fprintf(f, "num learned clauses: %"PRIu32"\n", solver->pool.num_learned_clauses);
+  fprintf(f, "nvars: %" PRIu32 "\n", solver->nvars);
+  fprintf(f, "nliterals: %" PRIu32 "\n", solver->nliterals);
+  fprintf(f, "num prob. clauses: %" PRIu32 "\n", solver->pool.num_prob_clauses);
+  fprintf(f, "num learned clauses: %" PRIu32 "\n", solver->pool.num_learned_clauses);
   fprintf(f, "assignment\n");
   show_assigned_vars(f, solver);
   fprintf(f, "clauses\n");
@@ -11775,7 +11766,7 @@ void show_state(FILE *f, const sat_solver_t *solver) {
  *   CONSISTENCY CHECKS FOR DEBUGGING   *
  ***************************************/
 
-#if DEBUG
+#if YICES_DEBUG
 
 /*
  * Check whether the clause pool counters are correct.
@@ -11869,21 +11860,21 @@ static void check_clause_pool_learned_index(const clause_pool_t *pool) {
   }
 
   if (cidx == pool->size) {
-    fprintf(stderr, "**** BUG: expected %"PRIu32" problem clauses. Found %"PRIu32". ****\n",
+    fprintf(stderr, "**** BUG: expected %" PRIu32 " problem clauses. Found %" PRIu32 ". ****\n",
             pool->num_prob_clauses, i + 1);
     fflush(stderr);
   } else {
     next = next_clause_index(pool, end);        // next clause after that (i.e., first learned clause or nothing)
     if (cidx >= pool->learned) {
-      fprintf(stderr, "**** BUG: last problem clause starts at %"PRIu32". Learned index is %"PRIu32" ****\n",
+      fprintf(stderr, "**** BUG: last problem clause starts at %" PRIu32 ". Learned index is %" PRIu32 " ****\n",
               cidx, pool->learned);
       fflush(stderr);
     } else if (end > pool->learned) {
-      fprintf(stderr, "**** BUG: last problem clause ends at %"PRIu32". Learned index is %"PRIu32" ****\n",
+      fprintf(stderr, "**** BUG: last problem clause ends at %" PRIu32 ". Learned index is %" PRIu32 " ****\n",
               end, pool->learned);
       fflush(stderr);
     } else if (next < pool->size && next < pool->learned) {
-      fprintf(stderr, "**** BUG: first learned clause starts at %"PRIu32". Learned index is %"PRIu32" ****\n",
+      fprintf(stderr, "**** BUG: first learned clause starts at %" PRIu32 ". Learned index is %" PRIu32 " ****\n",
               next, pool->learned);
       fflush(stderr);
     }
@@ -11904,13 +11895,13 @@ static void check_heap(const nvar_heap_t *heap) {
   for (i=0; i<=n; i++) {
     x = heap->heap[i];
     if (heap->heap_index[x] != (int32_t) i) {
-      fprintf(stderr, "*** BUG: heap[%"PRIu32"] = %"PRIu32" but heap_index[%"PRIu32"] = %"PRId32" ****\n",
+      fprintf(stderr, "*** BUG: heap[%" PRIu32 "] = %" PRIu32 " but heap_index[%" PRIu32 "] = %" PRId32 " ****\n",
               i, x, x, heap->heap_index[x]);
     }
     j = i>>1; // parent of i (or j=i=0 for the special marker)
     y = heap->heap[j];
     if (heap->activity[y] < heap->activity[x]) {
-      fprintf(stderr, "*** BUG: bad heap ordering: activity[%"PRIu32"] < activity[%"PRIu32"] ****\n", j, i);
+      fprintf(stderr, "*** BUG: bad heap ordering: activity[%" PRIu32 "] < activity[%" PRIu32 "] ****\n", j, i);
     }
   }
 
@@ -11918,7 +11909,7 @@ static void check_heap(const nvar_heap_t *heap) {
   for (i=0; i<n; i++) {
     k= heap->heap_index[i];
     if (k >= 0 && heap->heap[k] != i) {
-      fprintf(stderr, "*** BUG: heap_index[%"PRIu32"] = %"PRId32" but heap[%"PRId32"] = %"PRIu32" ****\n",
+      fprintf(stderr, "*** BUG: heap_index[%" PRIu32 "] = %" PRId32 " but heap[%" PRId32 "] = %" PRIu32 " ****\n",
               i, k, k, heap->heap[k]);
     }
   }
@@ -11939,7 +11930,7 @@ static void check_candidate_clauses_to_delete(const sat_solver_t *solver, const 
   for (i=0; i<n; i++) {
     c1 = a[i];
     if (clause_is_locked(solver, c1)) {
-      fprintf(stderr, "**** BUG: locked clause (cidx = %"PRIu32") is candidate for deletion ****\n", c1);
+      fprintf(stderr, "**** BUG: locked clause (cidx = %" PRIu32 ") is candidate for deletion ****\n", c1);
       fflush(stderr);
     }
   }
@@ -11952,7 +11943,7 @@ static void check_candidate_clauses_to_delete(const sat_solver_t *solver, const 
     c2 = a[i];
     a2 = get_learned_clause_activity(&solver->pool, c2);
     if (a1 > a2 || (a1 == a2 && c1 > c2)) {
-      fprintf(stderr, "**** BUG: candidates for deletion not sorted (at position i = %"PRIu32")\n", i);
+      fprintf(stderr, "**** BUG: candidates for deletion not sorted (at position i = %" PRIu32 ")\n", i);
       fflush(stderr);
     }
     a1 = a2;
@@ -12003,12 +11994,12 @@ static void check_all_clauses_are_in_watch_vectors(const sat_solver_t *solver) {
     l1 = second_literal_of_clause(&solver->pool, cidx);
     assert(l0 < solver->nliterals && l1 < solver->nliterals);
     if (!clause_is_in_watch_vector(solver, l0, cidx)) {
-      fprintf(stderr, "*** BUG: missing clause index (%"PRIu32") in watch vector for literal %"PRIu32" ***\n",
+      fprintf(stderr, "*** BUG: missing clause index (%" PRIu32 ") in watch vector for literal %" PRIu32 " ***\n",
               cidx, l0);
       fflush(stderr);
     }
     if (!clause_is_in_watch_vector(solver, l1, cidx)) {
-      fprintf(stderr, "*** BUG: missing clause index (%"PRIu32") in watch vector for literal %"PRIu32" ***\n",
+      fprintf(stderr, "*** BUG: missing clause index (%" PRIu32 ") in watch vector for literal %" PRIu32 " ***\n",
               cidx, l1);
       fflush(stderr);
     }
@@ -12028,7 +12019,7 @@ static void check_watch_vector_is_good(const sat_solver_t *solver, const watch_t
     if (idx_is_clause(k)) {
       if (first_literal_of_clause(&solver->pool, k) != l &&
           second_literal_of_clause(&solver->pool, k) != l) {
-        fprintf(stderr, "*** BUG: clause %"PRIu32" is in watch vector for literal %"PRIu32"\n, but the literal is not first or second ***\n", k, l);
+        fprintf(stderr, "*** BUG: clause %" PRIu32 " is in watch vector for literal %" PRIu32 "\n, but the literal is not first or second ***\n", k, l);
         fflush(stderr);
       }
       i += 2;
@@ -12140,10 +12131,10 @@ static void check_pool_propagation(const sat_solver_t *solver) {
       f = num_false_literals_in_clause(solver, cidx);
       n = clause_length(&solver->pool, cidx);
       if (f == n) {
-        fprintf(stderr, "*** BUG: missed conflict. Clause %"PRIu32" is false ***\n", cidx);
+        fprintf(stderr, "*** BUG: missed conflict. Clause %" PRIu32 " is false ***\n", cidx);
         fflush(stderr);
       } else if (f == n -1) {
-        fprintf(stderr, "*** BUG: missed propagation for clause %"PRIu32" ***\n", cidx);
+        fprintf(stderr, "*** BUG: missed propagation for clause %" PRIu32 " ***\n", cidx);
         fflush(stderr);
       }
     }
@@ -12169,10 +12160,10 @@ static void check_missed_watch_prop(const sat_solver_t *solver, const watch_t *w
     if (idx_is_literal(k)) {
       l1 = idx2lit(k);
       if (lit_is_false(solver, l1)) {
-        fprintf(stderr, "*** BUG: missed binary conflict for clause %"PRIu32" %"PRIu32" ***\n", l, l1);
+        fprintf(stderr, "*** BUG: missed binary conflict for clause %" PRIu32 " %" PRIu32 " ***\n", l, l1);
         fflush(stderr);
       } else if (lit_is_unassigned(solver, l1)) {
-        fprintf(stderr, "*** BUG: missed binary propagation for clause %"PRIu32" %"PRIu32" ***\n", l, l1);
+        fprintf(stderr, "*** BUG: missed binary propagation for clause %" PRIu32 " %" PRIu32 " ***\n", l, l1);
         fflush(stderr);
       }
       i ++;
@@ -12217,7 +12208,7 @@ static void check_clause_antecedents(const sat_solver_t *solver) {
     if (solver->ante_tag[var_of(l)] == ATAG_CLAUSE) {
       cidx = solver->ante_data[var_of(l)];
       if (first_literal_of_clause(&solver->pool, cidx) != l) {
-        fprintf(stderr, "*** BUG: implied literal %"PRIu32" is not first in clause %"PRIu32" ****\n", l, cidx);
+        fprintf(stderr, "*** BUG: implied literal %" PRIu32 " is not first in clause %" PRIu32 " ****\n", l, cidx);
         fflush(stderr);
       }
     }
@@ -12242,7 +12233,7 @@ static void check_sound_propagation(const sat_solver_t *solver) {
     case ATAG_BINARY:
       l1 = solver->ante_data[var_of(l)];
       if (! lit_is_false(solver, l1)) {
-        fprintf(stderr, "*** BUG: unsound propagation for binary clause %"PRIu32" %"PRIu32" ***\n", l, l1);
+        fprintf(stderr, "*** BUG: unsound propagation for binary clause %" PRIu32 " %" PRIu32 " ***\n", l, l1);
         fflush(stderr);
       }
       break;
@@ -12252,7 +12243,7 @@ static void check_sound_propagation(const sat_solver_t *solver) {
       f = num_false_literals_in_clause(solver, cidx);
       n = clause_length(&solver->pool, cidx);
       if (f != n - 1) {
-        fprintf(stderr, "*** BUG: unsound propagation. Clause %"PRIu32" antecedent of literal %"PRIu32" ***\n",
+        fprintf(stderr, "*** BUG: unsound propagation. Clause %" PRIu32 " antecedent of literal %" PRIu32 " ***\n",
                 cidx, l);
         fflush(stderr);
       }
@@ -12280,7 +12271,7 @@ static void check_stacked_clause_antecedents(const sat_solver_t *solver) {
     if (solver->ante_tag[var_of(l)] == ATAG_STACKED) {
       cidx = solver->ante_data[var_of(l)];
       if (first_literal_of_stacked_clause(&solver->stash, cidx) != l) {
-        fprintf(stderr, "*** BUG: implied literal %"PRIu32" is not first in stacked clause %"PRIu32" ****\n", l, cidx);
+        fprintf(stderr, "*** BUG: implied literal %" PRIu32 " is not first in stacked clause %" PRIu32 " ****\n", l, cidx);
         fflush(stderr);
       }
     }
@@ -12304,17 +12295,17 @@ static void check_stacked_clauses(const sat_solver_t *solver) {
     l = first_literal_of_stacked_clause(&solver->stash, cidx);
     if (solver->ante_tag[var_of(l)] != ATAG_STACKED ||
         solver->ante_data[var_of(l)] != cidx) {
-      fprintf(stderr, "*** BUG: bad antecedent for literal %"PRIu32" (first in stacked clause %"PRIu32") ****\n", l, cidx);
+      fprintf(stderr, "*** BUG: bad antecedent for literal %" PRIu32 " (first in stacked clause %" PRIu32 ") ****\n", l, cidx);
       fflush(stderr);
     }
     if (!lit_is_true(solver, l)) {
-      fprintf(stderr, "*** BUG: literal %"PRIu32" (first in stacked clause %"PRIu32") is not true ****\n", l, cidx);
+      fprintf(stderr, "*** BUG: literal %" PRIu32 " (first in stacked clause %" PRIu32 ") is not true ****\n", l, cidx);
       fflush(stderr);
     }
     n = stacked_clause_length(&solver->stash, cidx);
     f = num_false_literals_in_stacked_clause(solver, cidx);
     if (f != n-1) {
-      fprintf(stderr, "*** BUG: stacked clause %"PRIu32" has %"PRIu32" false literals (out of %"PRIu32") ***\n", cidx, f, n);
+      fprintf(stderr, "*** BUG: stacked clause %" PRIu32 " has %" PRIu32 " false literals (out of %" PRIu32 ") ***\n", cidx, f, n);
       fflush(stderr);
     }
   }
@@ -12348,7 +12339,7 @@ static void check_buffer_marks(const sat_solver_t *solver) {
   for (i=0; i<n; i++) {
     l = solver->buffer.data[i];
     if (! variable_is_marked(solver, var_of(l))) {
-      fprintf(stderr, "*** BUG: literal %"PRIu32" in the learned clause is not marked ***\n", l);
+      fprintf(stderr, "*** BUG: literal %" PRIu32 " in the learned clause is not marked ***\n", l);
       fflush(stderr);
     }
   }
@@ -12382,7 +12373,7 @@ static void check_marks(const sat_solver_t *solver) {
 
   n = num_marked_variables(solver);
   if (n != solver->buffer.size) {
-    fprintf(stderr, "*** BUG: expected %"PRIu32" marked variables; found %"PRIu32" ***\n",
+    fprintf(stderr, "*** BUG: expected %" PRIu32 " marked variables; found %" PRIu32 " ***\n",
             solver->buffer.size, n);
   } else {
     check_buffer_marks(solver);
@@ -12398,7 +12389,7 @@ static void check_all_unmarked(const sat_solver_t *solver) {
 
   n = num_marked_variables(solver);
   if (n > 0) {
-    fprintf(stderr, "*** BUG: found %"PRIu32" marked variables: should be 0 ***\n", n);
+    fprintf(stderr, "*** BUG: found %" PRIu32 " marked variables: should be 0 ***\n", n);
     fflush(stderr);
   }
 }
@@ -12417,7 +12408,7 @@ static void check_elim_heap(const sat_solver_t *solver) {
   n = heap->size;
   for (i=2; i<n; i++) {
     if (elim_lt(solver, heap->data[i], heap->data[i>>1])) {
-      fprintf(stderr, "*** BUG: invalid elimination heap: at index %"PRIu32" ***\n", i);
+      fprintf(stderr, "*** BUG: invalid elimination heap: at index %" PRIu32 " ***\n", i);
       fflush(stderr);
     }
   }
@@ -12425,7 +12416,7 @@ static void check_elim_heap(const sat_solver_t *solver) {
   for (i=0; i<n; i++) {
     x = heap->data[i];
     if (heap->elim_idx[x] != i) {
-      fprintf(stderr, "*** BUG: invalid heap index: data[%"PRIu32"] = %"PRIu32", but elim_idx[%"PRIu32"] /= %"PRIu32" ***\n", i, x, x, i);
+      fprintf(stderr, "*** BUG: invalid heap index: data[%" PRIu32 "] = %" PRIu32 ", but elim_idx[%" PRIu32 "] /= %" PRIu32 " ***\n", i, x, x, i);
       fflush(stderr);
     }
   }
@@ -12434,11 +12425,11 @@ static void check_elim_heap(const sat_solver_t *solver) {
     if (heap->elim_idx[x] >= 0) {
       i = heap->elim_idx[x];
       if (i >= heap->size) {
-        fprintf(stderr, "*** BUG: bad elim_idx for variable %"PRIu32": index = %"PRIu32", heap size = %"PRIu32"\n", x, i, heap->size);
+        fprintf(stderr, "*** BUG: bad elim_idx for variable %" PRIu32 ": index = %" PRIu32 ", heap size = %" PRIu32 "\n", x, i, heap->size);
         fflush(stderr);
       }
       if (heap->data[i] != x) {
-        fprintf(stderr, "*** BUG: invalid data: elim_idx[%"PRIu32"] = %"PRIu32", but data[%"PRIu32"] /= %"PRIu32" ***\n", x, i, i, x);
+        fprintf(stderr, "*** BUG: invalid data: elim_idx[%" PRIu32 "] = %" PRIu32 ", but data[%" PRIu32 "] /= %" PRIu32 " ***\n", x, i, i, x);
         fflush(stderr);
       }
     }
@@ -12467,7 +12458,7 @@ static void check_unassigned_index(const sat_solver_t *solver) {
     if (i == 0) break;
     if (var_is_active(solver, i)) {
       assert(var_is_unassigned(solver, i));
-      fprintf(stderr, "*** BUG: unassigned var %"PRIu32" occurs after the unassigned_index\n", i);
+      fprintf(stderr, "*** BUG: unassigned var %" PRIu32 " occurs after the unassigned_index\n", i);
       fflush(stderr);
       abort();
     }
@@ -12496,13 +12487,13 @@ static void check_list(const sat_solver_t *solver) {
   } while (i != 0);
 
   if (len != solver->nvars) {
-    fprintf(stderr, "*** BUG: list length = %"PRIu32" (expected %"PRIu32")\n", len, solver->nvars);
+    fprintf(stderr, "*** BUG: list length = %" PRIu32 " (expected %" PRIu32 ")\n", len, solver->nvars);
     fflush(stderr);
   }
 
   check_unassigned_index(solver);
 
-  fprintf(stderr, "check[%"PRIu32"]: OK\n", checks);
+  fprintf(stderr, "check[%" PRIu32 "]: OK\n", checks);
 }
 
 #endif

@@ -224,13 +224,13 @@ static int_hmap2_rec_t *get_clean(int_hmap2_t *hmap, int32_t k0, int32_t k1) {
  * If a new record is created, val is not initialized.
  * - k0 and k2 must be non-negative.
  */
-int_hmap2_rec_t *int_hmap2_get(int_hmap2_t *hmap, int32_t k0, int32_t k1, bool *new) {
+int_hmap2_rec_t *int_hmap2_get(int_hmap2_t *hmap, int32_t k0, int32_t k1, bool *new_) {
   int_hmap2_rec_t *r;
   uint32_t i, mask;
 
   assert(k0 >= 0 && k1 >= 0 && hmap->nelems < hmap->size);
 
-  *new = false;
+  *new_ = false;
   mask = hmap->size - 1;
   i = hash_pair(k0, k1) & mask;
   for (;;) {
@@ -244,7 +244,7 @@ int_hmap2_rec_t *int_hmap2_get(int_hmap2_t *hmap, int32_t k0, int32_t k1, bool *
   /*
    * add new record in hmap->data
    */
-  *new = true;
+  *new_ = true;
   hmap->nelems ++;
   if (hmap->nelems >= hmap->resize_threshold) {
     // resize needed

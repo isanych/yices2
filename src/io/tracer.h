@@ -129,7 +129,7 @@ extern void delete_trace(tracer_t *tracer);
  * - rest = stuff to print (as in prinf too)
  */
 extern void trace_printf(tracer_t *tracer, uint32_t level, const char *format, ...)
-  __attribute__ ((format (printf, 3, 4)));
+ATTRIBUTE_FORMAT(printf, 3, 4);
 
 
 /*

@@ -35,7 +35,7 @@ static int32_t buffer[BUFFER_SIZE];
  * Array of composites to use as pointers
  */
 #define NUM_COMPOSIDES 20
-static composite_t fake[20];
+static composite_t* fake;
 
 
 /*
@@ -76,12 +76,12 @@ static void print_assertion(eassertion_t *a) {
 
   n = eassertion_get_arity(a);
   size = eassertion_get_size(a);
-  printf("Assertion %p: %s, arith = %"PRIu32", size = %"PRIu32"\n", a, kind2string(eassertion_get_kind(a)), n, size);
+  printf("Assertion %p: %s, arith = %" PRIu32 ", size = %" PRIu32 "\n", a, kind2string(eassertion_get_kind(a)), n, size);
   printf(" hint = %p\n", a->hint);
-  printf(" id = %"PRId32"\n", a->id);
+  printf(" id = %" PRId32 "\n", a->id);
   printf(" vars:");
   for (i=0; i<n; i++) {
-    printf(" %"PRId32, a->var[i]);
+    printf(" %" PRId32, a->var[i]);
   }
   printf("\n");
 }
@@ -108,6 +108,7 @@ static void print_queue(void) {
  */
 int main(void) {
   uint32_t i, n;
+  fake = (composite_t*)malloc(sizeof(composite_t) * NUM_COMPOSIDES);
 
   init_eassertion_queue(&queue);
 
@@ -142,7 +143,7 @@ int main(void) {
     eassertion_push_distinct(&queue, 100, buffer, NULL);
     n ++;
     if (n % 5 == 0) {
-      printf("=== After %"PRIu32" distincts ===\n", n);
+      printf("=== After %" PRIu32 " distincts ===\n", n);
       print_queue();
     }
   }

@@ -26,10 +26,9 @@
 #include "utils/memalloc.h"
 #include "utils/ptr_array_sort2.h"
 #include "utils/ptr_vectors.h"
+#include "yices_config.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 #include <inttypes.h>
 #include "io/term_printer.h"
 #endif
@@ -38,7 +37,7 @@
 /*
  * CONSTRAINT DESCRIPTORS
  */
-#if TRACE
+#if YICES_TRACE
 static void print_aproj_monomial(FILE *f, rational_t *coeff, int32_t x, bool first) {
   bool negative;
   bool abs_one;
@@ -68,7 +67,7 @@ static void print_aproj_monomial(FILE *f, rational_t *coeff, int32_t x, bool fir
       q_print_abs(f, coeff);
       fprintf(f, "*");
     }
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
   }
 }
 
@@ -76,7 +75,7 @@ static void print_aproj_constraint(FILE *f, aproj_constraint_t *c) {
   uint32_t i, n;
   bool first;
 
-  fprintf(f, "constraint[%"PRIu32"]: (", c->id);
+  fprintf(f, "constraint[%" PRIu32 "]: (", c->id);
   n = c->nterms;
   if (n == 0) {
     fputc('0', f);
@@ -744,7 +743,7 @@ static bool aproj_cheaper_var(void *table, int32_t x, int32_t y) {
   aproj_vtbl_t *vtbl;
   var_group_t gx, gy;
 
-  vtbl = table;
+  vtbl = (aproj_vtbl_t*)table;
   gx = aproj_var_group(vtbl, x);
   gy = aproj_var_group(vtbl, y);
 
@@ -790,7 +789,7 @@ void init_arith_projector(arith_projector_t *proj, term_manager_t *mngr, uint32_
  * Delete all constraint descriptors in proj
  */
 static void cnstr_free_iterator(void *aux, void *p) {  
-  free_aproj_constraint(p);
+  free_aproj_constraint((aproj_constraint_t*)p);
 }
 
 static void free_constraints(arith_projector_t *proj) {
@@ -1028,7 +1027,7 @@ static void add_constraint_from_buffer(arith_projector_t *proj, poly_buffer_t *b
     c = make_aproj_constraint(buffer, tag, proj->next_id);
     assert(aproj_good_constraint(proj, c));
     aproj_add_cnstr(proj, c);
-#if TRACE
+#if YICES_TRACE
     printf("--> adding constraint\n");
     print_aproj_constraint(stdout, c);
     printf("\n");
@@ -1295,7 +1294,7 @@ static void aproj_detach_all_constraints_on_var(arith_projector_t *proj, int32_t
 
   n = set->size;
   for (k=0; k<n; k++) {
-    c = set->data[k];
+    c = (aproj_constraint_t*)set->data[k];
     if (live_ptr_elem(c)) {
       aproj_remove_cnstr_var(proj, c, i);
     }
@@ -1318,7 +1317,7 @@ static void aproj_remove_all_constraints_on_var(arith_projector_t *proj, int32_t
   if (set != NULL) {
     n = set->size;
     for (k=0; k<n; k++) {
-      c = set->data[k];
+      c = (aproj_constraint_t*)set->data[k];
       if (live_ptr_elem(c)) {
 	aproj_remove_cnstr_var(proj, c, i);
 	free_aproj_constraint(c);
@@ -1406,7 +1405,7 @@ static void aproj_substitute_eq(arith_projector_t *proj, aproj_constraint_t *eq,
 
   n = set->size;
   for (k=0; k<n; k++) {
-    c = set->data[k];
+    c = (aproj_constraint_t*)set->data[k];
     if (live_ptr_elem(c)) {
       assert(c != eq);
       aproj_subst_constraint(proj, c, eq, i);
@@ -1441,7 +1440,7 @@ static aproj_constraint_t *aproj_pick_eq(arith_projector_t *proj, int32_t i) {
   
   n = set->size;
   for (k=0; k<n; k++) {
-    d = set->data[k];
+    d = (aproj_constraint_t*)set->data[k];
     if (live_ptr_elem(d) && d->tag == APROJ_EQ && d->nterms < size) {
       c = d;
       size = d->nterms;
@@ -1544,7 +1543,7 @@ static void aproj_prepare_inequalities_on_var(arith_projector_t *proj, int32_t i
 
   n = set->size;
   for (k=0; k<n; k++) {
-    c = set->data[k];
+    c = (aproj_constraint_t*)set->data[k];
     if (live_ptr_elem(c)) {
       assert(c->tag == APROJ_GE || c->tag == APROJ_GT);
       aproj_normalize_inequality(proj, c, i);
@@ -1572,7 +1571,7 @@ static void aproj_prepare_inequalities_on_var(arith_projector_t *proj, int32_t i
  * Note: this function also gives the right tag if c1 or c2 is an equality.
  */
 static inline aproj_tag_t aproj_combine_tags(aproj_constraint_t *c1, aproj_constraint_t *c2) {
-  return c1->tag & c2->tag;
+  return (aproj_tag_t)(c1->tag & c2->tag);
 }
 
 
@@ -1604,7 +1603,7 @@ static void empty_aproj_vector(pvector_t *v) {
 
   n = v->size;
   for (i=0; i<n; i++) {
-    free_aproj_constraint(v->data[i]);
+    free_aproj_constraint((aproj_constraint_t*)v->data[i]);
   }
   pvector_reset(v);
 }
@@ -1627,10 +1626,10 @@ static void aproj_fourier_motzkin(arith_projector_t *proj, int32_t i) {
 
   // Add the resolvants
   for (j=0; j<pos; j++) {
-    assert(aproj_var_coeff_is_one(v1->data[j], i)); 
+    assert(aproj_var_coeff_is_one((aproj_constraint_t*)v1->data[j], i));
     for (k=0; k<neg; k++) {
-      assert(aproj_var_coeff_is_minus_one(v2->data[k], i));
-      aproj_resolve(proj, v1->data[j], v2->data[k]);
+      assert(aproj_var_coeff_is_minus_one((aproj_constraint_t*)v2->data[k], i));
+      aproj_resolve(proj, (aproj_constraint_t*)v1->data[j], (aproj_constraint_t*)v2->data[k]);
     }
   }
 
@@ -1729,7 +1728,7 @@ static void aproj_substitute_buffer(arith_projector_t *proj, poly_buffer_t *b, i
   v = &proj->pos_vector;
   n = v->size;
   for (k=0; k<n; k++) {
-    c = v->data[k];
+    c = (aproj_constraint_t*)v->data[k];
     assert(aproj_var_coeff_is_one(c, i));
     // c is (i + p) > 0 or >= 0 and b is (i - t)
     // the new constraint is t + p with the same tag as c
@@ -1747,7 +1746,7 @@ static void aproj_substitute_buffer(arith_projector_t *proj, poly_buffer_t *b, i
   v = &proj->neg_vector;
   n = v->size;
   for (k=0; k<n; k++) {
-    c = v->data[k];
+    c = (aproj_constraint_t*)v->data[k];
     assert(aproj_var_coeff_is_minus_one(c, i));
     // c is (- i + q) > 0 (or >= 0) and b is (i - t)
     // the new constraint is - t + q >0 or >= 0
@@ -1779,11 +1778,11 @@ static aproj_constraint_t *aproj_min_constraint(arith_projector_t *proj, pvector
   q_min = &proj->q1;
   q = &proj->q2;
 
-  min = v->data[0];
+  min = (aproj_constraint_t*)v->data[0];
   aproj_eval_cnstr_in_model(&proj->vtbl, q_min, min); // q_min = val(min)
 
   for (i=1; i<n; i++) {
-    c = v->data[i];
+    c = (aproj_constraint_t*)v->data[i];
     aproj_eval_cnstr_in_model(&proj->vtbl, q, c); // q := val(c)
 
     if (q_lt(q, q_min)) {
@@ -1843,34 +1842,34 @@ void aproj_eliminate(arith_projector_t *proj) {
   while (! generic_heap_is_empty(var_heap)) {
     i = generic_heap_get_min(var_heap);
 
-#if TRACE
-    printf("Eliminating variable %"PRId32"\n", i);
+#if YICES_TRACE
+    printf("Eliminating variable %" PRId32 "\n", i);
 #endif
 
     switch (aproj_var_group(&proj->vtbl, i)) {
     case APROJ_TRIVIAL:
-#if TRACE
+#if YICES_TRACE
       printf(" trivial variable\n");
 #endif
       aproj_remove_all_constraints_on_var(proj, i);
       break;
 
     case APROJ_SUBST:
-#if TRACE
+#if YICES_TRACE
       printf(" substitution\n");
 #endif
       aproj_elim_var_subst(proj, i);
       break;
 
     case APROJ_CHEAP:
-#if TRACE
+#if YICES_TRACE
       printf(" Fourier-Motzkin\n");
 #endif
       aproj_fourier_motzkin(proj, i);
       break;
 
     case APROJ_EXPENSIVE:
-#if TRACE
+#if YICES_TRACE
       printf(" Virtual substitution\n");
 #endif
       aproj_virtual_subst(proj, i);
@@ -1952,7 +1951,7 @@ void aproj_get_formula_vector(arith_projector_t *proj, ivector_t *v) {
   if (set != NULL) {
     n = set->size;
     for (i=0; i<n; i++) {
-      c = set->data[i];
+      c = (aproj_constraint_t*)set->data[i];
       if (live_ptr_elem(c)) {
 	t = aproj_convert_constraint(proj, c);
 	ivector_push(v, t);

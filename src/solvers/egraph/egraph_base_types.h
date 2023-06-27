@@ -474,14 +474,14 @@ typedef enum atm_tag {
  * Get the tag of atm
  */
 static inline atm_tag_t atom_tag(void *atm) {
-  return ((size_t) atm) & ATM_TAG_MASK;
+  return (atm_tag_t) ((size_t)atm & ATM_TAG_MASK);
 }
 
 /*
  * Remove the tag of atm
  */
 static inline void *untag_atom(void *atm) {
-  return (void *) (((size_t) atm) & ~ATM_TAG_MASK);
+  return (void *) ((size_t)atm & ~ATM_TAG_MASK);
 }
 
 /*

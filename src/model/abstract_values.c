@@ -854,7 +854,7 @@ static void pstore_prepare_rank(pstore_t *store) {
 
   n = store->ptbl.nobjects;
   if (store->rank_size < n) {
-    store->rank = safe_realloc(store->rank, n * sizeof(int32_t));
+    store->rank = (int32_t *)safe_realloc(store->rank, n * sizeof(int32_t));
     store->rank_size = n;
   }
 

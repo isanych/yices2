@@ -465,7 +465,7 @@ term_t intern_tbl_reverse_lit_map(intern_tbl_t *tbl, literal_t l) {
   ip = int_hmap_find(&tbl->reverse_map, literal2code(l));
   if (ip != NULL) return ip->val;
 
-  ip = int_hmap_find(&tbl->reverse_map, literal2code(not(l)));
+  ip = int_hmap_find(&tbl->reverse_map, literal2code(not_(l)));
   if (ip != NULL) return opposite_term(ip->val);
 
   return NULL_TERM;

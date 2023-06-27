@@ -365,7 +365,7 @@ int32_t config_set_field(ctx_config_t *config, const char *key, const char *valu
     if (v < 0) {
       r = -2;
     } else {
-      config->mode = v;
+      config->mode = (context_mode_t)v;
     }
     break;
 
@@ -374,7 +374,7 @@ int32_t config_set_field(ctx_config_t *config, const char *key, const char *valu
     if (v < 0) {
       r = -2;
     } else {
-      config->solver_type = v;
+      config->solver_type = (context_solver_type_t)v;
     }
     break;
 
@@ -409,7 +409,7 @@ int32_t config_set_field(ctx_config_t *config, const char *key, const char *valu
       r = -2;
     } else {
       assert(0 <= v && v <= NUM_SOLVER_CODES);
-      config->arith_config = v;
+      config->arith_config = (solver_code_t)v;
     }
     break;
   case CTX_CONFIG_KEY_MODEL_INTERPOLATION:
@@ -634,7 +634,7 @@ int32_t decode_config(const ctx_config_t *config, smt_logic_t *logic, context_ar
     }
 
     a = logic2arch[logic_code];
-    if (a < 0 || !arch_is_supported(a)) {
+    if (a < 0 || !arch_is_supported((context_arch_t)a)) {
       // not supported
       r = -2;
     } else {
@@ -681,7 +681,7 @@ int32_t decode_config(const ctx_config_t *config, smt_logic_t *logic, context_ar
     // a is either -1 or an architecture code
     if (a < 0) {
       r = -1; // invalid combination of solvers
-    } else if (arch_supports_mode(a, config->mode)) {
+    } else if (arch_supports_mode((context_arch_t)a, config->mode)) {
       // good configuration
       *logic = SMT_UNKNOWN;
       *arch = (context_arch_t) a;

@@ -34,22 +34,22 @@ static void print_token(smt2_token_t tk) {
   uint32_t n;
   char *s;
 
-  printf("---> Token %s (%"PRId32")\n", smt2_token_to_string(tk), tk);
-  printf("     pos = %"PRIu64", line = %"PRIu32", column = %"PRIu32"\n",
+  printf("---> Token %s (%" PRId32 ")\n", smt2_token_to_string(tk), tk);
+  printf("     pos = %" PRIu64 ", line = %" PRIu32 ", column = %" PRIu32 "\n",
 	 lexer.tk_pos, lexer.tk_line, lexer.tk_column);
   n = current_token_length(&lexer);
   s = current_token_value(&lexer);
   if (tk != SMT2_TK_LP && tk != SMT2_TK_RP && tk != SMT2_TK_ERROR && tk != SMT2_TK_EOS) {
     printf("     value: '%s'\n", s);
-    printf("     length: %"PRIu32"\n", n);
+    printf("     length: %" PRIu32 "\n", n);
   }
 
   if (tk == SMT2_TK_KEYWORD) {
     kw = smt2_string_to_keyword(s, n);
-    printf("      keyword %"PRId32": %s\n", kw, smt2_keyword_to_string(kw));
+    printf("      keyword %" PRId32 ": %s\n", kw, smt2_keyword_to_string(kw));
   } else if (tk == SMT2_TK_SYMBOL) {
     sym = smt2_string_to_symbol(s, n);
-    printf("      symbol %"PRId32": %s\n", sym, smt2_symbol_to_string(sym));
+    printf("      symbol %" PRId32 ": %s\n", sym, smt2_symbol_to_string(sym));
   }
 
 }
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
     if (tk >= SMT2_TK_INVALID_STRING) {
       printf("*** Error ***\n");
     }
-    print_token(tk);
+    print_token((smt2_token_t)tk);
   } while (tk != SMT2_TK_EOS);
 
   close_lexer(&lexer);

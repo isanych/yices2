@@ -20,21 +20,12 @@
  * QUANTIFIER PATTERNS
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include "solvers/quant/quant_pattern.h"
 #include "utils/index_vectors.h"
 #include "terms/term_explorer.h"
 #include "yices.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 
@@ -260,7 +251,7 @@ static bool quant_infer_single_fapps(term_table_t *terms, term_t t, int_hmap_t *
   x = unsigned_term(t);
   kind = term_kind(terms, x);
 
-//#if TRACE
+//#if YICES_TRACE
 //  printf("    processing term ");
 //  yices_pp_term(stdout, t, 1200, 1, 0);
 //#endif
@@ -326,7 +317,7 @@ static bool quant_infer_single_fapps(term_table_t *terms, term_t t, int_hmap_t *
   case VARIABLE:
     p = int_hmap_get(uvarMap, x);
     p->val = 1;
-#if TRACE
+#if YICES_TRACE
     printf("    found var: ");
     yices_pp_term(stdout, x, 120, 1, 0);
 #endif
@@ -335,7 +326,7 @@ static bool quant_infer_single_fapps(term_table_t *terms, term_t t, int_hmap_t *
   case APP_TERM:
     if (!skip && uvarMap->nelems == nuvars) {
       ivector_push(out, x);
-#if TRACE
+#if YICES_TRACE
       printf("    found fapp: ");
       yices_pp_term(stdout, x, 120, 1, 0);
 #endif
@@ -361,7 +352,7 @@ static bool quant_infer_single_fapps(term_table_t *terms, term_t t, int_hmap_t *
     assert(false);
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("    term (%d): ", skip);
   yices_pp_term(stdout, t, 1200, 1, 0);
   printf("    table: ");
@@ -403,7 +394,7 @@ static bool quant_infer_multi_fapps(term_table_t *terms, term_t t, ptr_hmap_t *u
   x = unsigned_term(t);
   kind = term_kind(terms, x);
 
-#if TRACE
+#if YICES_TRACE
   printf("    processing term ");
   yices_pp_term(stdout, t, 1200, 1, 0);
 #endif
@@ -430,7 +421,7 @@ static bool quant_infer_multi_fapps(term_table_t *terms, term_t t, ptr_hmap_t *u
 
   case APP_TERM:
     if (!skip) {
-#if TRACE
+#if YICES_TRACE
       printf("    fapp: ");
       yices_pp_term(stdout, x, 120, 1, 0);
 #endif
@@ -442,7 +433,7 @@ static bool quant_infer_multi_fapps(term_table_t *terms, term_t t, ptr_hmap_t *u
             if (is_neg_term(u)) {
               u = opposite_term(u);
             }
-#if TRACE
+#if YICES_TRACE
             printf("      var: ");
             yices_pp_term(stdout, u, 120, 1, 0);
 #endif
@@ -450,41 +441,41 @@ static bool quant_infer_multi_fapps(term_table_t *terms, term_t t, ptr_hmap_t *u
             u2f = ptr_hmap_get(uv2fapp, u);
             if (u2f->val == NULL) {
               u2f->val = safe_malloc(sizeof(ivector_t));
-              init_ivector(u2f->val, 0);
+              init_ivector((ivector_t*)u2f->val, 0);
             }
-            ivector_push(u2f->val, x);
+            ivector_push((ivector_t*)u2f->val, x);
 
             f2u = ptr_hmap_get(fapp2uv, x);
             if (f2u->val == NULL) {
               f2u->val = safe_malloc(sizeof(ivector_t));
-              init_ivector(f2u->val, 0);
+              init_ivector((ivector_t*)f2u->val, 0);
             }
-            ivector_push(f2u->val, u);
+            ivector_push((ivector_t*)f2u->val, u);
           } else if (term_kind(terms, u) == APP_TERM) {
             f2u = ptr_hmap_find(fapp2uv, u);
             if (f2u != NULL) {
               uint32_t j, m;
               ivector_t *uvars;
-              uvars = f2u->val;
+              uvars = (ivector_t*)f2u->val;
               m = uvars->size;
               for(j=0; j<m; j++) {
                 u = uvars->data[j];
                 assert (term_kind(terms, u) == VARIABLE);
-#if TRACE
+#if YICES_TRACE
                   printf("      var: ");
                   yices_pp_term(stdout, u, 120, 1, 0);
 #endif
                 assert(is_pos_term(u));
                 u2f = ptr_hmap_get(uv2fapp, u);
                 assert(u2f->val != NULL);
-                ivector_push(u2f->val, x);
+                ivector_push((ivector_t*)u2f->val, x);
 
                 f2u = ptr_hmap_get(fapp2uv, x);
                 if (f2u->val == NULL) {
                   f2u->val = safe_malloc(sizeof(ivector_t));
-                  init_ivector(f2u->val, 0);
+                  init_ivector((ivector_t*)f2u->val, 0);
                 }
-                ivector_push(f2u->val, u);
+                ivector_push((ivector_t*)f2u->val, u);
               }
             }
           }
@@ -531,35 +522,35 @@ void quant_infer_multi_pattern(term_table_t *terms, term_t t, ivector_t *uvars, 
   quant_infer_multi_fapps(terms, t, &uv2fapp, &fapp2uv);
 
   map = &uv2fapp;
-#if TRACE
+#if YICES_TRACE
   printf("\n  uv2fapps (%d):\n", map->nelems);
 #endif
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    v = p->val;
+    v = (ivector_t*)p->val;
     ivector_remove_duplicates(v);
-#if TRACE
+#if YICES_TRACE
     printf("    %s -> ", yices_term_to_string(p->key, 100, 1, 0));
     yices_pp_term_array(stdout, v->size, v->data, 120, UINT32_MAX, 0, 1);
 #endif
   }
 
   map = &fapp2uv;
-#if TRACE
+#if YICES_TRACE
   printf("\n  fapp2uv (%d):\n", map->nelems);
 #endif
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    v = p->val;
+    v = (ivector_t*)p->val;
     ivector_remove_duplicates(v);
-#if TRACE
+#if YICES_TRACE
     printf("    %s -> ", yices_term_to_string(p->key, 100, 1, 0));
     yices_pp_term_array(stdout, v->size, v->data, 120, UINT32_MAX, 0, 1);
 #endif
   }
-#if TRACE
+#if YICES_TRACE
   printf("\n");
 #endif
 
@@ -593,7 +584,7 @@ void quant_infer_multi_pattern(term_table_t *terms, term_t t, ivector_t *uvars, 
       break;
     }
 
-#if TRACE
+#if YICES_TRACE
     printf("    choosing uvar: ");
     yices_pp_term(stdout, u, 120, 1, 0);
 #endif
@@ -603,21 +594,21 @@ void quant_infer_multi_pattern(term_table_t *terms, term_t t, ivector_t *uvars, 
       ivector_reset(&multiPat);
       break;
     }
-    v = p->val;
+    v = (ivector_t*)p->val;
     n = v->size;
     assert(n != 0);
     f = v->data[n-1];
     ivector_push(&multiPat, f);
-#if TRACE
+#if YICES_TRACE
     printf("    choosing fapp: ");
     yices_pp_term(stdout, f, 120, 1, 0);
 #endif
 
     p = ptr_hmap_find(&fapp2uv, f);
     assert(p != NULL);
-    v = p->val;
+    v = (ivector_t*)p->val;
     n = v->size;
-#if TRACE
+#if YICES_TRACE
     printf("    uvars: ");
     yices_pp_term_array(stdout, v->size, v->data, 120, UINT32_MAX, 0, 1);
 #endif
@@ -641,7 +632,7 @@ void quant_infer_multi_pattern(term_table_t *terms, term_t t, ivector_t *uvars, 
     }
     ivector_push(out, pat);
 
-#if TRACE
+#if YICES_TRACE
     printf("  Multi pattern: ");
     yices_pp_term(stdout, pat, 120, 1, 0);
 #endif
@@ -654,7 +645,7 @@ void quant_infer_multi_pattern(term_table_t *terms, term_t t, ivector_t *uvars, 
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    v = p->val;
+    v = (ivector_t*)p->val;
     if (v != NULL) {
       delete_ivector(v);
       safe_free(v);
@@ -666,7 +657,7 @@ void quant_infer_multi_pattern(term_table_t *terms, term_t t, ivector_t *uvars, 
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    v = p->val;
+    v = (ivector_t*)p->val;
     if (v != NULL) {
       delete_ivector(v);
       safe_free(v);

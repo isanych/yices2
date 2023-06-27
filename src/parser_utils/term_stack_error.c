@@ -20,12 +20,6 @@
  * ERROR MESSAGES/DIAGNOSIS ON EXCEPTION RAISED BY TERM STACK
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
@@ -381,7 +375,7 @@ static void yices_error(FILE *f, const char *name, tstack_t *tstack, const char 
   if (name != NULL) {
     fprintf(f, "%s: ", name);
   }
-  fprintf(f, "error in %s, line %"PRId32", column %"PRId32": ",
+  fprintf(f, "error in %s, line %" PRId32 ", column %" PRId32 ": ",
           opcode2string[tstack->error_op], tstack->error_loc.line, tstack->error_loc.column);
 
   print_error(f);
@@ -412,13 +406,13 @@ static void base_term_stack_error(FILE *f, const char *name, tstack_t *tstack, t
   case TSTACK_NOT_A_SYMBOL:
   case TSTACK_NOT_A_TYPE:
   case TSTACK_STRINGS_ARE_NOT_TERMS:  // should never be raised by the yices or smt1 parser
-    fprintf(f, "Internal exception: opcode = %"PRId32"\n", (int32_t) tstack->error_op);
+    fprintf(f, "Internal exception: opcode = %" PRId32 "\n", (int32_t) tstack->error_op);
     report_bug("Term-stack error");
     break;
 
   case TSTACK_INVALID_FRAME:
   case TSTACK_NONPOSITIVE_BVSIZE:
-    fprintf(f, "in %s (line %"PRId32", column %"PRId32")\n",
+    fprintf(f, "in %s (line %" PRId32 ", column %" PRId32 ")\n",
             opcode2string[tstack->error_op], tstack->error_loc.line, tstack->error_loc.column);
     break;
 
@@ -439,7 +433,7 @@ static void base_term_stack_error(FILE *f, const char *name, tstack_t *tstack, t
   case TSTACK_TYPENAME_REDEF:
   case TSTACK_TERMNAME_REDEF:
   case TSTACK_MACRO_REDEF:
-    fprintf(f, "%s (line %"PRId32", column %"PRId32")\n",
+    fprintf(f, "%s (line %" PRId32 ", column %" PRId32 ")\n",
             tstack->error_string, tstack->error_loc.line, tstack->error_loc.column);
     break;
 
@@ -457,12 +451,12 @@ static void base_term_stack_error(FILE *f, const char *name, tstack_t *tstack, t
   case TSTACK_BVLOGIC_ERROR:
   case TSTACK_TYPE_ERROR_IN_DEFTERM:
   case TSTACK_VARIABLES_VALUES_NOT_MATCHING:
-    fprintf(f, "(line %"PRId32", column %"PRId32")\n",
+    fprintf(f, "(line %" PRId32 ", column %" PRId32 ")\n",
             tstack->error_loc.line, tstack->error_loc.column);
     break;
 
   default:
-    fprintf(f, "Invalid error code: %"PRId32"\n", (int32_t) exception);
+    fprintf(f, "Invalid error code: %" PRId32 "\n", (int32_t) exception);
     report_bug("Term-stack error");
     break;
   }
@@ -489,7 +483,7 @@ static void base_term_stack_error(FILE *f, const char *name, tstack_t *tstack, t
  * - severity 2: means bug in term_stack or Yices parser
  */
 static const uint8_t severity[NUM_YICES_ERRORS] = {
-  2, // NO_ERROR (should never be raised)
+  2, // YICES_NO_ERROR (should never be raised)
   2, // INVALID_TYPE
   2, // INVALID_TERM
   2, // INVALID_CONSTANT_INDEX (bug in scalar-type construction)

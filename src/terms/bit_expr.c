@@ -54,9 +54,9 @@ static void alloc_node_table(node_table_t *table, uint32_t n) {
   }
 
   static const indexed_table_vtbl_t vtbl = {
-    .elem_size = sizeof(node_desc_t),
-    .max_elems = MAX_NODE_TABLE_SIZE,
-    .extend = NULL
+    sizeof(node_desc_t),
+    MAX_NODE_TABLE_SIZE,
+    NULL
   };
 
   indexed_table_init(&table->nodes, n, &vtbl);

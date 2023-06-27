@@ -1380,13 +1380,13 @@ static value_t eval_app(evaluator_t *eval, composite_term_t *app) {
 }
 
 
-static value_t eval_or(evaluator_t *eval, composite_term_t *or) {
+static value_t eval_or(evaluator_t *eval, composite_term_t *or_) {
   uint32_t i, n;
   value_t v;
 
-  n = or->arity;
+  n = or_->arity;
   for (i=0; i<n; i++) {
-    v = eval_term(eval, or->arg[i]);
+    v = eval_term(eval, or_->arg[i]);
     if (is_true(eval->vtbl, v)) {
       return v;
     }
@@ -1397,14 +1397,14 @@ static value_t eval_or(evaluator_t *eval, composite_term_t *or) {
 }
 
 
-static value_t eval_xor(evaluator_t *eval, composite_term_t *xor) {
+static value_t eval_xor(evaluator_t *eval, composite_term_t *xor_) {
   uint32_t i, n;
   value_t v, w;
 
-  n = xor->arity;
+  n = xor_->arity;
   v = vtbl_mk_false(eval->vtbl);
   for (i=0; i<n; i++) {
-    w = eval_term(eval, xor->arg[i]);
+    w = eval_term(eval, xor_->arg[i]);
     // v := v xor w: true if v != w, false if v == w
     v = vtbl_mk_bool(eval->vtbl, v != w);
   }

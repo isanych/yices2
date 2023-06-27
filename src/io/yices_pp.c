@@ -704,7 +704,7 @@ static char *clone_str(const char *s) {
   if (n + 1 < n) {
     out_of_memory(); // overflow
   }
-  copy = safe_malloc(n+1);
+  copy = (char*)safe_malloc(n+1);
   strcpy(copy, s);
 
   return copy;
@@ -823,7 +823,7 @@ static uint32_t *clone_bv_array(const uint32_t *a, uint32_t n) {
   uint32_t i;
 
   n = (n+31)>>5; // ceil(n/32)
-  copy = safe_malloc(n * sizeof(uint32_t));
+  copy = (uint32_t*)safe_malloc(n * sizeof(uint32_t));
   for (i=0; i<n; i++) {
     copy[i] = a[i];
   }
@@ -1269,7 +1269,7 @@ void pp_function(yices_pp_t *printer, value_table_t *table, value_t c, bool show
   uint32_t j, m;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
 
   pp_function_header(printer, table, c, fun->type);
 
@@ -1368,7 +1368,7 @@ void pp_object(yices_pp_t *printer, value_table_t *table, value_t c) {
     pp_algebraic(printer, table->desc[c].ptr);
     break;
   case BITVECTOR_VALUE:
-    pp_bitvector(printer, table->desc[c].ptr);
+    pp_bitvector(printer, (value_bv_t*)table->desc[c].ptr);
     break;
   case UNINTERPRETED_VALUE:
     pp_unint_name(printer, c);

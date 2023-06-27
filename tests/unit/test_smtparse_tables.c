@@ -26,9 +26,9 @@ static action_t get_action(state_t s, token_t tk) {
 
   i = base[s] + tk;
   if (check[i] == s) {
-    return value[i];
+    return (action_t)value[i];
   } else {
-    return default_value[s];
+    return (action_t)default_value[s];
   }
 }
 
@@ -247,7 +247,7 @@ int main(void) {
   for (s=0; s<NSTATES; s++) {
     printf("Source state %s\n", state2string[s]);
     for (tk=SMT_TK_LP; tk<NUM_SMT_TOKENS; tk++) {
-      printf("   %20s     %s\n", smt_token_to_string(tk), action2string[get_action(s, tk)]);
+      printf("   %20s     %s\n", smt_token_to_string((smt_token_t)tk), action2string[get_action((state_t)s, tk)]);
     }
     printf("\n");
   }

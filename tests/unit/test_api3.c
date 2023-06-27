@@ -48,7 +48,7 @@
 
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -511,10 +511,10 @@ static term_t term_store_sample(term_store_t *store, type_t tau, term_pred_t p) 
 /*
  * BASE TYPES
  */
-static type_t boolean, bv1, bv2, bv12, bv32, bv64, bv65, bv100;
+static type_t boolean_, bv1, bv2, bv12, bv32, bv64, bv65, bv100;
 
 static void init_base_types(void) {
-  boolean = yices_bool_type();
+  boolean_ = yices_bool_type();
   bv1 = yices_bv_type(1);
   bv2 = yices_bv_type(2);
   bv12 = yices_bv_type(12);
@@ -539,23 +539,23 @@ static void init_base_terms(void) {
   // boolean terms
   add_term(yices_true());
   add_term(yices_false());
-  t = yices_new_uninterpreted_term(boolean);
+  t = yices_new_uninterpreted_term(boolean_);
   yices_set_term_name(t, "p0");
   add_term(t);
   add_term(yices_not(t));
-  t = yices_new_uninterpreted_term(boolean);
+  t = yices_new_uninterpreted_term(boolean_);
   yices_set_term_name(t, "p1");
   add_term(t);
   add_term(yices_not(t));
-  t = yices_new_uninterpreted_term(boolean);
+  t = yices_new_uninterpreted_term(boolean_);
   yices_set_term_name(t, "p2");
   add_term(t);
   add_term(yices_not(t));
-  t = yices_new_uninterpreted_term(boolean);
+  t = yices_new_uninterpreted_term(boolean_);
   yices_set_term_name(t, "p3");
   add_term(t);
   add_term(yices_not(t));
-  t = yices_new_uninterpreted_term(boolean);
+  t = yices_new_uninterpreted_term(boolean_);
   yices_set_term_name(t, "p4");
   add_term(t);
   add_term(yices_not(t));
@@ -909,7 +909,7 @@ static term_t test_shift(uint32_t i, term_t t1, uint32_t n) {
 
   printf("test: (%s ", shift_array[i].name);
   print_term(stdout, __yices_globals.terms, t1);
-  printf(" %"PRIu32") --> ", n);
+  printf(" %" PRIu32 ") --> ", n);
   t = shift_array[i].fun(t1, n);
   print_term(stdout, __yices_globals.terms, t);
   printf("\n");
@@ -927,7 +927,7 @@ static term_t test_extend(uint32_t i, term_t t1, uint32_t n) {
 
   printf("test: (%s ", extend_array[i].name);
   print_term(stdout, __yices_globals.terms, t1);
-  printf(" %"PRIu32") --> ", n);
+  printf(" %" PRIu32 ") --> ", n);
   t = extend_array[i].fun(t1, n);
   print_term(stdout, __yices_globals.terms, t);
   printf("\n");
@@ -968,7 +968,7 @@ static term_t test_bvextract(term_t t1, uint32_t i, uint32_t j) {
 
   printf("test: (bvextract ");
   print_term(stdout, __yices_globals.terms, t1);
-  printf(" %"PRIu32" %"PRIu32") --> ", i, j);
+  printf(" %" PRIu32 " %" PRIu32 ") --> ", i, j);
   t = yices_bvextract(t1, i, j);
   print_term(stdout, __yices_globals.terms, t);
   printf("\n");
@@ -1106,7 +1106,7 @@ static term_t test_bitextract(term_t t, uint32_t i) {
 
   printf("test: (bit-extract ");
   print_term(stdout, __yices_globals.terms, t);
-  printf(" %"PRIu32") --> ", i);
+  printf(" %" PRIu32 ") --> ", i);
   b = yices_bitextract(t, i);
   print_term(stdout, __yices_globals.terms, b);
   printf("\n");
@@ -1215,7 +1215,7 @@ static void random_binary_tests(uint32_t n) {
     t1 = type_store_sample_terms(&all_types, tau);
     t2 = type_store_sample_terms(&all_types, tau);
     assert(t1 != NULL_TERM && t2 != NULL_TERM);
-    printf("--- Test %"PRIu32"---\n", n);
+    printf("--- Test %" PRIu32 "---\n", n);
     full_binary_tests(t1, t2);
     printf("\n\n");
     n --;
@@ -1236,8 +1236,8 @@ static void random_bvarrays(uint32_t n) {
   while (n > 0) {
     tau = type_store_sample(&all_types, is_bvtype);
     k = bv_type_size(__yices_globals.types, tau);
-    t1 = term_store_sample(&all_terms, boolean, has_type);
-    t2 = term_store_sample(&all_terms, boolean, has_type);
+    t1 = term_store_sample(&all_terms, boolean_, has_type);
+    t2 = term_store_sample(&all_terms, boolean_, has_type);
 
     t = test_bvarray1(k, t1);
     add_term(t);
@@ -1309,7 +1309,7 @@ static void random_ite(uint32_t n) {
     tau = type_store_sample(&all_types, is_bvtype);
     t1 = type_store_sample_terms(&all_types, tau);
     t2 = type_store_sample_terms(&all_types, tau);
-    c = term_store_sample(&all_terms, boolean, has_type);
+    c = term_store_sample(&all_terms, boolean_, has_type);
 
     test_ite(c, t1, t2);
     printf("\n");

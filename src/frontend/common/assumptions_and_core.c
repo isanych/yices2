@@ -32,7 +32,7 @@
 assumptions_and_core_t *new_assumptions(term_table_t *terms) {
   assumptions_and_core_t *a;
 
-  a = safe_malloc(sizeof(assumptions_and_core_t));
+  a = (assumptions_and_core_t*)safe_malloc(sizeof(assumptions_and_core_t));
   a->terms = terms;
   init_assumption_table(&a->table);
   init_ivector(&a->assumptions, 0);

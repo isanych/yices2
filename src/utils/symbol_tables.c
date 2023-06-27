@@ -196,8 +196,8 @@ static void stbl_extend(stbl_t *sym_table) {
   sym_table->size = n;
 
 #if TRACE_RESIZE
-  printf("resize table %p: cost = %"PRIu32", nelems = %"PRIu32", ndeleted = %"PRIu32
-         ", old size = %"PRIu32", new size = %"PRIu32"\n",
+  printf("resize table %p: cost = %" PRIu32 ", nelems = %" PRIu32 ", ndeleted = %" PRIu32
+         ", old size = %" PRIu32 ", new size = %" PRIu32 "\n",
 	 sym_table, sym_table->cost, sym_table->nelems, sym_table->ndeleted, old_size, n);
   fflush(stdout);
 #endif
@@ -252,7 +252,7 @@ void delete_stbl(stbl_t *sym_table) {
   uint32_t k;
 
 #if TRACE_RESIZE
-  printf("delete table %p: cost = %"PRIu32", nelems = %"PRIu32", ndeleted = %"PRIu32", size = %"PRIu32"\n",
+  printf("delete table %p: cost = %" PRIu32 ", nelems = %" PRIu32 ", ndeleted = %" PRIu32 ", size = %" PRIu32 "\n",
 	 sym_table, sym_table->cost, sym_table->nelems, sym_table->ndeleted, sym_table->size);
   fflush(stdout);
 #endif

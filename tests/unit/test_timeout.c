@@ -95,7 +95,7 @@ static void show_counter(uint32_t *c, uint32_t n) {
 static void test_timeout(timeout_t *to, uint32_t *c, uint32_t n, uint32_t timeout) {
   double start, end;
 
-  printf("---> test: size = %"PRIu32", timeout = %"PRIu32" s\n", n, timeout);
+  printf("---> test: size = %" PRIu32 ", timeout = %" PRIu32 " s\n", n, timeout);
   fflush(stdout);
   wrapper.interrupted  = false;
   start_timeout(to, timeout, handler, &wrapper);

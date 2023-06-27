@@ -27,7 +27,7 @@
 #include "utils/mark_vectors.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -42,16 +42,16 @@ static void print_mark_vector(mark_vector_t *v) {
   uint32_t i, n;
 
   printf("mark vector %p\n", v);
-  printf("  size = %"PRIu32"\n", v->size);
-  printf("  end_map = %"PRIu32"\n", v->end_map);
-  printf("  default = %"PRIu8"\n", v->def);
+  printf("  size = %" PRIu32 "\n", v->size);
+  printf("  end_map = %" PRIu32 "\n", v->end_map);
+  printf("  default = %" PRIu8 "\n", v->def);
 
   n = v->end_map;
   if (n > 0) {
     printf("  content:\n");
     for (i=0; i<n; i++) {
       if (v->map[i] != v->def) {
-	printf("   map[%"PRIu32"] = %"PRIu8"\n", i, v->map[i]);
+	printf("   map[%" PRIu32 "] = %" PRIu8 "\n", i, v->map[i]);
       }
     }
   } else {
@@ -97,7 +97,7 @@ static void test1(void) {
 
   printf("Check map\n");
   for (i=0; i<40; i++) {
-    printf("  map[%"PRId32"] = %"PRIu8"\n", i, mark_vector_get_mark(&vector, i));
+    printf("  map[%" PRId32 "] = %" PRIu8 "\n", i, mark_vector_get_mark(&vector, i));
   }
   printf("\n");
 
@@ -120,7 +120,7 @@ static void test1(void) {
 
   printf("Check map\n");
   for (i=0; i<40; i++) {
-    printf("  map[%"PRId32"] = %"PRIu8"\n", i, mark_vector_get_mark(&vector, i));
+    printf("  map[%" PRId32 "] = %" PRIu8 "\n", i, mark_vector_get_mark(&vector, i));
   }
   printf("\n");
 
@@ -149,7 +149,7 @@ static void test2(uint32_t n) {
     j = (int32_t) (random() % 2000);
     x = (uint8_t) (random() & 0xFF);
 
-    printf("add %"PRId32" --> %"PRIu8"\n", j, x);
+    printf("add %" PRId32 " --> %" PRIu8 "\n", j, x);
     mark_vector_add_mark(&vector, j, x);
 
     assert(mark_vector_get_mark(&vector, j) == x);

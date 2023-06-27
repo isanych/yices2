@@ -33,15 +33,12 @@
 #include "utils/int_array_sort.h"
 #include "utils/memalloc.h"
 #include "utils/prng.h"
-
-#define DEBUG 0
-#define TRACE 0
-
+#include "yices_config.h"
 
 /*
  * Internal checks
  */
-#if DEBUG
+#if YICES_DEBUG
 
 static void check_literal_vector(literal_t *v);
 static void check_propagation(sat_solver_t *sol);
@@ -207,7 +204,7 @@ static inline void delete_learned_clause(clause_t *cl) {
  *   rather than c1 (i.e., c1's score is worse than c2's score).
  */
 static bool clause_cmp(const void *aux, const void *c1, const void *c2) {
-  return get_activity(c1) <= get_activity(c2);
+  return get_activity((const clause_t*)c1) <= get_activity((const clause_t*)c2);
 }
 
 
@@ -289,7 +286,7 @@ static void shrink_clause_vector(clause_t ***v) {
   vector = cv_header(*v);
   n = vector->size;
   if (n < vector->capacity) {
-    vector = realloc(vector, sizeof(clause_vector_t) + n * sizeof(clause_t *));
+    vector = (clause_vector_t*)realloc(vector, sizeof(clause_vector_t) + n * sizeof(clause_t *));
     // if vector == NULL, realloc has failed but v is still usable.
     if (vector != NULL) {
       vector->capacity = n;
@@ -327,9 +324,6 @@ static inline uint32_t get_lv_size(literal_t *v) {
 static inline void set_lv_size(literal_t *v, uint32_t sz) {
   lv_header(v)->size = sz;
 }
-
-#if DEBUG
-#endif
 
 /*
  * Add literal l at the end of vector *v
@@ -772,7 +766,7 @@ static void flush_stat_buffer(void) {
   f = stat_buffer.file;
   n = stat_buffer.nrecords;
   for (i=0; i<n; i++) {
-    fprintf(f, "%"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32"\n",
+    fprintf(f, "%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
 	    d->creation, d->last_prop, d->last_reso, d->deletion, d->props, d->resos,
 	    d->base_glue, d->min_glue, d->glue);
     d ++;
@@ -1223,7 +1217,7 @@ bvar_t sat_solver_new_var(sat_solver_t *solver) {
 static void assign_literal(sat_solver_t *solver, literal_t l) {
   bvar_t v;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Assigning literal %d, decision level = %u\n", l, solver->decision_level);
 #endif
   assert(0 <= l && l < solver->nb_lits);
@@ -1234,9 +1228,9 @@ static void assign_literal(sat_solver_t *solver, literal_t l) {
   push_literal(&solver->stack, l);
 
   solver->value[l] = val_true;
-  solver->value[not(l)] = val_false;
+  solver->value[not_(l)] = val_false;
 
-  v = var_of(not(l));
+  v = var_of(not_(l));
   solver->level[v] = 0;
   solver->antecedent[v] = mk_literal_antecedent(null_literal);
   set_bit(solver->mark, v); // marked at level 0
@@ -1255,7 +1249,7 @@ void sat_solver_add_empty_clause(sat_solver_t *solver) {
  * or set status to unsat if l is already false
  */
 void sat_solver_add_unit_clause(sat_solver_t *solver, literal_t l) {
-#if TRACE
+#if YICES_TRACE
   printf("---> Add unit clause: { %d }\n", l);
 #endif
 
@@ -1279,7 +1273,7 @@ void sat_solver_add_unit_clause(sat_solver_t *solver, literal_t l) {
  * Add clause { l0, l1 }
  */
 void sat_solver_add_binary_clause(sat_solver_t *solver, literal_t l0, literal_t l1) {
-#if TRACE
+#if YICES_TRACE
   printf("---> Add binary clause: { %d %d }\n", l0, l1);
 #endif
 
@@ -1369,8 +1363,8 @@ void sat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, litera
   }
 
   /*
-   * Remove duplicates and check for opposite literals l, not(l)
-   * (sorting ensure that not(l) is just after l)
+   * Remove duplicates and check for opposite literals l, not_(l)
+   * (sorting ensure that not_(l) is just after l)
    */
   int_array_sort(lit, n);
   l = lit[0];
@@ -1378,7 +1372,7 @@ void sat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, litera
   for (i=1; i<n; i++) {
     l_aux = lit[i];
     if (l_aux != l) {
-      if (l_aux == not(l)) return; // true clause
+      if (l_aux == not_(l)) return; // true clause
       lit[j] = l_aux;
       l = l_aux;
       j ++;
@@ -1800,8 +1794,8 @@ static void simplify_binary_vectors(sat_solver_t *solver) {
       solver->stats.aux_literals += n;
     }
 
-    // remove all binary clauses that contain not(l0)
-    l0 = not(l0);
+    // remove all binary clauses that contain not_(l0)
+    l0 = not_(l0);
     v0 = solver->bin[l0];
     if (v0 != NULL) {
       solver->stats.aux_literals += get_lv_size(v0);
@@ -1878,11 +1872,11 @@ static void decide_variable(sat_solver_t *solver, bvar_t x) {
   l = preferred_literal(solver, x);
   assert(l == pos_lit(x) || l == neg_lit(x));
   solver->value[l] = val_true;
-  solver->value[not(l)] = val_false;
+  solver->value[not_(l)] = val_false;
 
   push_literal(&solver->stack, l);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Decision: literal %d, decision level = %u\n", l, solver->decision_level);
 #endif
 }
@@ -1897,7 +1891,7 @@ static void implied_literal(sat_solver_t *solver, literal_t l, antecedent_t a) {
 
   assert(lit_is_unassigned(solver, l));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Implied literal %d, decision level = %u\n", l, solver->decision_level);
 #endif
 
@@ -1906,9 +1900,9 @@ static void implied_literal(sat_solver_t *solver, literal_t l, antecedent_t a) {
   push_literal(&solver->stack, l);
 
   solver->value[l] = val_true;
-  solver->value[not(l)] = val_false;
+  solver->value[not_(l)] = val_false;
 
-  v = var_of(not(l));
+  v = var_of(not_(l));
   solver->antecedent[v] = a;
   solver->level[v] = solver->decision_level;
 }
@@ -1932,7 +1926,7 @@ static void implied_literal(sat_solver_t *solver, literal_t l, antecedent_t a) {
  * Record a two-literal conflict: clause {l0, l1} is false
  */
 static void record_binary_conflict(sat_solver_t *solver, literal_t l0, literal_t l1) {
-#if TRACE
+#if YICES_TRACE
   printf("\n---> Binary conflict: {%d, %d}\n", l0, l1);
 #endif
 
@@ -1947,7 +1941,7 @@ static void record_binary_conflict(sat_solver_t *solver, literal_t l0, literal_t
  * Record cl as a conflict clause
  */
 static void record_clause_conflict(sat_solver_t *solver, clause_t *cl) {
-#if TRACE
+#if YICES_TRACE
   uint32_t i;
   literal_t ll;
 
@@ -1989,7 +1983,7 @@ static int32_t propagation_via_bin_vector(sat_solver_t *sol, uint8_t *val, liter
     do {
       l1 = *v ++;
       //      v1 = lit_val(sol, l1);
-      v1 = val[l1];
+      v1 = (bval_t)val[l1];
     } while (v1 == val_true);
 
     if (l1 < 0) break; // end_marker
@@ -2026,7 +2020,7 @@ static int propagation_via_watched_list(sat_solver_t *sol, uint8_t *val, link_t 
     i = idx_of(link);
     cl = clause_of(link);
     l1 = get_other_watch(cl, i);
-    v1 = val[l1];
+    v1 = (bval_t)val[l1];
 
     assert(next_of(link) == cl->link[i]);
     assert(cdr_ptr(link) == cl->link + i);
@@ -2117,7 +2111,7 @@ static int32_t propagation(sat_solver_t *sol) {
   queue = sol->stack.lit;
 
   for (i = sol->stack.prop_ptr; i < sol->stack.top; i++) {
-    l = not(queue[i]);
+    l = not_(queue[i]);
     bin = sol->bin[l];
     if (bin != NULL) {
       code = propagation_via_bin_vector(sol, sol->value, l, bin);
@@ -2284,7 +2278,7 @@ static bool analyze_antecedents(sat_solver_t *sol, literal_t l, uint32_t sgn) {
     c = clause_antecedent(a)->cl;
     i = clause_index(a);
     // other watched literal
-    assert(c[i] == not(l));
+    assert(c[i] == not_(l));
     l1 = c[i^1];
     if (is_lit_unmarked(sol, l1)) {
       set_lit_mark(sol, l1);
@@ -2415,9 +2409,6 @@ static inline bool is_var_unmarked(sat_solver_t *sol, bvar_t x) {
   return tst_bit(sol->mark, x) == 0;
 }
 
-#if DEBUG
-#endif
-
 /*
  * Set mark for literal l
  */
@@ -2485,7 +2476,7 @@ static void analyze_conflict(sat_solver_t *sol) {
   buffer = &sol->buffer;
   unresolved = 0;
 
-#if DEBUG
+#if YICES_DEBUG
   check_marks(sol);
 #endif
 
@@ -2531,7 +2522,7 @@ static void analyze_conflict(sat_solver_t *sol) {
     if (is_lit_marked(sol, b)) {
       if (unresolved == 1) {
         // b is the UIP literal we're done.
-        buffer->data[0] = not(b);
+        buffer->data[0] = not_(b);
         break;
 
       } else {
@@ -2585,7 +2576,7 @@ static void analyze_conflict(sat_solver_t *sol) {
    */
   simplify_learned_clause(sol);
 
-#if DEBUG
+#if YICES_DEBUG
   check_marks(sol);
 #endif
 
@@ -2619,7 +2610,7 @@ static bvar_t select_variable(sat_solver_t *solver) {
   if (rnd <= (uint32_t) (0x1000000 * VAR_RANDOM_FACTOR)) {
     x = random_uint(solver->nb_vars);
     if (var_is_unassigned(solver, x)) {
-#if TRACE
+#if YICES_TRACE
       printf("---> Random selection: literal %d\n", l);
 #endif
       solver->stats.decisions ++;
@@ -2635,7 +2626,7 @@ static bvar_t select_variable(sat_solver_t *solver) {
   while (! heap_is_empty(&solver->heap)) {
     x = heap_get_top(&solver->heap);
     if (var_is_unassigned(solver, x)) {
-#if DEBUG
+#if YICES_DEBUG
       check_top_var(solver, x);
 #endif
       solver->stats.decisions ++;
@@ -2679,7 +2670,7 @@ static void backtrack(sat_solver_t *sol, uint32_t back_level) {
   literal_t l;
   bvar_t x;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Backtracking to level %u\n", back_level);
 #endif
 
@@ -2697,9 +2688,9 @@ static void backtrack(sat_solver_t *sol, uint32_t back_level) {
 
     // clear assignment (i.e. bit 1) but keep current polarity (i.e. bit 0)
     x = var_of(l);
-    val[x] ^= (uint16_t) (0x0202); // flip assign bits of val[l] and val[not(l)]
+    val[x] ^= (uint16_t) (0x0202); // flip assign bits of val[l] and val[not_(l)]
 
-    assert(lit_val(sol, l) == val_undef_true && lit_val(sol, not(l)) == val_undef_false);
+    assert(lit_val(sol, l) == val_undef_true && lit_val(sol, not_(l)) == val_undef_false);
 
     heap_insert(&sol->heap, x);
   }
@@ -2837,7 +2828,7 @@ static uint32_t next_snapshot;
  * - conflict_bound: number of conflict
  * output: status_sat, status_unsolved, or status_unsat
  */
-solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
+YICES_EXTERN solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
   int32_t code;
   literal_t l, *b;
   bvar_t x;
@@ -2852,7 +2843,7 @@ solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
     code = propagation(sol);
 
     if (code == no_conflict) {
-#if DEBUG
+#if YICES_DEBUG
       check_propagation(sol);
 #endif
 
@@ -2871,10 +2862,10 @@ solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
 	if (sol->stack.top > sol->simplify_bottom &&
 	    sol->stats.propagations >= sol->simplify_props + sol->simplify_threshold) {
 
-#if TRACE
+#if YICES_TRACE
 	  printf("---> Simplify\n");
 	  printf("---> level = %u, bottom = %u, top = %u\n", sol->decision_level, sol->simplify_bottom, sol->stack.top);
-	  printf("---> props = %"PRIu64", threshold = %"PRIu64"\n", sol->stats.propagations, sol->simplify_threshold);
+	  printf("---> props = %" PRIu64 ", threshold = %" PRIu64 "\n", sol->stats.propagations, sol->simplify_threshold);
 #endif
 
 	  simplify_clause_database(sol);
@@ -2962,14 +2953,14 @@ solver_status_t sat_search(sat_solver_t *sol, uint32_t conflict_bound) {
 /*
  * Solve procedure
  */
-solver_status_t solve(sat_solver_t *sol, bool verbose) {
+YICES_EXTERN solver_status_t solve(sat_solver_t *sol, bool verbose) {
   int32_t code;
   //  uint32_t c_threshold, d_threshold;
   uint32_t u, v, threshold;
 
   if (sol->status == status_unsat) return status_unsat;
 
-#if DEBUG
+#if YICES_DEBUG
   uint32_t i;
 
   check_marks(sol);
@@ -2985,7 +2976,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
     return status_unsat;
   }
 
-#if DEBUG
+#if YICES_DEBUG
   check_propagation(sol);
 #endif
 
@@ -3032,7 +3023,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
     fprintf(stderr, "|   Conf.      Del. |  Clauses  |   Clauses   Lits. |   Clauses  Lits. Lits/Cl. |\n");
     fprintf(stderr, "---------------------------------------------------------------------------------\n");
 
-    fprintf(stderr, "| %7"PRIu32"  %8"PRIu32" |  %8"PRIu32" | %8"PRIu32" %8"PRIu64" | %8"PRIu32" %8"PRIu64" %7.1f |\n",
+    fprintf(stderr, "| %7" PRIu32 "  %8" PRIu32 " |  %8" PRIu32 " | %8" PRIu32 " %8" PRIu64 " | %8" PRIu32 " %8" PRIu64 " %7.1f |\n",
 	    //	    d_threshold, sol->reduce_threshold, sol->nb_bin_clauses,              // PICO
 	    threshold, sol->reduce_threshold, sol->nb_bin_clauses,  // LUBY
             get_cv_size(sol->problem_clauses), sol->stats.prob_literals,
@@ -3042,13 +3033,13 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
   }
 
   do {
-#if DEBUG
+#if YICES_DEBUG
     check_marks(sol);
 #endif
     //    code = sat_search(sol, c_threshold);  // PICO
     code = sat_search(sol, threshold);     // LUBY
 
-#if DEBUG
+#if YICES_DEBUG
     check_marks(sol);
 #endif
 
@@ -3062,7 +3053,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
     }
     threshold = v * LUBY_INTERVAL;
     if (verbose) {
-      fprintf(stderr, "| %7"PRIu32"  %8"PRIu32" |  %8"PRIu32" | %8"PRIu32" %8"PRIu64" | %8"PRIu32" %8"PRIu64" %7.1f |\n",
+      fprintf(stderr, "| %7" PRIu32 "  %8" PRIu32 " |  %8" PRIu32 " | %8" PRIu32 " %8" PRIu64 " | %8" PRIu32 " %8" PRIu64 " %7.1f |\n",
 	      threshold, sol->reduce_threshold, sol->nb_bin_clauses,
 	      get_cv_size(sol->problem_clauses), sol->stats.prob_literals,
 	      get_cv_size(sol->learned_clauses), sol->stats.learned_literals,
@@ -3078,7 +3069,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
       c_threshold = INITIAL_RESTART_THRESHOLD;
       d_threshold = (uint32_t)(d_threshold * RESTART_FACTOR);
       if (verbose) {
-        fprintf(stderr, "| %7"PRIu32"  %8"PRIu32" |  %8"PRIu32" | %8"PRIu32" %8"PRIu64" | %8"PRIu32" %8"PRIu64" %7.1f |\n",
+        fprintf(stderr, "| %7" PRIu32 "  %8" PRIu32 " |  %8" PRIu32 " | %8" PRIu32 " %8" PRIu64 " | %8" PRIu32 " %8" PRIu64 " %7.1f |\n",
                 d_threshold, sol->reduce_threshold, sol->nb_bin_clauses,
                 get_cv_size(sol->problem_clauses), sol->stats.prob_literals,
                 get_cv_size(sol->learned_clauses), sol->stats.learned_literals,
@@ -3099,7 +3090,7 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
     fflush(stderr);
   }
 
-  return code;
+  return (solver_status_t)code;
 }
 
 
@@ -3108,12 +3099,12 @@ solver_status_t solve(sat_solver_t *sol, bool verbose) {
 /*
  * Return the model: copy all variable value into val
  */
-void get_allvars_assignment(sat_solver_t *solver, bval_t *val) {
+YICES_EXTERN void get_allvars_assignment(sat_solver_t *solver, bval_t *val) {
   uint32_t i, n;
 
   n = solver->nb_vars;
   for (i=0; i<n; i++) {
-    val[i] = solver->value[pos_lit(i)];
+    val[i] = (bval_t)solver->value[pos_lit(i)];
   }
 }
 
@@ -3125,7 +3116,7 @@ void get_allvars_assignment(sat_solver_t *solver, bval_t *val) {
  *
  * If solver->status == sat this should be equal to solver->nb_vars.
  */
-uint32_t get_true_literals(sat_solver_t *solver, literal_t *a) {
+YICES_EXTERN uint32_t get_true_literals(sat_solver_t *solver, literal_t *a) {
   uint32_t n;
   literal_t l;
 
@@ -3148,7 +3139,7 @@ uint32_t get_true_literals(sat_solver_t *solver, literal_t *a) {
  *  DEBUGGING  *
  **************/
 
-#if DEBUG
+#if YICES_DEBUG
 
 /*
  * Inline functions used only here: they can cause compilation warning

@@ -57,7 +57,7 @@ static void test_export(const char *filename, uint32_t n, const term_t t[], bool
   int32_t code;
 
   code = yices_export_formulas_to_dimacs(t, n, filename, simplify, &status);
-  printf("\nTest export formulas to '%s': got code %"PRId32"\n", filename, code);
+  printf("\nTest export formulas to '%s': got code %" PRId32 "\n", filename, code);
   if (code >= 0) {
     show_formulas(t, n);    
   }
@@ -82,7 +82,7 @@ static void test_export(const char *filename, uint32_t n, const term_t t[], bool
       perror(filename);
     }
   } else {
-    printf(" BUG: invalid code = %"PRId32"\n", code);
+    printf(" BUG: invalid code = %" PRId32 "\n", code);
     fflush(stdout);
     exit(1);
   }

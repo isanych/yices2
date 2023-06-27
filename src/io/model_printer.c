@@ -43,7 +43,7 @@ void model_print_term_value(FILE *f, model_t *model, term_t t) {
 
   name = term_name(model->terms, t);
   if (name == NULL) {
-    fprintf(f, "(= t!%"PRId32" ", t);
+    fprintf(f, "(= t!%" PRId32 " ", t);
   } else {
     fprintf(f, "(= %s ", name);
   }
@@ -236,7 +236,7 @@ static void model_print_function_assignments(FILE *f, model_t *model, const term
  * - return true if term t should be printed in the assignments (i.e., t has a name)
  */
 static bool term_to_print(void *aux, term_t t) {
-  return is_pos_term(t) && term_kind(aux, t) == UNINTERPRETED_TERM && term_name(aux, t) != NULL;
+  return is_pos_term(t) && term_kind((term_table_t *)aux, t) == UNINTERPRETED_TERM && term_name((term_table_t*)aux, t) != NULL;
 }
 
 
@@ -291,7 +291,7 @@ static void eval_print_term_value(FILE *f, evaluator_t *eval, term_t t) {
     // v = good value for t
     name = term_name(model->terms, t);
     if (name == NULL) {
-      fprintf(f, "(= t!%"PRId32" ", t);
+      fprintf(f, "(= t!%" PRId32 " ", t);
     } else {
       fprintf(f, "(= %s ", name);
     }
@@ -314,7 +314,7 @@ static void eval_print_constant_term(FILE *f, evaluator_t *eval, term_t t) {
   d = vtbl_unint(eval->vtbl, c);
   name = term_name(eval->terms, t);
   if (name == NULL) {
-    fprintf(f, "(= t!%"PRId32" ", t);
+    fprintf(f, "(= t!%" PRId32 " ", t);
     vtbl_print_object(f, eval->vtbl, c);
     fputs(")\n", f);
   } else if (d->name == NULL || strcmp(name, d->name) != 0) {
@@ -346,7 +346,7 @@ static void eval_print_function_term(FILE *f, evaluator_t *eval, term_t t) {
      */
     fun = vtbl_function(eval->vtbl, c);
     if (name == NULL) {
-      fprintf(f, "(= t%"PRId32" ", t);
+      fprintf(f, "(= t%" PRId32 " ", t);
       vtbl_print_object(f, eval->vtbl, c);
       fputs(")\n", f);
     } else if (fun->name == NULL || strcmp(name, fun->name) != 0) {

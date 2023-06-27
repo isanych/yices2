@@ -196,14 +196,14 @@ static int32_t test_dl_profiling(smt_benchmark_t *bench) {
     print_internalization_code(code);
   }
 
-  printf("term table: %"PRIu32" elements\n", nterms(context.terms));
+  printf("term table: %" PRIu32 " elements\n", nterms(context.terms));
 
   profile = context.dl_profile;
   if (profile != NULL) {
     printf("profile:\n");
-    printf("  %"PRIu32" variables\n", profile->num_vars);
-    printf("  %"PRIu32" atoms\n", profile->num_atoms);
-    printf("  %"PRIu32" equalities\n", profile->num_eqs);
+    printf("  %" PRIu32 " variables\n", profile->num_vars);
+    printf("  %" PRIu32 " atoms\n", profile->num_atoms);
+    printf("  %" PRIu32 " equalities\n", profile->num_eqs);
     printf("  path bound = ");
     q_print(stdout, &profile->path_bound);
     printf("\n");

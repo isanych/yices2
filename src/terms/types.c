@@ -101,8 +101,8 @@ static inline void delete_descriptor(type_macro_t *d) {
  */
 static void init_type_mtbl(type_mtbl_t *table, uint32_t n) {
   static const indexed_table_vtbl_t vtbl = {
-    .elem_size = sizeof(type_mtbl_elem_t),
-    .max_elems = TYPE_MACRO_MAX_SIZE,
+    sizeof(type_mtbl_elem_t),
+    TYPE_MACRO_MAX_SIZE,
   };
 
   indexed_table_init(&table->macros, n, &vtbl);
@@ -210,8 +210,8 @@ static void type_table_init(type_table_t *table, uint32_t n) {
   assert(offsetof(type_desc_t, elem) == 0);
 
   static const indexed_table_vtbl_t vtbl = {
-    .elem_size = sizeof(type_desc_t),
-    .max_elems = YICES_MAX_TYPES,
+    sizeof(type_desc_t),
+    YICES_MAX_TYPES,
   };
   
   indexed_table_init(&table->types, n, &vtbl);
@@ -237,20 +237,22 @@ static void type_table_init(type_table_t *table, uint32_t n) {
  * The other fields are not initialized.
  */
 static type_t allocate_type_id(type_table_t *table,
-			       type_kind_t kind,
-			       uint32_t card,
-			       uint32_t depth,
-			       uint8_t flags) {
+                               type_kind_t kind,
+                               uint32_t card,
+                               uint32_t depth,
+                               uint8_t flags) {
   type_t i = indexed_table_alloc(&table->types);
 
-  *type_desc(table, i) = (type_desc_t) {
-    .kind = kind,
-    .card = card,
-    .depth = depth,
-    .flags = flags,
-    .name = NULL
-  };
-
+  type_desc_t* t = type_desc(table, i);
+#ifdef __cplusplus
+  *t = {};
+#else
+  *t = (type_desc_t){0};
+#endif
+  t->kind = kind;
+  t->card = card;
+  t->depth = depth;
+  t->flags = flags;
   return i;
 }
 
@@ -949,7 +951,7 @@ static type_t build_instance_type(instance_type_hobj_t *p) {
 
 
 /*
- * TABLE MANAGEMENT + EXPORTED TYPE CONSTRUCTORS
+ * TABLE MANAGEMENT + YICES_EXPORTED TYPE CONSTRUCTORS
  *
  * NOTE: The constructors for uninterpreted and scalar types
  * are defined above. They don't use hash consing.
@@ -2355,7 +2357,7 @@ static type_t max_tuple_super_type(type_table_t *table, tuple_type_t *tup) {
   n = tup->nelem;
   s = buffer;
   if (n > 8) {
-    s = safe_malloc(n * sizeof(type_t));
+    s = (type_t*)safe_malloc(n * sizeof(type_t));
   }
 
   for (i=0; i<n; i++) {
@@ -2624,7 +2626,7 @@ type_t instantiate_type_macro(type_table_t *table, int32_t id, uint32_t n, const
   int32_t *key;
   tuple_hmap_rec_t *r;
   type_macro_t *d;
-  bool new;
+  bool new_;
   uint32_t i;
   type_t result;
 
@@ -2652,9 +2654,9 @@ type_t instantiate_type_macro(type_table_t *table, int32_t id, uint32_t n, const
     result = instance_type(table, id, n, actual);
   } else {
     // check the cache
-    r = tuple_hmap_get(&mtbl->cache, n+1, key, &new);
+    r = tuple_hmap_get(&mtbl->cache, n+1, key, &new_);
     result = r->value;
-    if (new) {
+    if (new_) {
       result = type_substitution(table, d->body, n, d->vars, actual);
       assert(tuple_hmap_find(&mtbl->cache, n+1, key) == r); // i.e. r is still valid
       r->value = result;
@@ -2694,15 +2696,15 @@ static void erase_hcons_type(type_table_t *table, type_t i) {
     break;
 
   case TUPLE_TYPE:
-    k = hash_tupletype(type_desc(table, i)->ptr);
+    k = hash_tupletype((tuple_type_t*)type_desc(table, i)->ptr);
     break;
 
   case FUNCTION_TYPE:
-    k = hash_funtype(type_desc(table, i)->ptr);
+    k = hash_funtype((function_type_t*)type_desc(table, i)->ptr);
     break;
 
   case INSTANCE_TYPE:
-    k = hash_instancetype(type_desc(table, i)->ptr);
+    k = hash_instancetype((instance_type_t*)type_desc(table, i)->ptr);
     break;
 
   default:
@@ -2744,7 +2746,7 @@ static void mark_reachable_types(type_table_t *table, type_t ptr, type_t i) {
 
   switch (type_desc(table, i)->kind) {
   case TUPLE_TYPE:
-    tup = type_desc(table, i)->ptr;
+    tup = (tuple_type_t*)type_desc(table, i)->ptr;
     n = tup->nelem;
     for (j=0; j<n; j++) {
       mark_and_explore(table, ptr, tup->elem[j]);
@@ -2752,7 +2754,7 @@ static void mark_reachable_types(type_table_t *table, type_t ptr, type_t i) {
     break;
 
   case FUNCTION_TYPE:
-    fun = type_desc(table, i)->ptr;
+    fun = (function_type_t*)type_desc(table, i)->ptr;
     mark_and_explore(table, ptr, fun->range);
     n = fun->ndom;
     for (j=0; j<n; j++) {
@@ -2761,7 +2763,7 @@ static void mark_reachable_types(type_table_t *table, type_t ptr, type_t i) {
     break;
 
   case INSTANCE_TYPE:
-    inst = type_desc(table, i)->ptr;
+    inst = (instance_type_t*)type_desc(table, i)->ptr;
     n = inst->arity;
     for (j=0; j<n; j++) {
       mark_and_explore(table, ptr, inst->param[j]);
@@ -2798,7 +2800,7 @@ static void mark_live_types(type_table_t *table) {
  *   is the id of a type to preserve.
  */
 static void mark_symbol(void *aux, const stbl_rec_t *r) {
-  type_table_set_gc_mark(aux, r->value);
+  type_table_set_gc_mark((type_table_t*)aux, r->value);
 }
 
 
@@ -2809,7 +2811,7 @@ static void mark_symbol(void *aux, const stbl_rec_t *r) {
  *   r will be finalized then removed from the symbol table.
  */
 static bool dead_type_symbol(void *aux, const stbl_rec_t *r) {
-  return !type_is_marked(aux, r->value);
+  return !type_is_marked((type_table_t*)aux, r->value);
 }
 
 /*
@@ -2819,8 +2821,8 @@ static bool dead_type_symbol(void *aux, const stbl_rec_t *r) {
  * - aux is a pointer to the type table
  */
 static bool keep_in_cache(void *aux, int_hmap2_rec_t *r) {
-  return good_type(aux, r->k0) && good_type(aux, r->k1) &&
-    good_type(aux, r->val);
+  return good_type((type_table_t*)aux, r->k0) && good_type((type_table_t*)aux, r->k1) &&
+    good_type((type_table_t*)aux, r->val);
 }
 
 
@@ -2829,7 +2831,7 @@ static bool keep_in_cache(void *aux, int_hmap2_rec_t *r) {
  * - record (k --> x) is kept if k and x haven't been deleted
  */
 static bool keep_in_max_table(void *aux, const int_hmap_pair_t *r) {
-  return good_type(aux, r->key) && good_type(aux, r->val);
+  return good_type((type_table_t*)aux, r->key) && good_type((type_table_t*)aux, r->val);
 }
 
 
@@ -2845,12 +2847,12 @@ static bool keep_in_max_table(void *aux, const int_hmap_pair_t *r) {
 static bool keep_in_tuple_cache(void *aux, tuple_hmap_rec_t *r) {
   uint32_t i, n;
 
-  if (! good_type(aux, r->value)) return false;
+  if (! good_type((type_table_t*)aux, r->value)) return false;
 
   n = r->arity;
   assert(n > 1);
   for (i=1; i<n; i++) {
-    if (! good_type(aux, r->key[i])) return false;
+    if (! good_type((type_table_t*)aux, r->key[i])) return false;
   }
 
   return true;

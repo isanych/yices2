@@ -401,23 +401,23 @@ static inline literal_t make_ite(bool_vartable_t *table, literal_t c, literal_t 
  * Derived gates
  */
 static inline literal_t make_and2(bool_vartable_t *table, literal_t l1, literal_t l2) {
-  return not(make_or2(table, not(l1), not(l2)));
+  return not_(make_or2(table, not_(l1), not_(l2)));
 }
 
 static inline literal_t make_and3(bool_vartable_t *table, literal_t l1, literal_t l2, literal_t l3) {
-  return not(make_or3(table, not(l1), not(l2), not(l3)));
+  return not_(make_or3(table, not_(l1), not_(l2), not_(l3)));
 }
 
 static inline literal_t make_implies(bool_vartable_t *table, literal_t l1, literal_t l2) {
-  return make_or2(table, not(l1), l2);
+  return make_or2(table, not_(l1), l2);
 }
 
 static inline literal_t make_iff(bool_vartable_t *table, literal_t l1, literal_t l2) {
-  return not(make_xor2(table, l1, l2));
+  return not_(make_xor2(table, l1, l2));
 }
 
 static inline literal_t make_cmp(bool_vartable_t *table, literal_t l1, literal_t l2, literal_t l3) {
-  return make_maj3(table, l1, not(l2), l3);
+  return make_maj3(table, l1, not_(l2), l3);
 }
 
 

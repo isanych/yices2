@@ -94,7 +94,7 @@ static void test_parse_bvbin(uint32_t n, char *s) {
   code = bvconst64_set_from_string(&test, n, s);
   assert(code == -1 && test == check); // test should not change
 
-  printf("PASS: %s with n = %"PRIu32"\n", __func__, n);
+  printf("PASS: %s with n = %" PRIu32 "\n", __func__, n);
   fflush(stdout);
 }
 
@@ -203,7 +203,7 @@ static void test_parse_bvhex(uint32_t n, char *s) {
   code = bvconst64_set_from_hexa_string(&test, n, s);
   assert(code == -1 && test == check); // test should not change
 
-  printf("PASS: %s with n = %"PRIu32"\n", __func__, n);
+  printf("PASS: %s with n = %" PRIu32 "\n", __func__, n);
   fflush(stdout);
 }
 

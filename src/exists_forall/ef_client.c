@@ -20,15 +20,10 @@
  * Client utilities for EF-solving
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <assert.h>
 #include <stdint.h>
 
+#include "yices_config.h"
 #include "api/yices_globals.h"
 #include "context/context.h"
 #include "exists_forall/ef_client.h"
@@ -169,12 +164,12 @@ void ef_solve(ef_client_t *efc, uint32_t n, const term_t *assertions, param_t *p
       efc->efsolver = (ef_solver_t *) safe_malloc(sizeof(ef_solver_t));
       init_ef_solver(efc->efsolver, efc->efprob, logic_code, arch);
       if (tracer != NULL) {
-	ef_solver_set_trace(efc->efsolver, tracer);
+        ef_solver_set_trace(efc->efsolver, tracer);
       }
       ef_solver_check(efc->efsolver, parameters, efc->ef_parameters.gen_mode,
-			efc->ef_parameters.max_samples, efc->ef_parameters.max_iters,
-			efc->ef_parameters.max_numlearnt_per_round,
-			efc->ef_parameters.ematching);
+        efc->ef_parameters.max_samples, efc->ef_parameters.max_iters,
+        efc->ef_parameters.max_numlearnt_per_round,
+        efc->ef_parameters.ematching);
       efc->efdone = true;
     }
   }

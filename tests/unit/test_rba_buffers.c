@@ -25,7 +25,7 @@
 #include "terms/pprod_table.h"
 #include "terms/rationals.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -53,13 +53,13 @@ static bool is_ordered(rba_buffer_t *b, uint32_t x) {
 
   // the expected order is s < r < t
   if (i != 0 && !pprod_precedes(s, r)) {
-    printf("tree not ordered at node %"PRIu32" (for left child %"PRIu32")\n", x, i);
+    printf("tree not ordered at node %" PRIu32 " (for left child %" PRIu32 ")\n", x, i);
     fflush(stdout);
     return false;
   }
 
   if (j != 0 && !pprod_precedes(r, t)) {
-    printf("tree not ordered at node %"PRIu32" (for right child = %"PRIu32")\n", x, j);
+    printf("tree not ordered at node %" PRIu32 " (for right child = %" PRIu32 ")\n", x, j);
     fflush(stdout);
     return false;
   }
@@ -102,7 +102,7 @@ static bool check_colors(rba_buffer_t *b, uint32_t x) {
   i = b->child[x][0];
   j = b->child[x][1];
   if (is_red(b, x) && (is_red(b, i) || is_red(b, j))) {
-    printf("bad coloring at red node %"PRIu32": its two children should be black\n", x);
+    printf("bad coloring at red node %" PRIu32 ": its two children should be black\n", x);
     fflush(stdout);
 
     return false;
@@ -117,7 +117,7 @@ static bool tree_is_well_colored(rba_buffer_t *b) {
 
   x = b->root;
   if (is_red(b, x)) {
-    printf("bad coloring: the root %"PRIu32" is read\n", x);
+    printf("bad coloring: the root %" PRIu32 " is read\n", x);
     fflush(stdout);
     return false;
   }
@@ -153,9 +153,9 @@ static bool is_balanced(rba_buffer_t *b, uint32_t x, uint32_t *h) {
 
       return true;
     } else {
-      printf("unbalanced tree at node %"PRIu32"\n", x);
-      printf("   left child = %"PRIu32",  black height = %"PRIu32"\n", i, hi);
-      printf("  right child = %"PRIu32",  black height = %"PRIu32"\n", j, hj);
+      printf("unbalanced tree at node %" PRIu32 "\n", x);
+      printf("   left child = %" PRIu32 ",  black height = %" PRIu32 "\n", i, hi);
+      printf("  right child = %" PRIu32 ",  black height = %" PRIu32 "\n", j, hj);
       fflush(stdout);
     }
   }
@@ -210,14 +210,14 @@ static bool check_sizes(rba_buffer_t *b) {
 
   s = tree_size(b);
   if (s != b->nterms) {
-    printf("invalid tree: size = %"PRIu32", nterms = %"PRIu32"\n", s, b->nterms);
+    printf("invalid tree: size = %" PRIu32 ", nterms = %" PRIu32 "\n", s, b->nterms);
     fflush(stdout);
     return false;
   }
 
   s = free_list_size(b);
   if (s != b->num_nodes - b->nterms - 1) {
-    printf("invalid free list: size = %"PRIu32", should be %"PRIu32"\n",
+    printf("invalid free list: size = %" PRIu32 ", should be %" PRIu32 "\n",
 	   s, b->num_nodes - b->nterms - 1);
     fflush(stdout);
     return false;
@@ -271,7 +271,7 @@ static void test_add(rba_buffer_t *b, pprod_t *p) {
   if (p == empty_pp) {
     printf("test add: empty product\n");
   } else {
-    printf("test add: x%"PRId32"\n", var_of_pp(p));
+    printf("test add: x%" PRId32 "\n", var_of_pp(p));
   }
 
   i = rba_find_node(b, p);
@@ -318,7 +318,7 @@ static void test_remove(rba_buffer_t *b, pprod_t *p) {
   if (p == empty_pp) {
     printf("test remove: empty product\n");
   } else {
-    printf("test remove: x%"PRId32"\n", var_of_pp(p));
+    printf("test remove: x%" PRId32 "\n", var_of_pp(p));
   }
 
   i = rba_find_node(b, p);
@@ -386,13 +386,13 @@ static void run_tests(rba_buffer_t *b) {
   for (i=0; i<n; i++) {
     test_add(b, test[i]);
   }
-  printf("\nAfter %"PRIu32" additions\n", n);
-  printf("   num_nodes = %"PRIu32"\n", b->num_nodes);
-  printf("   num_terms = %"PRIu32"\n", b->nterms);
-  printf("   root node = %"PRIu32"\n", b->root);
+  printf("\nAfter %" PRIu32 " additions\n", n);
+  printf("   num_nodes = %" PRIu32 "\n", b->num_nodes);
+  printf("   num_terms = %" PRIu32 "\n", b->nterms);
+  printf("   root node = %" PRIu32 "\n", b->root);
   if (is_balanced(b, b->root, &h)) {
-    printf("   b-height    = %"PRIu32"\n", h);
-    printf("   full height = %"PRIu32"\n", tree_height(b));
+    printf("   b-height    = %" PRIu32 "\n", h);
+    printf("   full height = %" PRIu32 "\n", tree_height(b));
   } else {
     printf("   not balanced\n");
   }
@@ -403,13 +403,13 @@ static void run_tests(rba_buffer_t *b) {
   for (i=0; i<n; i++) {
     test_remove(b, test[i]);
   }
-  printf("\nAfter %"PRIu32" removals\n", n);
-  printf("   num_nodes = %"PRIu32"\n", b->num_nodes);
-  printf("   num_terms = %"PRIu32"\n", b->nterms);
-  printf("   root node = %"PRIu32"\n", b->root);
+  printf("\nAfter %" PRIu32 " removals\n", n);
+  printf("   num_nodes = %" PRIu32 "\n", b->num_nodes);
+  printf("   num_terms = %" PRIu32 "\n", b->nterms);
+  printf("   root node = %" PRIu32 "\n", b->root);
   if (is_balanced(b, b->root, &h)) {
-    printf("   b-height    = %"PRIu32"\n", h);
-    printf("   full height = %"PRIu32"\n", tree_height(b));
+    printf("   b-height    = %" PRIu32 "\n", h);
+    printf("   full height = %" PRIu32 "\n", tree_height(b));
   } else {
     printf("   not balanced\n");
   }
@@ -418,13 +418,13 @@ static void run_tests(rba_buffer_t *b) {
   for (i=0; i<n; i++) {
     test_add(b, test[i]);
   }
-  printf("\nAfter %"PRIu32" additions\n", n);
-  printf("   num_nodes = %"PRIu32"\n", b->num_nodes);
-  printf("   num_terms = %"PRIu32"\n", b->nterms);
-  printf("   root node = %"PRIu32"\n", b->root);
+  printf("\nAfter %" PRIu32 " additions\n", n);
+  printf("   num_nodes = %" PRIu32 "\n", b->num_nodes);
+  printf("   num_terms = %" PRIu32 "\n", b->nterms);
+  printf("   root node = %" PRIu32 "\n", b->root);
   if (is_balanced(b, b->root, &h)) {
-    printf("   b-height    = %"PRIu32"\n", h);
-    printf("   full height = %"PRIu32"\n", tree_height(b));
+    printf("   b-height    = %" PRIu32 "\n", h);
+    printf("   full height = %" PRIu32 "\n", tree_height(b));
   } else {
     printf("   not balanced\n");
   }
@@ -440,13 +440,13 @@ static void run_tests(rba_buffer_t *b) {
     test_add(b, test[i]);
   }
 
-  printf("\nAfter %"PRIu32" additions\n", n);
-  printf("   num_nodes = %"PRIu32"\n", b->num_nodes);
-  printf("   num_terms = %"PRIu32"\n", b->nterms);
-  printf("   root node = %"PRIu32"\n", b->root);
+  printf("\nAfter %" PRIu32 " additions\n", n);
+  printf("   num_nodes = %" PRIu32 "\n", b->num_nodes);
+  printf("   num_terms = %" PRIu32 "\n", b->nterms);
+  printf("   root node = %" PRIu32 "\n", b->root);
   if (is_balanced(b, b->root, &h)) {
-    printf("   b-height    = %"PRIu32"\n", h);
-    printf("   full height = %"PRIu32"\n", tree_height(b));
+    printf("   b-height    = %" PRIu32 "\n", h);
+    printf("   full height = %" PRIu32 "\n", tree_height(b));
   } else {
     printf("   not balanced\n");
   }
@@ -458,13 +458,13 @@ static void run_tests(rba_buffer_t *b) {
     test_remove(b, test[i]);
   }
 
-  printf("\nAfter %"PRIu32" removals\n", n);
-  printf("   num_nodes = %"PRIu32"\n", b->num_nodes);
-  printf("   num_terms = %"PRIu32"\n", b->nterms);
-  printf("   root node = %"PRIu32"\n", b->root);
+  printf("\nAfter %" PRIu32 " removals\n", n);
+  printf("   num_nodes = %" PRIu32 "\n", b->num_nodes);
+  printf("   num_terms = %" PRIu32 "\n", b->nterms);
+  printf("   root node = %" PRIu32 "\n", b->root);
   if (is_balanced(b, b->root, &h)) {
-    printf("   b-height    = %"PRIu32"\n", h);
-    printf("   full height = %"PRIu32"\n", tree_height(b));
+    printf("   b-height    = %" PRIu32 "\n", h);
+    printf("   full height = %" PRIu32 "\n", tree_height(b));
   } else {
     printf("   not balanced\n");
   }

@@ -200,7 +200,7 @@ static void test2(void) {
   }
 
   for (i=0; i<40; i++) {
-    printf("---> creating (distinct a_%"PRIu32" ... a_%"PRIu32")\n", i, i+5);
+    printf("---> creating (distinct a_%" PRIu32 " ... a_%" PRIu32 ")\n", i, i+5);
     l = egraph_make_distinct(&egraph, 5, a+i);
     printf("---> result = ");
     print_literal(stdout, l);

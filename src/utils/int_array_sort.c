@@ -23,26 +23,23 @@
 #include "utils/int_array_sort.h"
 #include "utils/prng.h"
 
-static void qsort_int_array(uint32_t *prng, int32_t *a, uint32_t n);
+static void qsort_int_array(uint32_t *prng, int32_t *a, const uint32_t n);
 
 // insertion sort
-static void isort_int_array(int32_t *a, uint32_t n) {
-  uint32_t i, j;
-  int32_t x, y;
-
-  for (i=1; i<n; i++) {
-    x = a[i];
-    j = 0;
-    while (a[j] < x) j ++;
+static void isort_int_array(int32_t* a, const uint32_t n) {
+  for (uint32_t i = 1; i < n; i++) {
+    int32_t x = a[i];
+    uint32_t j = 0;
+    while (a[j] < x) j++;
     while (j < i) {
-      y = a[j]; a[j] = x; x = y;
-      j ++;
+      const int32_t y = a[j]; a[j] = x; x = y;
+      j++;
     }
     a[j] = x;
   }
 }
 
-static inline void sort_array(uint32_t *prng, int32_t *a, uint32_t n) {
+static inline void sort_array(uint32_t *prng, int32_t *a, const uint32_t n) {
   if (n < 10) {
     isort_int_array(a, n);
   } else {
@@ -51,26 +48,23 @@ static inline void sort_array(uint32_t *prng, int32_t *a, uint32_t n) {
 }
 
 // quick sort: requires n > 1
-static void qsort_int_array(uint32_t *prng, int32_t *a, uint32_t n) {
-  uint32_t i, j;
-  int32_t x, y;
-
+static void qsort_int_array(uint32_t* prng, int32_t* a, const uint32_t n) {
   // x = random pivot
-  i = random_uint(prng, n);
-  x = a[i];
+  uint32_t i = random_uint(prng, n);
+  const int32_t x = a[i];
 
   // swap x and a[0]
   a[i] = a[0];
   a[0] = x;
 
   i = 0;
-  j = n;
+  uint32_t j = n;
 
   do { j--; } while (a[j] > x);
   do { i++; } while (i <= j && a[i] < x);
 
   while (i < j) {
-    y = a[i]; a[i] = a[j]; a[j] = y;
+    const int32_t y = a[i]; a[i] = a[j]; a[j] = y;
 
     do { j--; } while (a[j] > x);
     do { i++; } while (a[i] < x);
@@ -86,13 +80,10 @@ static void qsort_int_array(uint32_t *prng, int32_t *a, uint32_t n) {
   sort_array(prng, a + j, n - j);
 }
 
-
 /*
  * External call
  */
-void int_array_sort(int32_t *a, uint32_t n) {
-  uint32_t prng;
-
-  prng = PRNG_DEFAULT_SEED;
+void int_array_sort(int32_t *a, const uint32_t n) {
+  uint32_t prng = PRNG_DEFAULT_SEED;
   sort_array(&prng, a, n);
 }

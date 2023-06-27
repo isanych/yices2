@@ -24,12 +24,9 @@
 
 #include "solvers/bv/bit_blaster.h"
 #include "utils/int_array_sort.h"
+#include "yices_config.h"
 
-
-
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 #include "solvers/cdcl/smt_core_printer.h"
@@ -145,7 +142,7 @@ static inline int8_t opposite_code(literal_t l) {
 /*
  * Add literal l to clause i
  * - return true if that makes the clause true
- *   (i.e., if clause i contains not(l))
+ *   (i.e., if clause i contains not_(l))
  * - return false otherwise
  */
 static inline bool cbuffer_add_lit(cbuffer_t *buffer, uint32_t i, literal_t l) {
@@ -210,7 +207,7 @@ static bool cbuffer_subsumes(cbuffer_t *buffer, uint32_t i, uint32_t k) {
 /*
  * Resolution: check whether clauses i and k can be resolved.
  * - if they can, return the index j such that data[i][j] = - data[k][j]
- *   Clause i is of the form (A or l) and clause k is (B or not(l)),
+ *   Clause i is of the form (A or l) and clause k is (B or not_(l)),
  *   with l = pos_lit(var[j]) or neg_lit(var[j]).
  * - if they can't be resolved, return -1
  */
@@ -302,7 +299,7 @@ static void remove_clauses_subsumed(cbuffer_t *buffer, uint32_t i) {
 /*
  * Attempt resolution/subsumption
  * - search for two live clauses i and k such that
- *   clause[i] = (A or l) and clause[k] = (A or B or not(l))
+ *   clause[i] = (A or l) and clause[k] = (A or B or not_(l))
  * - replace clause[k] by the resolvent (A or B)
  * - remove all clauses subsumed by (A or B)
  * Return true if such a pair was found
@@ -319,7 +316,7 @@ static bool resolution_subsumption(cbuffer_t *buffer) {
           // var_of(clause[i]) is a subset of var_of(clause[k])
           j = cbuffer_resolver_index(buffer, i, k);
           if (j >= 0) {
-            // replace clause[k] = (A or B or not(l)) by (A or B)
+            // replace clause[k] = (A or B or not_(l)) by (A or B)
             cbuffer_remove_lit(buffer, k, j);
             remove_clauses_subsumed(buffer, k);
             return true;
@@ -500,14 +497,14 @@ static inline void bit_blaster_add_empty_clause(bit_blaster_t *s) {
 }
 
 static void bit_blaster_add_unit_clause(bit_blaster_t *s, literal_t l) {
-#if TRACE
+#if YICES_TRACE
   trace_unit_clause(s, l);
 #endif
   add_unit_clause(s->solver, l);
 }
 
 static void bit_blaster_add_binary_clause(bit_blaster_t *s, literal_t l1, literal_t l2) {
-#if TRACE
+#if YICES_TRACE
   trace_binary_clause(l1, l2);
 #endif
   add_binary_clause(s->solver, l1, l2);
@@ -515,7 +512,7 @@ static void bit_blaster_add_binary_clause(bit_blaster_t *s, literal_t l1, litera
 
 
 static void bit_blaster_add_ternary_clause(bit_blaster_t *s, literal_t l1, literal_t l2, literal_t l3) {
-#if TRACE
+#if YICES_TRACE
   trace_ternary_clause(l1, l2, l3);
 #endif
   add_ternary_clause(s->solver, l1, l2, l3);
@@ -524,7 +521,7 @@ static void bit_blaster_add_ternary_clause(bit_blaster_t *s, literal_t l1, liter
 static void bit_blaster_add_quad_clause(bit_blaster_t *s, literal_t l1, literal_t l2, literal_t l3, literal_t l4) {
   literal_t aux[4];
 
-#if TRACE
+#if YICES_TRACE
   trace_quad_clause(l1, l2, l3, l4);
 #endif
 
@@ -538,7 +535,7 @@ static void bit_blaster_add_quad_clause(bit_blaster_t *s, literal_t l1, literal_
 
 
 static void bit_blaster_add_clause(bit_blaster_t *s, uint32_t n, literal_t *a) {
-#if TRACE
+#if YICES_TRACE
   trace_clause(n, a);
 #endif
   add_clause(s->solver, n, a);
@@ -641,7 +638,7 @@ static void commit_buffer(bit_blaster_t *s, cbuffer_t *buffer) {
   literal_t aux[CBUFFER_NVARS];
   uint32_t i, n, k;
 
-#if TRACE
+#if YICES_TRACE
   trace_cbuffer(buffer);
 #endif
 
@@ -725,7 +722,7 @@ static void simplify_or(bit_blaster_t *s, literal_t *a, uint32_t n, ivector_t *v
     for (i=1; i<n; i++) {
       aux = v->data[i];
       if (aux != l) {
-        if (aux == not(l)) goto or_is_true;
+        if (aux == not_(l)) goto or_is_true;
         v->data[j] = aux;
         l = aux;
         j ++;
@@ -743,8 +740,8 @@ static void simplify_or(bit_blaster_t *s, literal_t *a, uint32_t n, ivector_t *v
 }
 
 /*
- * Find a literal in v with the same boolean variable as x (i.e., equal to x or not(x))
- * - return the index k such that v->data[k] = x or v->data[k] = not(x)
+ * Find a literal in v with the same boolean variable as x (i.e., equal to x or not_(x))
+ * - return the index k such that v->data[k] = x or v->data[k] = not_(x)
  * - return -1 if x does not occur in v
  */
 static int32_t find_in_vector(ivector_t *v, literal_t x) {
@@ -807,7 +804,7 @@ static void assert_ordef_clauses(bit_blaster_t *s, literal_t x, ivector_t *v) {
   switch (base_value(s, x)) {
   case VAL_FALSE:
     for (i=0; i<n; i++) {
-      bit_blaster_add_unit_clause(s, not(a[i]));
+      bit_blaster_add_unit_clause(s, not_(a[i]));
     }
     break;
 
@@ -817,9 +814,9 @@ static void assert_ordef_clauses(bit_blaster_t *s, literal_t x, ivector_t *v) {
     if (k < 0) {
       // No simplifications
       for (i=0; i<n; i++) {
-        bit_blaster_add_binary_clause(s, x, not(a[i]));
+        bit_blaster_add_binary_clause(s, x, not_(a[i]));
       }
-      ivector_push(v, not(x));
+      ivector_push(v, not_(x));
       bit_blaster_add_clause(s, n+1, v->data);
 
     } else {
@@ -833,8 +830,8 @@ static void assert_ordef_clauses(bit_blaster_t *s, literal_t x, ivector_t *v) {
          */
         for (i=0; i<n; i++) {
           if (i != k) {
-            assert(a[i] != x && a[i] != not(x));
-            bit_blaster_add_binary_clause(s, x, not(a[i]));
+            assert(a[i] != x && a[i] != not_(x));
+            bit_blaster_add_binary_clause(s, x, not_(a[i]));
           }
         }
       } else {
@@ -842,12 +839,12 @@ static void assert_ordef_clauses(bit_blaster_t *s, literal_t x, ivector_t *v) {
          * Constraint x == (or a[0] ... ~x ... a[n-1])
          * Clauses: { x } and { a[0], ..., a[n-1] }
          */
-        assert(aux == not(x));
+        assert(aux == not_(x));
         bit_blaster_add_unit_clause(s, x);
 
         // remove ~x from v (may be overkill?)
         for (i=k+1; i<n; i++) {
-          assert(a[i] != x && a[i] != not(x));
+          assert(a[i] != x && a[i] != not_(x));
           a[i-1] = a[i];
         }
         bit_blaster_add_clause(s, n-1, a);
@@ -964,14 +961,14 @@ static uint32_t simplify_xor(bit_blaster_t *s, uint32_t n, literal_t *a, literal
  */
 static void bit_blaster_assert_xor2(bit_blaster_t *s, literal_t a, literal_t b) {
   bit_blaster_add_binary_clause(s, a, b);
-  bit_blaster_add_binary_clause(s, not(a), not(b));
+  bit_blaster_add_binary_clause(s, not_(a), not_(b));
 }
 
 static void bit_blaster_assert_xor3(bit_blaster_t *s, literal_t a, literal_t b, literal_t c) {
   bit_blaster_add_ternary_clause(s, a, b, c);
-  bit_blaster_add_ternary_clause(s, a, not(b), not(c));
-  bit_blaster_add_ternary_clause(s, not(a), b, not(c));
-  bit_blaster_add_ternary_clause(s, not(a), not(b), c);
+  bit_blaster_add_ternary_clause(s, a, not_(b), not_(c));
+  bit_blaster_add_ternary_clause(s, not_(a), b, not_(c));
+  bit_blaster_add_ternary_clause(s, not_(a), not_(b), c);
 }
 
 
@@ -981,26 +978,26 @@ static void bit_blaster_assert_xor3(bit_blaster_t *s, literal_t a, literal_t b, 
 // clauses for (xor a b c d) = 1
 static void bit_blaster_assert_xor4(bit_blaster_t *s, literal_t a, literal_t b, literal_t c, literal_t d) {
   bit_blaster_add_quad_clause(s, a, b, c, d);
-  bit_blaster_add_quad_clause(s, a, b, not(c), not(d));
-  bit_blaster_add_quad_clause(s, a, not(b), c, not(d));
-  bit_blaster_add_quad_clause(s, a, not(b), not(c), d);
-  bit_blaster_add_quad_clause(s, not(a), b, c, not(d));
-  bit_blaster_add_quad_clause(s, not(a), b, not(c), d);
-  bit_blaster_add_quad_clause(s, not(a), not(b), c, d);
-  bit_blaster_add_quad_clause(s, not(a), not(b), not(c), not(d));
+  bit_blaster_add_quad_clause(s, a, b, not_(c), not_(d));
+  bit_blaster_add_quad_clause(s, a, not_(b), c, not_(d));
+  bit_blaster_add_quad_clause(s, a, not_(b), not_(c), d);
+  bit_blaster_add_quad_clause(s, not_(a), b, c, not_(d));
+  bit_blaster_add_quad_clause(s, not_(a), b, not_(c), d);
+  bit_blaster_add_quad_clause(s, not_(a), not_(b), c, d);
+  bit_blaster_add_quad_clause(s, not_(a), not_(b), not_(c), not_(d));
 }
 
 
 
 /*
  * Create a fresh literal l and assert l = (xor a b))
- * (i.e., (xor a b not(l)) = 1)
+ * (i.e., (xor a b not_(l)) = 1)
  */
 static inline literal_t make_xor2(bit_blaster_t *s, literal_t a, literal_t b) {
   literal_t l;
 
   l = bit_blaster_fresh_literal(s);
-  bit_blaster_assert_xor3(s, a, b, not(l));
+  bit_blaster_assert_xor3(s, a, b, not_(l));
   return l;
 }
 
@@ -1012,7 +1009,7 @@ static inline literal_t make_xor3(bit_blaster_t *s, literal_t a, literal_t b, li
   literal_t l;
 
   l = bit_blaster_fresh_literal(s);
-  bit_blaster_assert_xor4(s, a, b, c, not(l));
+  bit_blaster_assert_xor4(s, a, b, c, not_(l));
   return l;
 }
 
@@ -1092,14 +1089,14 @@ void bit_blaster_eq(bit_blaster_t *s, literal_t a, literal_t b) {
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_binary_clause(s, buffer, a, not(b));
-  push_binary_clause(s, buffer, not(a), b);
+  push_binary_clause(s, buffer, a, not_(b));
+  push_binary_clause(s, buffer, not_(a), b);
 
   if (cbuffer_nvars(buffer) != 2) {
     cbuffer_simplify(buffer);
   }
 
-  //  printf("BB: assert eq %"PRId32" %"PRId32"\n", a, b);
+  //  printf("BB: assert eq %" PRId32 " %" PRId32 "\n", a, b);
 
   commit_buffer(s, buffer);
 }
@@ -1114,10 +1111,10 @@ void bit_blaster_xor2_gate(bit_blaster_t *s, literal_t a, literal_t b, literal_t
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_ternary_clause(s, buffer, not(a), not(b), not(x));
-  push_ternary_clause(s, buffer, not(a), b, x);
-  push_ternary_clause(s, buffer, a, not(b), x);
-  push_ternary_clause(s, buffer, a, b, not(x));
+  push_ternary_clause(s, buffer, not_(a), not_(b), not_(x));
+  push_ternary_clause(s, buffer, not_(a), b, x);
+  push_ternary_clause(s, buffer, a, not_(b), x);
+  push_ternary_clause(s, buffer, a, b, not_(x));
 
   if (cbuffer_nvars(buffer) != 3) {
     cbuffer_simplify(buffer);
@@ -1135,14 +1132,14 @@ void bit_blaster_xor3_gate(bit_blaster_t *s, literal_t a, literal_t b, literal_t
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_quad_clause(s, buffer, not(a), not(b), not(c), x);
-  push_quad_clause(s, buffer, not(a), not(b), c, not(x));
-  push_quad_clause(s, buffer, not(a), b, not(c), not(x));
-  push_quad_clause(s, buffer, a, not(b), not(c), not(x));
-  push_quad_clause(s, buffer, a, b, c, not(x));
-  push_quad_clause(s, buffer, a, b, not(c), x);
-  push_quad_clause(s, buffer, a, not(b), c, x);
-  push_quad_clause(s, buffer, not(a), b, c, x);
+  push_quad_clause(s, buffer, not_(a), not_(b), not_(c), x);
+  push_quad_clause(s, buffer, not_(a), not_(b), c, not_(x));
+  push_quad_clause(s, buffer, not_(a), b, not_(c), not_(x));
+  push_quad_clause(s, buffer, a, not_(b), not_(c), not_(x));
+  push_quad_clause(s, buffer, a, b, c, not_(x));
+  push_quad_clause(s, buffer, a, b, not_(c), x);
+  push_quad_clause(s, buffer, a, not_(b), c, x);
+  push_quad_clause(s, buffer, not_(a), b, c, x);
 
   if (cbuffer_nvars(buffer) != 4) {
     cbuffer_simplify(buffer);
@@ -1160,9 +1157,9 @@ void bit_blaster_or2_gate(bit_blaster_t *s, literal_t a, literal_t b, literal_t 
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_binary_clause(s, buffer, not(a), x);
-  push_binary_clause(s, buffer, not(b), x);
-  push_ternary_clause(s, buffer, a, b, not(x));
+  push_binary_clause(s, buffer, not_(a), x);
+  push_binary_clause(s, buffer, not_(b), x);
+  push_ternary_clause(s, buffer, a, b, not_(x));
 
   if (cbuffer_nvars(buffer) != 3) {
     cbuffer_simplify(buffer);
@@ -1180,10 +1177,10 @@ void bit_blaster_or3_gate(bit_blaster_t *s, literal_t a, literal_t b, literal_t 
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_binary_clause(s, buffer, not(a), x);
-  push_binary_clause(s, buffer, not(b), x);
-  push_binary_clause(s, buffer, not(c), x);
-  push_quad_clause(s, buffer, a, b, c, not(x));
+  push_binary_clause(s, buffer, not_(a), x);
+  push_binary_clause(s, buffer, not_(b), x);
+  push_binary_clause(s, buffer, not_(c), x);
+  push_quad_clause(s, buffer, a, b, c, not_(x));
 
   if (cbuffer_nvars(buffer) != 4) {
     cbuffer_simplify(buffer);
@@ -1202,15 +1199,15 @@ void bit_blaster_mux(bit_blaster_t *s, literal_t c, literal_t a, literal_t b, li
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_ternary_clause(s, buffer, c, b, not(x));
-  push_ternary_clause(s, buffer, c, not(b), x);
-  push_ternary_clause(s, buffer, not(c), a, not(x));
-  push_ternary_clause(s, buffer, not(c), not(a), x);
+  push_ternary_clause(s, buffer, c, b, not_(x));
+  push_ternary_clause(s, buffer, c, not_(b), x);
+  push_ternary_clause(s, buffer, not_(c), a, not_(x));
+  push_ternary_clause(s, buffer, not_(c), not_(a), x);
 
 #if 1
   // optional: two more clauses (improve BCP in SAT solver)
-  push_ternary_clause(s, buffer, a, b, not(x));
-  push_ternary_clause(s, buffer, not(a), not(b), x);
+  push_ternary_clause(s, buffer, a, b, not_(x));
+  push_ternary_clause(s, buffer, not_(a), not_(b), x);
 #endif
 
   if (cbuffer_nvars(buffer) != 4) {
@@ -1231,12 +1228,12 @@ void bit_blaster_maj3(bit_blaster_t *s, literal_t a, literal_t b, literal_t c, l
   buffer = &s->buffer;
   assert(buffer->nclauses == 0);
 
-  push_ternary_clause(s, buffer, a, b, not(x));
-  push_ternary_clause(s, buffer, not(a), not(b), x);
-  push_ternary_clause(s, buffer, a, c, not(x));
-  push_ternary_clause(s, buffer, not(a), not(c), x);
-  push_ternary_clause(s, buffer, b, c, not(x));
-  push_ternary_clause(s, buffer, not(b), not(c), x);
+  push_ternary_clause(s, buffer, a, b, not_(x));
+  push_ternary_clause(s, buffer, not_(a), not_(b), x);
+  push_ternary_clause(s, buffer, a, c, not_(x));
+  push_ternary_clause(s, buffer, not_(a), not_(c), x);
+  push_ternary_clause(s, buffer, b, c, not_(x));
+  push_ternary_clause(s, buffer, not_(b), not_(c), x);
 
   if (cbuffer_nvars(buffer) != 4) {
     cbuffer_simplify(buffer);
@@ -1250,7 +1247,7 @@ void bit_blaster_maj3(bit_blaster_t *s, literal_t a, literal_t b, literal_t c, l
  */
 void bit_blaster_cmp(bit_blaster_t *s, literal_t a, literal_t b, literal_t c, literal_t x) {
   // use equivalence (cmp a b c) = (majority a (not b) c)
-  bit_blaster_maj3(s, a, not(b), c, x);
+  bit_blaster_maj3(s, a, not_(b), c, x);
 }
 
 
@@ -1268,15 +1265,15 @@ void bit_blaster_or_gate(bit_blaster_t *s, uint32_t n, literal_t *a, literal_t x
   if (n == 0) {
     // x = false
     if (base_value(s, x) != VAL_FALSE) {
-#if TRACE
-      trace_unit_clause(s, not(x));
+#if YICES_TRACE
+      trace_unit_clause(s, not_(x));
 #endif
-      bit_blaster_add_unit_clause(s, not(x));
+      bit_blaster_add_unit_clause(s, not_(x));
     }
   } else if (n == 1 && v->data[0] == true_literal) {
     // x = true
     if (base_value(s, x) != VAL_TRUE) {
-#if TRACE
+#if YICES_TRACE
       trace_unit_clause(s, x);
 #endif
       bit_blaster_add_unit_clause(s, x);
@@ -1307,7 +1304,7 @@ void bit_blaster_xor_gate(bit_blaster_t *s, uint32_t n, literal_t *a, literal_t 
       // The assertion (not empty-xor) = 0 is unsat
       // since empty-xor = 0 (i.e., false_literal)
       bit_blaster_add_empty_clause(s);
-#if TRACE
+#if YICES_TRACE
       printf("Unsat\n");
     } else {
       printf("No clauses\n");
@@ -1321,11 +1318,11 @@ void bit_blaster_xor_gate(bit_blaster_t *s, uint32_t n, literal_t *a, literal_t 
      * If sgn = 0, we rewrite (xor v[0] ... v[n-1]) = 0
      * to (xor ~v[0] v[1] ... v[n-1]) = 1
      */
-#if TRACE
+#if YICES_TRACE
     printf("Clauses:\n");
 #endif
     if (! sgn) {
-      v->data[0] = not(v->data[0]);
+      v->data[0] = not_(v->data[0]);
     }
     bit_blaster_assert_xor(s, v);
   }
@@ -1348,7 +1345,7 @@ void bit_blaster_xor_gate(bit_blaster_t *s, uint32_t n, literal_t *a, literal_t 
  */
 void bit_blaster_half_adder(bit_blaster_t *s, literal_t a, literal_t b, literal_t x, literal_t y) {
   bit_blaster_xor2_gate(s, a, b, x);               // x = a + b
-  bit_blaster_or2_gate(s, not(a), not(b), not(y)); // y = a and b
+  bit_blaster_or2_gate(s, not_(a), not_(b), not_(y)); // y = a and b
 }
 
 /*
@@ -1421,10 +1418,10 @@ literal_t bit_blaster_eval_xor2(bit_blaster_t *s, literal_t a, literal_t b) {
   b = eval_literal(s, b);
 
   if (a == b)             return false_literal;
-  if (a == not(b))        return true_literal;
-  if (a == true_literal)  return not(b);
+  if (a == not_(b))        return true_literal;
+  if (a == true_literal)  return not_(b);
   if (a == false_literal) return b;
-  if (b == true_literal)  return not(a);
+  if (b == true_literal)  return not_(a);
   if (b == false_literal) return a;
 
   return null_literal;
@@ -1441,9 +1438,9 @@ literal_t bit_blaster_eval_xor3(bit_blaster_t *s, literal_t a, literal_t b, lite
   if (a == b) return c;
   if (a == c) return b;
   if (b == c) return a;
-  if (a == not(b)) return not(c);
-  if (a == not(c)) return not(b);
-  if (b == not(c)) return not(a);
+  if (a == not_(b)) return not_(c);
+  if (a == not_(c)) return not_(b);
+  if (b == not_(c)) return not_(a);
 
   /*
    * No other simplifications are possible here
@@ -1461,7 +1458,7 @@ literal_t bit_blaster_eval_or2(bit_blaster_t *s, literal_t a, literal_t b) {
   b = eval_literal(s, b);
 
   if (a == b)             return a;
-  if (a == not(b))        return true_literal;
+  if (a == not_(b))        return true_literal;
   if (a == true_literal)  return true_literal;
   if (a == false_literal) return b;
   if (b == true_literal)  return true_literal;
@@ -1476,9 +1473,9 @@ literal_t bit_blaster_eval_or2(bit_blaster_t *s, literal_t a, literal_t b) {
 static literal_t bit_blaster_eval_and2(bit_blaster_t *s, literal_t a, literal_t b) {
   literal_t l;
 
-  l = bit_blaster_eval_or2(s, not(a), not(b));
+  l = bit_blaster_eval_or2(s, not_(a), not_(b));
   if (l != null_literal) {
-    l = not(l);
+    l = not_(l);
   }
   return l;
 }
@@ -1495,9 +1492,9 @@ literal_t bit_blaster_eval_or3(bit_blaster_t *s, literal_t a, literal_t b, liter
   if (b == true_literal) return true_literal;
   if (c == true_literal) return true_literal;
   if (a == b && b == c)  return a;
-  if (a == not(b))       return true_literal;
-  if (b == not(c))       return true_literal;
-  if (c == not(a))       return true_literal;
+  if (a == not_(b))       return true_literal;
+  if (b == not_(c))       return true_literal;
+  if (c == not_(a))       return true_literal;
 
   return null_literal;
 }
@@ -1523,7 +1520,7 @@ literal_t bit_blaster_eval_mux(bit_blaster_t *s, literal_t c, literal_t a, liter
    */
   if (a == c) {
     a = true_literal;
-  } else if (a == not(c)) {
+  } else if (a == not_(c)) {
     a = false_literal;
   }
 
@@ -1533,7 +1530,7 @@ literal_t bit_blaster_eval_mux(bit_blaster_t *s, literal_t c, literal_t a, liter
    */
   if (b == c) {
     b = false_literal;
-  } else if (b == not(c)) {
+  } else if (b == not_(c)) {
     b = true_literal;
   }
 
@@ -1544,7 +1541,7 @@ literal_t bit_blaster_eval_mux(bit_blaster_t *s, literal_t c, literal_t a, liter
    */
   if (a == b) return a;
   if (a == true_literal && b == false_literal) return c;
-  if (a == false_literal && b == true_literal) return not(c);
+  if (a == false_literal && b == true_literal) return not_(c);
 
   return null_literal;
 }
@@ -1558,8 +1555,8 @@ literal_t bit_blaster_eval_gt(bit_blaster_t *s, literal_t a, literal_t b) {
   b = eval_literal(s, b);
 
   if (a == b)             return false_literal;
-  if (a == not(b))        return a;
-  if (a == true_literal)  return not(b);
+  if (a == not_(b))        return a;
+  if (a == true_literal)  return not_(b);
   if (a == false_literal) return false_literal;
   if (b == true_literal)  return false_literal;
   if (b == false_literal) return a;
@@ -1578,11 +1575,11 @@ literal_t bit_blaster_eval_maj3(bit_blaster_t *s, literal_t a, literal_t b, lite
   c = eval_literal(s, c);
 
   if (a == b)      return a;
-  if (a == not(b)) return c;
+  if (a == not_(b)) return c;
   if (a == c)      return a;
-  if (a == not(c)) return b;
+  if (a == not_(c)) return b;
   if (b == c)      return b;
-  if (b == not(c)) return a;
+  if (b == not_(c)) return a;
 
   return null_literal;
 }
@@ -1593,7 +1590,7 @@ literal_t bit_blaster_eval_maj3(bit_blaster_t *s, literal_t a, literal_t b, lite
  */
 literal_t bit_blaster_eval_cmp(bit_blaster_t *s, literal_t a, literal_t b, literal_t c) {
   // (cmp a b c) = (majority a (not b) c)
-  return bit_blaster_eval_maj3(s, a, not(b), c);
+  return bit_blaster_eval_maj3(s, a, not_(b), c);
 }
 
 
@@ -1646,7 +1643,7 @@ literal_t bit_blaster_eval_bveq(bit_blaster_t *s, uint32_t n, literal_t *a, lite
   for (i=0; i<n; i++) {
     la = eval_literal(s, a[i]);
     lb = eval_literal(s, b[i]);
-    if (la == not(lb)) {
+    if (la == not_(lb)) {
       aux = false_literal; // a[i] != b[i] so a != b
       break;
     } else if (la != lb) {
@@ -1680,10 +1677,10 @@ static literal_t bit_blaster_create_or(bit_blaster_t *s, ivector_t *v) {
 
   l = bit_blaster_fresh_literal(s);
   for (i=0; i<n; i++) {
-    bit_blaster_add_binary_clause(s, l, not(a[i]));
+    bit_blaster_add_binary_clause(s, l, not_(a[i]));
   }
 
-  ivector_push(v, not(l));
+  ivector_push(v, not_(l));
   bit_blaster_add_clause(s, n+1, v->data);
 
   return l;
@@ -1864,12 +1861,12 @@ static literal_t make_or2(bit_blaster_t *s, literal_t a, literal_t b) {
 
 /*
  * Return a literal l = (and a b)
- * This gets turned into not(l) = (or not(a) not(b)).
+ * This gets turned into not_(l) = (or not_(a) not_(b)).
  * - if l does not exist, create a fresh literal and gate, and add the clauses
- *   for (not l) == (or not(a) not(b)).
+ *   for (not l) == (or not_(a) not_(b)).
  */
 static inline literal_t make_and2(bit_blaster_t *s, literal_t a, literal_t b) {
-  return not(make_or2(s, not(a), not(b)));
+  return not_(make_or2(s, not_(a), not_(b)));
 }
 
 
@@ -1936,10 +1933,10 @@ static void make_mux(bit_blaster_t *s, literal_t c, literal_t a, literal_t b, li
    */
   if (is_neg(c)) {
     l = a; a = b; b = l; // swap a and b
-    c = not(c);
+    c = not_(c);
   }
   if (is_neg(a)) {
-    make_mux_aux(s, c, not(a), not(b), not(x));
+    make_mux_aux(s, c, not_(a), not_(b), not_(x));
   } else {
     make_mux_aux(s, c, a, b, x);
   }
@@ -2084,15 +2081,15 @@ static literal_t find_mux(bit_blaster_t *s, literal_t c, literal_t a, literal_t 
      */
     if (is_neg(c)) {
       l = a; a = b; b = l; // swap a and b
-      c = not(c);
+      c = not_(c);
     }
 
     l = null_literal;
     if (is_neg(a)) {
-      g = gate_table_find_ite(s->htbl, c, not(a), not(b));
+      g = gate_table_find_ite(s->htbl, c, not_(a), not_(b));
       if (g != NULL) {
         assert(g->lit[3] != null_literal);
-        l = not(g->lit[3]);
+        l = not_(g->lit[3]);
       }
     } else {
       g = gate_table_find_ite(s->htbl, c, a, b);
@@ -2229,7 +2226,7 @@ literal_t bit_blaster_make_bveq(bit_blaster_t *s, literal_t *a, literal_t *b, ui
     }
   }
 
-  return not(bit_blaster_make_or(s, n, aux));
+  return not_(bit_blaster_make_or(s, n, aux));
 }
 
 
@@ -2250,7 +2247,7 @@ static literal_t find_cmp_cut(bit_blaster_t *s, literal_t a, literal_t b) {
   a = eval_literal(s, a);
   b = eval_literal(s, b);
 
-  if (a == not(b)) return a;
+  if (a == not_(b)) return a;
   return null_literal;
 }
 
@@ -2524,7 +2521,7 @@ void bit_blaster_assert_bvslt(bit_blaster_t *s, literal_t *a, literal_t *b, uint
     } else {
       // no simplification
       l = bit_blaster_make_bvuge(s, a, b, n);
-      bit_blaster_cmp(s, a[n], b[n], not(l), true_literal);
+      bit_blaster_cmp(s, a[n], b[n], not_(l), true_literal);
     }
   }
 }
@@ -2569,7 +2566,7 @@ void bit_blaster_make_bveq2(bit_blaster_t *s, literal_t *a, literal_t *b, litera
       aux[i] = find_xor2(s, a[i], b[i]);
       if (aux[i] == true_literal) {
         // l must be false since a[i] != b[i]
-        bit_blaster_add_unit_clause(s, not(l));
+        bit_blaster_add_unit_clause(s, not_(l));
         return;
       }
     }
@@ -2581,8 +2578,8 @@ void bit_blaster_make_bveq2(bit_blaster_t *s, literal_t *a, literal_t *b, litera
       }
     }
 
-    // assert not(l) == (or (xor a[0] b[0]) ... (xor a[n-1] b[n-1]))
-    bit_blaster_or_gate(s, n, aux, not(l));
+    // assert not_(l) == (or (xor a[0] b[0]) ... (xor a[n-1] b[n-1]))
+    bit_blaster_or_gate(s, n, aux, not_(l));
     break;
   }
 }
@@ -2762,16 +2759,16 @@ void bit_blaster_make_bvneg(bit_blaster_t *s, literal_t *a, literal_t *u, uint32
    */
   c = true_literal;
   for (i=0; i<n; i++) {
-    find_half_add(s, not(a[i]), c, &sum, &d);
+    find_half_add(s, not_(a[i]), c, &sum, &d);
     if (sum == null_literal) {
       assert(d == null_literal);
       /*
-       * create half_add(not(a[i]), c)
+       * create half_add(not_(a[i]), c)
        * u[i] := sum, d := carry out
        */
       f = concretize_pseudo_lit(s, u[i]);
       d = bit_blaster_fresh_literal(s);
-      make_half_add(s, not(a[i]), c, f, d);
+      make_half_add(s, not_(a[i]), c, f, d);
     } else {
       assert(d != null_literal);
       /*
@@ -2833,7 +2830,7 @@ void bit_blaster_make_bvsub(bit_blaster_t *s, literal_t *a, literal_t *b, litera
   // we do u = a + (bvnot b) + 1
   c = true_literal; // carry in = 1
   for (i=0; i<n; i++) {
-    find_full_add(s, a[i], not(b[i]), c, &sum, &d);
+    find_full_add(s, a[i], not_(b[i]), c, &sum, &d);
     if (sum == null_literal) {
       assert(d == null_literal);
       /*
@@ -2842,7 +2839,7 @@ void bit_blaster_make_bvsub(bit_blaster_t *s, literal_t *a, literal_t *b, litera
        */
       f = concretize_pseudo_lit(s, u[i]);
       d = bit_blaster_fresh_literal(s);
-      make_full_add(s, a[i], not(b[i]), c, f, d);
+      make_full_add(s, a[i], not_(b[i]), c, f, d);
     } else {
       assert(d != null_literal);
       /*
@@ -2909,10 +2906,10 @@ void bit_blaster_make_bvinc(bit_blaster_t *s, literal_t *a, uint32_t k, literal_
  */
 
 /*
- * Carry of (a - b) = (not(a) and b)
+ * Carry of (a - b) = (not_(a) and b)
  */
 static inline literal_t decr_carry(bit_blaster_t *s, literal_t a, literal_t b) {
-  return make_and2(s, not(a), b);
+  return make_and2(s, not_(a), b);
 }
 
 
@@ -3105,13 +3102,13 @@ static void bit_blaster_submul(bit_blaster_t *s, literal_t *a, literal_t *b, lit
   c0 = true_literal; // carry in
   for (i=0; i<n; i++) {
     p = make_and2(s, b[i], q); // p = b[i] * q;
-    find_full_add(s, a[i], not(p), c0, &s0, &d0); // s0 = a[i] + not(p) + c0, d0 = carry out
+    find_full_add(s, a[i], not_(p), c0, &s0, &d0); // s0 = a[i] + not_(p) + c0, d0 = carry out
     if (s0 == null_literal) {
       assert(d0 == null_literal);
       // create (fulladd sum[k+i] p c0)
       s0 = bit_blaster_fresh_literal(s);
       d0 = bit_blaster_fresh_literal(s);
-      make_full_add(s, a[i], not(p), c0, s0, d0);
+      make_full_add(s, a[i], not_(p), c0, s0, d0);
     }
     a[i] = s0;
     c0 = d0;
@@ -3177,12 +3174,12 @@ static void bvneg_litarray(bit_blaster_t *s, literal_t *a, literal_t *b, uint32_
 
   c = true_literal;
   for (i=0; i<n; i++) {
-    find_half_add(s, not(a[i]), c, &sum, &d); // sum = not(a[i]) + c, d = carry
+    find_half_add(s, not_(a[i]), c, &sum, &d); // sum = not_(a[i]) + c, d = carry
     if (sum == null_literal) {
       assert(d == null_literal);
       sum = bit_blaster_fresh_literal(s);
       d = bit_blaster_fresh_literal(s);
-      make_half_add(s, not(a[i]), c, sum, d);
+      make_half_add(s, not_(a[i]), c, sum, d);
     }
     b[i] = sum;
     c = d;
@@ -3334,7 +3331,7 @@ void bit_blaster_make_sdivision(bit_blaster_t *s, literal_t *a, literal_t *b,
 
   // r = (if (a >= 0) then aux[n-1 ..0] else (bvneg aux[n-1 ... 0])
   if (r != NULL) {
-    abseq_constraint(s, not(sa), aux, r, n);
+    abseq_constraint(s, not_(sa), aux, r, n);
   }
 }
 
@@ -3443,14 +3440,14 @@ void bit_blaster_make_smod(bit_blaster_t *s, literal_t *a, literal_t *b, literal
     ivector_reset(v);
     r2 = v->data;
     bvneg_litarray(s, aux, r2, n);              // r2 := neg r1
-    bvmux_litarray(s, not(sa), aux, r2, r2, n); // r2 := if a>=0 then r1 else (neg r1)
+    bvmux_litarray(s, not_(sa), aux, r2, r2, n); // r2 := if a>=0 then r1 else (neg r1)
   }
 
   // build l := ((sign of a) = (sign of b)) or (r2 = 0)
   if (same_sign == true_literal) {
     l = true_literal;
   } else {
-    z = not(bit_blaster_make_or(s, n, r2));
+    z = not_(bit_blaster_make_or(s, n, r2));
     l = bit_blaster_make_or2(s, same_sign, z);
   }
 
@@ -4138,7 +4135,7 @@ void bit_blaster_make_ashift_right(bit_blaster_t *s, literal_t *a, literal_t *b,
  *  TRACE  *
  **********/
 
-#if TRACE
+#if YICES_TRACE
 
 static void trace_cbuffer(cbuffer_t *buffer) {
   literal_t aux[CBUFFER_NVARS];

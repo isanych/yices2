@@ -46,9 +46,9 @@ void init_pprod_table(pprod_table_t *table, uint32_t n) {
   }
 
   static const indexed_table_vtbl_t vtbl = {
-    .elem_size = sizeof(pprod_table_elem_t),
-    .max_elems = PPROD_TABLE_MAX_SIZE,
-    .extend = extend_pprod_table
+    sizeof(pprod_table_elem_t),
+    PPROD_TABLE_MAX_SIZE,
+    extend_pprod_table
   };
   
   indexed_table_init(&table->pprods, n, &vtbl);

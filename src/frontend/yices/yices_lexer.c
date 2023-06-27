@@ -412,7 +412,7 @@ static yices_token_t read_symbol(lexer_t *lex) {
     tk = kw->tk;
   }
 
-  return tk;
+  return (yices_token_t)tk;
 }
 
 /*

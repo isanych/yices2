@@ -32,16 +32,16 @@
  */
 static void print_avar(FILE *f, arith_vartable_t *table, thvar_t v) {
   if (arith_var_is_int(table, v)) {
-    fprintf(f, "i!%"PRId32, v);
+    fprintf(f, "i!%" PRId32, v);
   } else {
-    fprintf(f, "z!%"PRId32, v);
+    fprintf(f, "z!%" PRId32, v);
   }
 }
 
 static void print_avar_power(FILE *f, arith_vartable_t *table, varexp_t *p) {
   print_avar(f, table, p->var);
   if (p->exp > 1) {
-    fprintf(f, "^%"PRIu32, p->exp);
+    fprintf(f, "^%" PRIu32, p->exp);
   }
 }
 
@@ -233,7 +233,7 @@ void print_matrix(FILE *f, arith_vartable_t *vtbl, matrix_t *matrix) {
 
   n = matrix->nrows;
   for (i=0; i<n; i++) {
-    fprintf(f, "  row[%"PRIu32"]:   ", i);
+    fprintf(f, "  row[%" PRIu32 "]:   ", i);
     print_space(f, i, n);
     print_row(f, vtbl, matrix->row[i]);
     fputc('\n', f);
@@ -247,7 +247,7 @@ void print_elim_matrix(FILE *f, arith_vartable_t *vtbl, elim_matrix_t *elim) {
 
   n = elim->nrows;
   for (i=0; i<n; i++) {
-    fprintf(f, "  elim[%"PRIu32"]:   ", i);
+    fprintf(f, "  elim[%" PRIu32 "]:   ", i);
     print_space(f, i, n);
     print_avar_poly(f, vtbl, elim->row[i]);
     fputs("  (", f);
@@ -263,7 +263,7 @@ void print_fixed_var_vector(FILE *f, arith_vartable_t *vtbl, fvar_vector_t *fvar
 
   n = fvars->nvars;
   for (i=0; i<n; i++) {
-    fprintf(f, "  fixed[%"PRIu32"]:   ", i);
+    fprintf(f, "  fixed[%" PRIu32 "]:   ", i);
     print_space(f, i, n);
     print_avar(f, vtbl, fvars->fvar[i].var);
     fputs(" == ", f);
@@ -341,7 +341,7 @@ static void print_avar_full(FILE *f, simplex_solver_t *solver, thvar_t x) {
   }
 
   if (r >= 0) {
-    fprintf(f, "\t\tbasic in row[%"PRIu32"]\n", r);
+    fprintf(f, "\t\tbasic in row[%" PRIu32 "]\n", r);
   } else {
     fprintf(f, "\t\tnon basic\n");
   }
@@ -409,8 +409,8 @@ void print_simplex_saved_rows(FILE *f, simplex_solver_t *solver) {
   v = &solver->saved_rows;
   n = v->size;
   for (i=0; i<n; i++) {
-    fprintf(f, "saved[%"PRIu32"]: ", i);
-    print_avar_poly(f, &solver->vtbl, v->data[i]);
+    fprintf(f, "saved[%" PRIu32 "]: ", i);
+    print_avar_poly(f, &solver->vtbl, (polynomial_t*)v->data[i]);
     fputc('\n', f);
   }
   fputc('\n', f);
@@ -425,7 +425,7 @@ void print_simplex_basic_vars(FILE *f, simplex_solver_t *solver) {
   matrix = &solver->matrix;
   n = matrix->nrows;
   for (i=0; i<n; i++) {
-    fprintf(f, "  row[%"PRIu32"]: ", i);
+    fprintf(f, "  row[%" PRIu32 "]: ", i);
     x = matrix->base_var[i];
     if (x >=0 ) {
       fputs("basic var = ", f);
@@ -614,7 +614,7 @@ void print_simplex_buffer(FILE *f, simplex_solver_t *solver) {
 
 
 void print_simplex_bound(FILE *f, simplex_solver_t *solver, uint32_t i) {
-  fprintf(f, "bound[%"PRIu32"]: ", i);
+  fprintf(f, "bound[%" PRIu32 "]: ", i);
   if (i < solver->bstack.top) {
     print_avar(f, &solver->vtbl, solver->bstack.var[i]);
     if (arith_tag_get_type(solver->bstack.tag[i]) == ATYPE_UB) {
@@ -639,8 +639,8 @@ static char *bool2string(bool x) {
 }
 
 void print_simplex_flags(FILE *f, simplex_solver_t *solver) {
-  fprintf(f, "base level:     %"PRIu32"\n", solver->base_level);
-  fprintf(f, "decision level: %"PRIu32"\n", solver->decision_level);
+  fprintf(f, "base level:     %" PRIu32 "\n", solver->base_level);
+  fprintf(f, "decision level: %" PRIu32 "\n", solver->decision_level);
   fprintf(f, "matrix ready:   %s\n", bool2string(solver->matrix_ready));
   fprintf(f, "tableau ready:  %s\n", bool2string(solver->tableau_ready));
   fprintf(f, "save rows:      %s\n", bool2string(solver->save_rows));
@@ -726,16 +726,16 @@ void print_simplex_bounds2(FILE *f, simplex_solver_t *solver) {
       if (xq_neq(solver->bstack.bound + lb, solver->bstack.bound + ub)) {
         fputs("  ", f);
         xq_print(f, solver->bstack.bound + lb);
-        fprintf(f, " <= x_%"PRIu32" <= ", i);
+        fprintf(f, " <= x_%" PRIu32 " <= ", i);
         xq_print(f, solver->bstack.bound + ub);
         fputc('\n', f);
       }
     } else if (lb >= 0) {
       fputs("  ", f);
       xq_print(f, solver->bstack.bound + lb);
-      fprintf(f, " <= x_%"PRIu32"\n", i);
+      fprintf(f, " <= x_%" PRIu32 "\n", i);
     } else if (ub >= 0) {
-      fprintf(f, "  x_%"PRIu32" <= ", i);
+      fprintf(f, "  x_%" PRIu32 " <= ", i);
       xq_print(f, solver->bstack.bound + ub);
       fputc('\n', f);
     }

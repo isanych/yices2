@@ -105,10 +105,10 @@ void assumption_table_add(assumption_table_t *table, term_t t, const char* name,
 /*
  * Ordering: i < j between two indices
  */
-static bool assumption_index_lt(void *data, int32_t i, int32_t j) {
+static bool assumption_index_lt(void* data, int32_t i, int32_t j) {
   assumption_table_t *table;
 
-  table = data;
+  table = (assumption_table_t*)data;
   assert(0 <= i && i < table->nelems);
   assert(0 <= j && j < table->nelems);
   return table->data[i].term < table->data[j].term;

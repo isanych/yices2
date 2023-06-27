@@ -170,7 +170,7 @@ static inline bool good_aval(attr_vtbl_t *table, aval_t i) {
 
 static inline aval_type_t aval_tag(attr_vtbl_t *table, aval_t i) {
   assert(valid_aval(table, i));
-  return table->tag[i];
+  return (aval_type_t)table->tag[i];
 }
 
 static inline uint32_t aval_refcount(attr_vtbl_t *table, aval_t i) {
@@ -191,22 +191,22 @@ static inline rational_t *aval_rational(attr_vtbl_t *table, aval_t i) {
 
 static inline bvconst_attr_t *aval_bvconst(attr_vtbl_t *table, aval_t i) {
   assert(aval_tag(table, i) == ATTR_BV);
-  return table->desc[i].ptr;
+  return (bvconst_attr_t *)table->desc[i].ptr;
 }
 
 static inline char *aval_string(attr_vtbl_t *table, aval_t i) {
   assert(aval_tag(table, i) == ATTR_STRING);
-  return table->desc[i].ptr;
+  return (char *)table->desc[i].ptr;
 }
 
 static inline char *aval_symbol(attr_vtbl_t *table, aval_t i) {
   assert(aval_tag(table, i) == ATTR_SYMBOL);
-  return table->desc[i].ptr;
+  return (char *)table->desc[i].ptr;
 }
 
 static inline attr_list_t *aval_list(attr_vtbl_t *table, aval_t i) {
   assert(aval_tag(table, i) == ATTR_LIST);
-  return table->desc[i].ptr;
+  return (attr_list_t *)table->desc[i].ptr;
 }
 
 

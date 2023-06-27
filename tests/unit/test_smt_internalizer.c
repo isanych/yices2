@@ -295,7 +295,7 @@ static void dump_bv_solver(FILE *f, bv_solver_t *solver) {
   print_bv_solver_vars(f, solver);
   fprintf(f, "\n--- Bitvector Atoms ---\n");
   print_bv_solver_atoms(f, solver);
-  fprintf(f, "\ntotal: %"PRIu32" atoms\n", solver->atbl.natoms);
+  fprintf(f, "\ntotal: %" PRIu32 " atoms\n", solver->atbl.natoms);
   fprintf(f, "\n--- Bitvector Bounds ---\n");
   print_bv_solver_bounds(f, solver);
   fprintf(f, "\n--- DAG ---\n");
@@ -323,17 +323,17 @@ static void dump_context(FILE *f, context_t *ctx) {
 
   if (context_has_arith_solver(ctx)) {
     if (context_has_idl_solver(ctx)) {
-      dump_idl_solver(f, ctx->arith_solver);
+      dump_idl_solver(f, (idl_solver_t*)ctx->arith_solver);
     } else if (context_has_rdl_solver(ctx)) {
-      dump_rdl_solver(f, ctx->arith_solver);
+      dump_rdl_solver(f, (rdl_solver_t*)ctx->arith_solver);
     } else {
       assert(context_has_simplex_solver(ctx));
-      dump_simplex_solver(f, ctx->arith_solver);
+      dump_simplex_solver(f, (simplex_solver_t*)ctx->arith_solver);
     }
   }
 
   if (context_has_bv_solver(ctx)) {
-    dump_bv_solver(f, ctx->bv_solver);
+    dump_bv_solver(f, (bv_solver_t*)ctx->bv_solver);
   }
 
   /*
@@ -470,7 +470,7 @@ static void test_internalization(smt_benchmark_t *bench) {
   } else if (context_has_bv_solver(&context)) {
     // test bit-blasting
     //    if (bv_solver_compile(context.bv_solver)) {
-    if (bv_solver_bitblast(context.bv_solver)) {
+    if (bv_solver_bitblast((bv_solver_t*)context.bv_solver)) {
       printf("Bitblasting OK\n");
       print_internalization_code(code);
     } else {
@@ -528,7 +528,7 @@ int main(int argc, char *argv[]) {
   code = parse_smt_benchmark(&parser, &bench);
   if (code == 0) {
     printf("No syntax error found\n");
-    printf("term table: %"PRIu32" elements\n", nterms(__yices_globals.terms));
+    printf("term table: %" PRIu32 " elements\n", nterms(__yices_globals.terms));
   } else {
     exit(YICES_EXIT_SYNTAX_ERROR);
   }

@@ -29,7 +29,7 @@
 #include "utils/memalloc.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -165,21 +165,21 @@ static void print_id(bit_t x) {
       }
     } else if (v < 10) {
       if (bit_is_neg(x)) {
-	printf("  ~p%"PRId32"  ", v);
+	printf("  ~p%" PRId32 "  ", v);
       } else {
-	printf("   p%"PRId32"  ", v);
+	printf("   p%" PRId32 "  ", v);
       }
     } else if (v < 100) {
       if (bit_is_neg(x)) {
-	printf(" ~p%"PRId32"  ", v);
+	printf(" ~p%" PRId32 "  ", v);
       } else {
-	printf("  p%"PRId32"  ", v);
+	printf("  p%" PRId32 "  ", v);
       }
     } else {
       if (bit_is_neg(x)) {
-	printf(" ~p%"PRId32" ", v);
+	printf(" ~p%" PRId32 " ", v);
       } else {
-	printf("  p%"PRId32" ", v);
+	printf("  p%" PRId32 " ", v);
       }
     }
   }
@@ -209,7 +209,7 @@ static void print_tt(void) {
     for (i=0; i<n; i++) {
       if (! fresh[i]) {
 	b = ((mask & tt[i]) != 0);
-	printf("   %"PRIu32"   ", b);
+	printf("   %" PRIu32 "   ", b);
       }
     }
     printf("\n");
@@ -346,7 +346,7 @@ static void print_simple_id(bit_t x) {
     if (is_variable_node(&dag, v)) {
       printf("%c", 'a' + (char) (v-1));
     } else {
-      printf("p%"PRId32, v);
+      printf("p%" PRId32, v);
     }
   }
 }

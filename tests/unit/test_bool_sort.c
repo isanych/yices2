@@ -29,7 +29,7 @@
 
 #include "utils/prng.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -137,7 +137,7 @@ static void print_terms(uint32_t n, term_t *a) {
       if (i > 0) printf("\n");
       printf("  ");
     }
-    printf("%02"PRId32, a[i]);
+    printf("%02" PRId32, a[i]);
   }
   printf("\n");
 }
@@ -153,7 +153,7 @@ static void random_test(uint32_t n) {
   random_terms(n, a);
   for (i=0; i<n; i++) b[i] = a[i];
 
-  printf("\n--- Test: n = %"PRIu32" ---\n", n);
+  printf("\n--- Test: n = %" PRIu32 " ---\n", n);
   print_terms(n, a);
   printf("\n");
   fflush(stdout);
@@ -185,7 +185,7 @@ static void constant_test(uint32_t n) {
   x = random() % 100;
   for (i=0; i<n; i++) a[i] = x;
 
-  printf("\n--- Test: n = %"PRIu32" ---\n", n);
+  printf("\n--- Test: n = %" PRIu32 " ---\n", n);
   print_terms(n, a);
   printf("\n");
   fflush(stdout);
@@ -217,7 +217,7 @@ static void increasing_test(uint32_t n) {
     b[i] = a[i];
   }
 
-  printf("\n--- Test: n = %"PRIu32" ---\n", n);
+  printf("\n--- Test: n = %" PRIu32 " ---\n", n);
   print_terms(n, a);
   printf("\n");
   fflush(stdout);
@@ -253,7 +253,7 @@ static void decreasing_test(uint32_t n) {
     b[i] = a[i];
   }
 
-  printf("\n--- Test: n = %"PRIu32" ---\n", n);
+  printf("\n--- Test: n = %" PRIu32 " ---\n", n);
   print_terms(n, a);
   printf("\n");
   fflush(stdout);

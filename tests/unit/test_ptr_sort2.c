@@ -25,7 +25,7 @@
 
 #include "utils/ptr_array_sort2.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -164,7 +164,7 @@ int main(void) {
   uint32_t n;
 
   for (n=0; n <= 100; n += 20) {
-    printf("\n==== size %"PRIu32" ====\n", n);
+    printf("\n==== size %" PRIu32 " ====\n", n);
     set_array_constant(a, n);
     test_sort(a, n);
     set_array_increasing(a, n);

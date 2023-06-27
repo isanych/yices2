@@ -40,7 +40,7 @@ typedef unsigned char byte_t;
  */
 static inline byte_t *allocate_bitvector(uint32_t n) {
   n = (n + 7) >> 3;
-  return safe_malloc(n);
+  return (byte_t *)safe_malloc(n);
 }
 
 /*
@@ -48,7 +48,7 @@ static inline byte_t *allocate_bitvector(uint32_t n) {
  */
 static inline byte_t *extend_bitvector(byte_t *bv, uint32_t n) {
   n = (n + 7) >> 3;
-  return safe_realloc(bv, n);
+  return (byte_t *)safe_realloc(bv, n);
 }
 
 

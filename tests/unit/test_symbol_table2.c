@@ -138,13 +138,13 @@ int main(int argc, char *argv[]) {
   for (i=0; i<n_words; i++) {
     x = stbl_find(&sym_table, words[i]);
     if (x != val[i]) {
-      printf("*** Error: %s, val = %"PRId32", should be %"PRId32" ***\n", words[i], x, val[i]);
+      printf("*** Error: %s, val = %" PRId32 ", should be %" PRId32 " ***\n", words[i], x, val[i]);
       fflush(stdout);
       exit(1);
     }
   }
 
-  printf("\n*** Added %"PRIu32" words from %s ***\n", n_words, argv[1]);
+  printf("\n*** Added %" PRIu32 " words from %s ***\n", n_words, argv[1]);
 
   // repeated additions of the same symbols with multiple lookups
   // warning: this code does not work (may give a false alarm)
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
     for (j=0; j<n; j++) {
       x = stbl_find(&sym_table, words[j]);
       if (x != new_val(i, j)) {
-	printf("*** Error: %s, val = %"PRId32", should be %"PRId32" ***\n", words[j], x, new_val(i, j));
+	printf("*** Error: %s, val = %" PRId32 ", should be %" PRId32 " ***\n", words[j], x, new_val(i, j));
 	fflush(stdout);
 	exit(1);
       }
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
     for (j=0; j<n; j++) {
       x = stbl_find(&sym_table, words[j]);
       if (x != new_val(i, j)) {
-	printf("*** Error: %s, val = %"PRId32", should be %"PRId32" ***\n", words[j], x, new_val(i, j));
+	printf("*** Error: %s, val = %" PRId32 ", should be %" PRId32 " ***\n", words[j], x, new_val(i, j));
 	fflush(stdout);
 	exit(1);
       }
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     for (j=0; j<n; j++) {
       x = stbl_find(&sym_table, words[j]);
       if (x != new_val(i, j)) {
-	printf("*** Error: %s, val = %"PRId32", should be %"PRId32" ***\n", words[j], x, new_val(i, j));
+	printf("*** Error: %s, val = %" PRId32 ", should be %" PRId32 " ***\n", words[j], x, new_val(i, j));
 	fflush(stdout);
 	exit(1);
       }
@@ -191,9 +191,9 @@ int main(int argc, char *argv[]) {
 
   runtime = get_cpu_time() - runtime;
   memused = mem_size() / (1024 * 1024);
-  printf("Adding 10000 times the same %"PRIu32" words + repeated lookups\n", n);
+  printf("Adding 10000 times the same %" PRIu32 " words + repeated lookups\n", n);
   printf("Runtime: %.4f s\n", runtime);
-  printf("Table size: %"PRIu32" (nelems = %"PRIu32", ndeleted = %"PRIu32")\n",
+  printf("Table size: %" PRIu32 " (nelems = %" PRIu32 ", ndeleted = %" PRIu32 ")\n",
 	sym_table.size, sym_table.nelems, sym_table.ndeleted);
   if (memused > 0) {
     printf("Memory used: %.2f MB\n", memused);

@@ -22,7 +22,7 @@
 #include "model/small_bvsets.h"
 #include "utils/bitvectors.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -38,16 +38,16 @@ static void print_bvset(small_bvset_t *s) {
   uint32_t i, n;
 
   printf("set %p\n", s);
-  printf("  size = %"PRIu32"\n", s->size);
-  printf("  nelems = %"PRIu32"\n", s->nelems);
-  printf("  ptr = %"PRIu32"\n", s->ptr);
+  printf("  size = %" PRIu32 "\n", s->size);
+  printf("  nelems = %" PRIu32 "\n", s->nelems);
+  printf("  ptr = %" PRIu32 "\n", s->ptr);
 
   if (s->nelems > 0) {
     printf("  content:");
     n = s->size;
     for (i=0; i<n; i++) {
       if (tst_bit(s->set, i)) {
-	printf(" %"PRIu32, i);
+	printf(" %" PRIu32, i);
       }
     }
     printf("\n");
@@ -105,7 +105,7 @@ int main(void) {
   // collect fresh values until the set is full
   while (! small_bvset_full(&set)) {
     x = small_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   }
 
   printf("\n=== Final set ===\n");
@@ -124,7 +124,7 @@ int main(void) {
 
   while (! small_bvset_full(&set)) {
     x = small_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   }
 
   printf("\n=== Final set ===\n");
@@ -143,7 +143,7 @@ int main(void) {
   // collect fresh values until the set is full
   while (! small_bvset_full(&set)) {
     x = small_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   }
 
   printf("\n=== Final set ===\n");

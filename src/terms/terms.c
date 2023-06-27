@@ -134,9 +134,9 @@ static void term_table_init(term_table_t *table, uint32_t n, type_table_t *ttbl,
   assert(offsetof(term_desc_t, elem) == 0);
   
   static const indexed_table_vtbl_t vtbl = {
-    .elem_size = sizeof(term_desc_t),
-    .max_elems = YICES_MAX_TERMS,
-    .extend = term_table_extend
+    sizeof(term_desc_t),
+    YICES_MAX_TERMS,
+    term_table_extend
   };
   
   indexed_table_init(&table->terms, n, &vtbl);
@@ -171,14 +171,16 @@ static void term_table_init(term_table_t *table, uint32_t n, type_table_t *ttbl,
  * Allocate a new term id
  * - clear its mark. Nothing else is initialized.
  */
-static int32_t allocate_term_id(term_table_t *table,
-				term_kind_t kind,
-				type_t tau) {
+static int32_t allocate_term_id(term_table_t *table, term_kind_t kind, type_t tau) {
   int32_t i = indexed_table_alloc(&table->terms);
-  *term_desc(table, i) = (term_desc_t) {
-    .kind = kind,
-    .type = tau
-  };
+  term_desc_t* t = term_desc(table, i);
+#ifdef __cplusplus
+  *t = {};
+#else
+  *t = (term_desc_t){0};
+#endif
+  t->kind = kind;
+  t->type = tau;
   clr_bit(table->mark, i);
 
   return i;
@@ -245,10 +247,9 @@ static int32_t new_select_term(term_table_t *table, term_kind_t tag, type_t tau,
   int32_t i;
 
   i = allocate_term_id(table, tag, tau);
-  term_desc(table, i)->select = (select_term_t) {
-    .idx = k,
-    .arg = t
-  };
+  select_term_t* s = &term_desc(table, i)->select;
+  s->idx = k;
+  s->arg = t;
 
   return i;
 }
@@ -949,7 +950,7 @@ static bool eq_composite_hobj(composite_term_hobj_t *o, int32_t i) {
 
   if (kind_for_idx(table, i) != o->tag) return false;
 
-  d = ptr_for_idx(table, i);
+  d = (composite_term_t*)ptr_for_idx(table, i);
   n = d->arity;
   return n == o->arity && eq_term_arrays(o->arg, d->arg, n);
 }
@@ -1354,7 +1355,7 @@ char *term_name(term_table_t *table, term_t t) {
   }
 
   assert(p->val != NULL);
-  return p->val;
+  return (char*)p->val;
 
 }
 
@@ -1406,7 +1407,7 @@ void set_term_base_name(term_table_t *table, term_t t, char *name) {
   p = ptr_hmap_get(&table->ntbl, t);
   assert(p != NULL);
   if (p->val != NULL) {
-    string_decref(p->val);
+    string_decref((char*)p->val);
   }
   p->val = name;
   string_incref(name);
@@ -1449,7 +1450,7 @@ void clear_term_name(term_table_t *table, term_t t) {
   assert(good_term(table, t));
   p = ptr_hmap_find(&table->ntbl, t);
   if (p != NULL) {
-    name = p->val;
+    name = (char*)p->val;
     assert(name != NULL);
 
     // remove the mapping t --> name from ntbl
@@ -1731,7 +1732,7 @@ static void delete_name_table(ptr_hmap_t *table) {
   p = ptr_hmap_first_record(table);
   while (p != NULL) {
     assert(p->val != NULL);
-    string_decref(p->val);
+    string_decref((char*)p->val);
     p = ptr_hmap_next_record(table, p);
   }
 
@@ -1861,7 +1862,7 @@ static void reset_name_table(ptr_hmap_t *table) {
   p = ptr_hmap_first_record(table);
   while (p != NULL) {
     assert(p->val != NULL);
-    string_decref(p->val);
+    string_decref((char*)p->val);
     p = ptr_hmap_next_record(table, p);
   }
   ptr_hmap_reset(table);
@@ -3231,7 +3232,7 @@ pprod_t **pprods_for_poly(term_table_t *table, const polynomial_t *p) {
 static bool var_is_int(void *aux, int32_t x) {
   term_table_t *table;
 
-  table = aux;
+  table = (term_table_t*)aux;
   return is_integer_type(term_type(table, x));
 }
 
@@ -3604,7 +3605,7 @@ static void mark_live_terms(term_table_t *table) {
  * - r is a record in the symbol table: r->value is a term to mark
  */
 static void mark_symbol(void *aux, const stbl_rec_t *r) {
-  term_table_set_gc_mark(aux, index_of(r->value));
+  term_table_set_gc_mark((term_table_t*)aux, index_of(r->value));
 }
 
 
@@ -3615,7 +3616,7 @@ static void mark_symbol(void *aux, const stbl_rec_t *r) {
  *   then r is finalized then removed from the symbol table.
  */
 static bool dead_term_symbol(void *aux, const stbl_rec_t *r) {
-  return !term_idx_is_marked(aux, index_of(r->value));
+  return !term_idx_is_marked((term_table_t*)aux, index_of(r->value));
 }
 
 

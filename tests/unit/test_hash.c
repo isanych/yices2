@@ -151,7 +151,7 @@ int main(void) {
   runtime = get_cpu_time() - runtime;
   printf("naive hash:   %u calls\n", 10000000 * 58);
   printf("cpu time:     %.4f s\n", runtime);
-  printf("last code:    %"PRIu32"\n", h);
+  printf("last code:    %" PRIu32 "\n", h);
 
   runtime = get_cpu_time();
   for (n=0; n<1000000; n++) {
@@ -162,7 +162,7 @@ int main(void) {
   runtime = get_cpu_time() - runtime;
   printf("jenkins hash:  %u calls\n", 10000000 * 58);
   printf("cpu time:      %.4f s\n", runtime);
-  printf("last code:    %"PRIu32"\n", h);
+  printf("last code:    %" PRIu32 "\n", h);
 
   runtime = get_cpu_time();
   for (n=0; n<1000000; n++) {
@@ -173,7 +173,7 @@ int main(void) {
   runtime = get_cpu_time() - runtime;
   printf("jenkins hash2: %u calls\n", 10000000 * 58);
   printf("cpu time:      %.4f s\n", runtime);
-  printf("last code:    %"PRIu32"\n", h);
+  printf("last code:    %" PRIu32 "\n", h);
 
   return 0;
 }

@@ -1139,14 +1139,12 @@ static inline bool valid_term_idx(const term_table_t *table, int32_t i) {
   return 0 <= i && i < nterms(table);
 }
 
-static inline term_desc_t *term_desc(const term_table_t *table,
-				     int32_t i) {
+static inline term_desc_t *term_desc(const term_table_t *table, int32_t i) {
   return indexed_table_elem(term_desc_t, &table->terms, i);
 }
 
-static inline term_kind_t unchecked_kind_for_idx(const term_table_t *table,
-						 int32_t i) {
-  return term_desc(table, i)->kind;
+static inline term_kind_t unchecked_kind_for_idx(const term_table_t *table, int32_t i) {
+  return (term_kind_t)term_desc(table, i)->kind;
 }
 
 static inline bool live_term_idx(const term_table_t *table, int32_t i) {
@@ -1675,7 +1673,7 @@ static inline special_term_t *special_desc(composite_term_t *p) {
 }
 
 static inline special_term_t *special_for_idx(const term_table_t *table, int32_t i) {
-  return special_desc(ptr_for_idx(table, i));
+  return special_desc((composite_term_t *)ptr_for_idx(table, i));
 }
 
 static inline composite_term_t *ite_special_term_desc(const term_table_t *table, term_t t) {

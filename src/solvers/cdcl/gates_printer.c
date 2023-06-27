@@ -33,7 +33,7 @@ static const char * const boolop2string[] = {
 static void print_gate_op(FILE *f, uint32_t tag) {
   gate_op_t op;
   op = tag_combinator(tag);
-  if (op > GTAG_NUM_OPS) op = GTAG_NUM_OPS;
+  if (op > GTAG_NUM_OPS) op = (gate_op_t)GTAG_NUM_OPS;
   fputs(boolop2string[op], f);
 }
 
@@ -142,7 +142,7 @@ void print_boolgate_list(FILE *f, lnkgate_t *list) {
  * List of gates + creation level
  */
 void print_boolgate_levlist(FILE *f, levlist_t *lv) {
-  fprintf(f, "  gates at level %"PRIu32"\n", lv->level);
+  fprintf(f, "  gates at level %" PRIu32 "\n", lv->level);
   print_boolgate_list(f, lv->list);
 }
 
@@ -156,8 +156,8 @@ void print_gate_table_stack(FILE *f, gate_table_t *tbl) {
 
   stack = &tbl->stack;
   fprintf(f, "Trail stack for gate table %p\n", tbl);
-  fprintf(f, "  current level = %"PRIu32"\n", stack->current_level);
-  fprintf(f, "  top level = %"PRIu32"\n", stack->top_level);
+  fprintf(f, "  current level = %" PRIu32 "\n", stack->current_level);
+  fprintf(f, "  top level = %" PRIu32 "\n", stack->top_level);
   for (i=0; i<stack->nlists; i++) {
     print_boolgate_levlist(f, stack->data + i);
   }
@@ -190,11 +190,11 @@ void print_gate_table_htbl(FILE *f, gate_table_t *tbl) {
 
   htbl = &tbl->htbl;
   fprintf(f, "Hash table for gate table %p\n", tbl);
-  fprintf(f, "  size = %"PRIu32"\n", htbl->size);
-  fprintf(f, "  nelems = %"PRIu32"\n", htbl->nelems);
-  fprintf(f, "  ndeleted = %"PRIu32"\n", htbl->ndeleted);
-  fprintf(f, "  resize threshold = %"PRIu32"\n", htbl->resize_threshold);
-  fprintf(f, "  cleanup threshold = %"PRIu32"\n", htbl->cleanup_threshold);
+  fprintf(f, "  size = %" PRIu32 "\n", htbl->size);
+  fprintf(f, "  nelems = %" PRIu32 "\n", htbl->nelems);
+  fprintf(f, "  ndeleted = %" PRIu32 "\n", htbl->ndeleted);
+  fprintf(f, "  resize threshold = %" PRIu32 "\n", htbl->resize_threshold);
+  fprintf(f, "  cleanup threshold = %" PRIu32 "\n", htbl->cleanup_threshold);
   fputs("  Content\n", f);
   print_gates_in_table(f, htbl->data, htbl->size);
   fputc('\n', f);

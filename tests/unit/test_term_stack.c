@@ -100,8 +100,8 @@ int main(void) {
       printf("*** bool --> ");
       print_type_def(stdout, __yices_globals.types, tau);
       printf("\n");
-      printf("*** yices_get_type_by_name(bool) = %"PRId32"\n", tau);
-      printf("*** yices_bool_type() = %"PRId32"\n", yices_bool_type());
+      printf("*** yices_get_type_by_name(bool) = %" PRId32 "\n", tau);
+      printf("*** yices_bool_type() = %" PRId32 "\n", yices_bool_type());
     }
 
 
@@ -132,8 +132,8 @@ int main(void) {
       printf("*** bv5 --> ");
       print_type_def(stdout, __yices_globals.types, tau);
       printf("\n");
-      printf("*** yices_get_type_by_name(bv5) = %"PRId32"\n", tau);
-      printf("*** yices_bv_type(5) = %"PRId32"\n", yices_bv_type(5));
+      printf("*** yices_get_type_by_name(bv5) = %" PRId32 "\n", tau);
+      printf("*** yices_bv_type(5) = %" PRId32 "\n", yices_bv_type(5));
     }
 
 
@@ -249,8 +249,8 @@ int main(void) {
       printf("---> string = %s\n", stack.error_string);
     }
     printf("---> code = %d\n", exception);
-    printf("---> line = %"PRId32"\n", stack.error_loc.line);
-    printf("---> column = %"PRId32"\n", stack.error_loc.column);
+    printf("---> line = %" PRId32 "\n", stack.error_loc.line);
+    printf("---> column = %" PRId32 "\n", stack.error_loc.column);
     printf("---> op = %d\n", stack.error_op);
     tstack_reset(&stack);
   }

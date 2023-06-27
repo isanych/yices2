@@ -20,12 +20,6 @@
  * ERROR MESSAGE
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
@@ -107,7 +101,7 @@ int32_t print_error(FILE *f) {
 
   error = yices_error_report();
   switch (error->code) {
-  case NO_ERROR:
+  case YICES_NO_ERROR:
     code = fprintf(f, "no error\n");
     break;
 
@@ -115,23 +109,23 @@ int32_t print_error(FILE *f) {
      * Term/type construction errors
      */
   case INVALID_TYPE:
-    code = fprintf(f, "invalid type: (index = %"PRId32")\n", error->type1);
+    code = fprintf(f, "invalid type: (index = %" PRId32 ")\n", error->type1);
     break;
 
   case INVALID_TERM:
-    code = fprintf(f, "invalid term: (index = %"PRId32")\n", error->term1);
+    code = fprintf(f, "invalid term: (index = %" PRId32 ")\n", error->term1);
     break;
 
   case INVALID_CONSTANT_INDEX:
-    code = fprintf(f, "invalid index %"PRId64" in constant creation\n", error->badval);
+    code = fprintf(f, "invalid index %" PRId64 " in constant creation\n", error->badval);
     break;
 
   case INVALID_VAR_INDEX:
-    code = fprintf(f, "invalid index %"PRId64" in variable creation\n", error->badval);
+    code = fprintf(f, "invalid index %" PRId64 " in variable creation\n", error->badval);
     break;
 
   case INVALID_TUPLE_INDEX:
-    code = fprintf(f, "invalid tuple index: %"PRId64"\n", error->badval);
+    code = fprintf(f, "invalid tuple index: %" PRId64 "\n", error->badval);
     break;
 
   case INVALID_RATIONAL_FORMAT:
@@ -163,15 +157,15 @@ int32_t print_error(FILE *f) {
     break;
 
   case TOO_MANY_ARGUMENTS:
-    code = fprintf(f, "too many arguments (max arity is %"PRIu32")\n", YICES_MAX_ARITY);
+    code = fprintf(f, "too many arguments (max arity is %" PRIu32 ")\n", YICES_MAX_ARITY);
     break;
 
   case TOO_MANY_VARS:
-    code = fprintf(f, "too many variables in quantifier (max is %"PRIu32")\n", YICES_MAX_VARS);
+    code = fprintf(f, "too many variables in quantifier (max is %" PRIu32 ")\n", YICES_MAX_VARS);
     break;
 
   case MAX_BVSIZE_EXCEEDED:
-    code = fprintf(f, "bitvector size is too large (max is %"PRIu32")\n", YICES_MAX_BVSIZE);
+    code = fprintf(f, "bitvector size is too large (max is %" PRIu32 ")\n", YICES_MAX_BVSIZE);
     break;
 
   case DEGREE_OVERFLOW:
@@ -247,11 +241,11 @@ int32_t print_error(FILE *f) {
     break;
 
   case INVALID_MACRO:
-    code = fprintf(f, "invalid macro id: %"PRId64"\n", error->badval);
+    code = fprintf(f, "invalid macro id: %" PRId64 "\n", error->badval);
     break;
 
   case TOO_MANY_MACRO_PARAMS:
-    code = fprintf(f, "too many arguments in type constructor or macro (max = %"PRIu32")\n", TYPE_MACRO_MAX_ARITY);
+    code = fprintf(f, "too many arguments in type constructor or macro (max = %" PRIu32 ")\n", TYPE_MACRO_MAX_ARITY);
     break;
 
   case TYPE_VAR_REQUIRED:
@@ -286,79 +280,79 @@ int32_t print_error(FILE *f) {
      * Parser errors
      */
   case INVALID_TOKEN:
-    code = fprintf(f, "invalid token (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "invalid token (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case SYNTAX_ERROR:
-    code = fprintf(f, "syntax error (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "syntax error (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case UNDEFINED_TYPE_NAME:
-    code = fprintf(f, "undefined type name (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "undefined type name (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case UNDEFINED_TERM_NAME:
-    code = fprintf(f, "undefined term name (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "undefined term name (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case REDEFINED_TYPE_NAME:
-    code = fprintf(f, "cannot redefine type (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "cannot redefine type (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case REDEFINED_TERM_NAME:
-    code = fprintf(f, "cannot redefine term (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "cannot redefine term (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case DUPLICATE_NAME_IN_SCALAR:
-    code = fprintf(f, "duplicate name in scalar type definition (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "duplicate name in scalar type definition (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case  DUPLICATE_VAR_NAME:
-    code = fprintf(f, "duplicate variable in quantifier (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "duplicate variable in quantifier (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case INTEGER_OVERFLOW:
-    code = fprintf(f, "integer overflow (constant does not fit in 32bits) (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "integer overflow (constant does not fit in 32bits) (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case INTEGER_REQUIRED:
-    code = fprintf(f, "integer required (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "integer required (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case RATIONAL_REQUIRED:
-    code = fprintf(f, "numeric constant required (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "numeric constant required (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case SYMBOL_REQUIRED:
-    code = fprintf(f, "symbol required (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "symbol required (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case TYPE_REQUIRED:
-    code = fprintf(f, "type required (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "type required (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case NON_CONSTANT_DIVISOR:
-    code = fprintf(f, "invalid division (divisor is not a constant) (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "invalid division (divisor is not a constant) (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case NEGATIVE_BVSIZE:
-    code = fprintf(f, "invalid bitvector size (negative number) (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "invalid bitvector size (negative number) (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case INVALID_BVCONSTANT:
-    code = fprintf(f, "invalid number in 'mk-bv' (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "invalid number in 'mk-bv' (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case TYPE_MISMATCH_IN_DEF:
-    code = fprintf(f, "type mismatch in 'define' (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "type mismatch in 'define' (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case ARITH_ERROR:
-    code = fprintf(f, "error in arithmetic operation (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "error in arithmetic operation (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
   case BVARITH_ERROR:
-    code = fprintf(f, "error in bitvector operation (line %"PRIu32", column %"PRIu32")\n", error->line, error->column);
+    code = fprintf(f, "error in bitvector operation (line %" PRIu32 ", column %" PRIu32 ")\n", error->line, error->column);
     break;
 
     /*
@@ -624,7 +618,7 @@ char *error_string(void) {
 
   error = yices_error_report();
   switch (error->code) {
-  case NO_ERROR:
+  case YICES_NO_ERROR:
     nchar = snprintf(buffer, BUFFER_SIZE, "no error");
     break;
 
@@ -632,23 +626,23 @@ char *error_string(void) {
      * Term/type construction errors
      */
   case INVALID_TYPE:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid type: (index = %"PRId32")", error->type1);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid type: (index = %" PRId32 ")", error->type1);
     break;
 
   case INVALID_TERM:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid term: (index = %"PRId32")", error->term1);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid term: (index = %" PRId32 ")", error->term1);
     break;
 
   case INVALID_CONSTANT_INDEX:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid index %"PRId64" in constant creation", error->badval);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid index %" PRId64 " in constant creation", error->badval);
     break;
 
   case INVALID_VAR_INDEX:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid index %"PRId64" in variable creation", error->badval);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid index %" PRId64 " in variable creation", error->badval);
     break;
 
   case INVALID_TUPLE_INDEX:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid tuple index: %"PRId64, error->badval);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid tuple index: %" PRId64, error->badval);
     break;
 
   case INVALID_RATIONAL_FORMAT:
@@ -680,15 +674,15 @@ char *error_string(void) {
     break;
 
   case TOO_MANY_ARGUMENTS:
-    nchar = snprintf(buffer, BUFFER_SIZE, "too many arguments (max arity is %"PRIu32")", YICES_MAX_ARITY);
+    nchar = snprintf(buffer, BUFFER_SIZE, "too many arguments (max arity is %" PRIu32 ")", YICES_MAX_ARITY);
     break;
 
   case TOO_MANY_VARS:
-    nchar = snprintf(buffer, BUFFER_SIZE, "too many variables in quantifier (max is %"PRIu32")", YICES_MAX_VARS);
+    nchar = snprintf(buffer, BUFFER_SIZE, "too many variables in quantifier (max is %" PRIu32 ")", YICES_MAX_VARS);
     break;
 
   case MAX_BVSIZE_EXCEEDED:
-    nchar = snprintf(buffer, BUFFER_SIZE, "bitvector size is too large (max is %"PRIu32")", YICES_MAX_BVSIZE);
+    nchar = snprintf(buffer, BUFFER_SIZE, "bitvector size is too large (max is %" PRIu32 ")", YICES_MAX_BVSIZE);
     break;
 
   case DEGREE_OVERFLOW:
@@ -764,11 +758,11 @@ char *error_string(void) {
     break;
 
   case INVALID_MACRO:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid macro id: %"PRId64, error->badval);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid macro id: %" PRId64, error->badval);
     break;
 
   case TOO_MANY_MACRO_PARAMS:
-    nchar = snprintf(buffer, BUFFER_SIZE, "too many arguments in type constructor or macro (max = %"PRIu32")", TYPE_MACRO_MAX_ARITY);
+    nchar = snprintf(buffer, BUFFER_SIZE, "too many arguments in type constructor or macro (max = %" PRIu32 ")", TYPE_MACRO_MAX_ARITY);
     break;
 
   case TYPE_VAR_REQUIRED:
@@ -803,79 +797,79 @@ char *error_string(void) {
      * Parser errors
      */
   case INVALID_TOKEN:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid token (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid token (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case SYNTAX_ERROR:
-    nchar = snprintf(buffer, BUFFER_SIZE, "syntax error (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "syntax error (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case UNDEFINED_TYPE_NAME:
-    nchar = snprintf(buffer, BUFFER_SIZE, "undefined type name (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "undefined type name (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case UNDEFINED_TERM_NAME:
-    nchar = snprintf(buffer, BUFFER_SIZE, "undefined term name (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "undefined term name (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case REDEFINED_TYPE_NAME:
-    nchar = snprintf(buffer, BUFFER_SIZE, "cannot redefine type (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "cannot redefine type (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case REDEFINED_TERM_NAME:
-    nchar = snprintf(buffer, BUFFER_SIZE, "cannot redefine term (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "cannot redefine term (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case DUPLICATE_NAME_IN_SCALAR:
-    nchar = snprintf(buffer, BUFFER_SIZE, "duplicate name in scalar type definition (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "duplicate name in scalar type definition (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case  DUPLICATE_VAR_NAME:
-    nchar = snprintf(buffer, BUFFER_SIZE, "duplicate variable in quantifier (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "duplicate variable in quantifier (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case INTEGER_OVERFLOW:
-    nchar = snprintf(buffer, BUFFER_SIZE, "integer overflow (constant does not fit in 32bits) (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "integer overflow (constant does not fit in 32bits) (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case INTEGER_REQUIRED:
-    nchar = snprintf(buffer, BUFFER_SIZE, "integer required (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "integer required (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case RATIONAL_REQUIRED:
-    nchar = snprintf(buffer, BUFFER_SIZE, "numeric constant required (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "numeric constant required (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case SYMBOL_REQUIRED:
-    nchar = snprintf(buffer, BUFFER_SIZE, "symbol required (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "symbol required (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case TYPE_REQUIRED:
-    nchar = snprintf(buffer, BUFFER_SIZE, "type required (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "type required (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case NON_CONSTANT_DIVISOR:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid division (divisor is not a constant) (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid division (divisor is not a constant) (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case NEGATIVE_BVSIZE:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid bitvector size (negative number) (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid bitvector size (negative number) (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case INVALID_BVCONSTANT:
-    nchar = snprintf(buffer, BUFFER_SIZE, "invalid number in 'mk-bv' (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "invalid number in 'mk-bv' (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case TYPE_MISMATCH_IN_DEF:
-    nchar = snprintf(buffer, BUFFER_SIZE, "type mismatch in 'define' (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "type mismatch in 'define' (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case ARITH_ERROR:
-    nchar = snprintf(buffer, BUFFER_SIZE, "error in arithmetic operation (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "error in arithmetic operation (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
   case BVARITH_ERROR:
-    nchar = snprintf(buffer, BUFFER_SIZE, "error in bitvector operation (line %"PRIu32", column %"PRIu32")", error->line, error->column);
+    nchar = snprintf(buffer, BUFFER_SIZE, "error in bitvector operation (line %" PRIu32 ", column %" PRIu32 ")", error->line, error->column);
     break;
 
     /*

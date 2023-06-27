@@ -24,11 +24,7 @@
 #include "solvers/quant/cnstr_learner.h"
 #include "utils/index_vectors.h"
 #include "utils/prng.h"
-
-
-#define TRACE 0
-
-
+#include "yices_config.h"
 
 /*
  * Setup learner: iterate over each quant cnstr and add to heap
@@ -77,7 +73,7 @@ void cnstr_learner_reset_round(cnstr_learner_t *learner, bool reset) {
   }
 
   uint_learner_reset_reward(&learner->learner);
-#if TRACE
+#if YICES_TRACE
   printf("  New reward (reset) = %.2f\n", uint_learner_get_reward(&learner->learner));
 #endif
 }
@@ -104,7 +100,7 @@ void cnstr_learner_update_last_round(cnstr_learner_t *learner, bool update_heap)
       if (uint_learner_get_reward(uint_learner) != 0) {
         uint_learner_updateQ_latest(uint_learner, cIdx);
 
-#if TRACE
+#if YICES_TRACE
         printf("  New reward (cumulative) for cnstr @%d = %.2f\n", cIdx, uint_learner_get_reward(uint_learner));
 #endif
       }
@@ -130,7 +126,7 @@ void cnstr_learner_update_term_reward(cnstr_learner_t *learner, uint32_t cost, u
   reward = (- CNSTR_RL_TERM_COST_FACTOR * ((double) cost));
   uint_learner_updateQ(&learner->learner, i, reward);
 
-#if TRACE
+#if YICES_TRACE
   printf("  New reward (term) for cnstr @%d = %.2f\n", i, reward);
 #endif
 }
@@ -146,7 +142,7 @@ void cnstr_learner_update_lemma_reward(cnstr_learner_t *learner, uint32_t cost, 
   reward = (- CNSTR_RL_LEMMA_COST_FACTOR * ((double) cost));
   uint_learner_updateQ(&learner->learner, i, reward);
 
-#if TRACE
+#if YICES_TRACE
   printf("  New reward (lemma) for cnstr @%d = %.2f\n", i, reward);
 #endif
 }
@@ -164,7 +160,7 @@ void cnstr_learner_update_decision_reward(cnstr_learner_t *learner) {
     reward = (- CNSTR_RL_DECISION_COST_FACTOR);
     uint_learner_add_reward(uint_learner, reward);
 
-#if TRACE
+#if YICES_TRACE
     printf("  New reward (decision) = %.2f\n", reward);
 #endif
   }
@@ -183,7 +179,7 @@ void cnstr_learner_update_backtrack_reward(cnstr_learner_t *learner, uint32_t ju
     reward = (CNSTR_RL_BACKTRACK_REWARD_FACTOR * ((double) jump));
     uint_learner_add_reward(uint_learner, reward);
 
-#if TRACE
+#if YICES_TRACE
     printf("  New reward (backtrack) = %.2f\n", reward);
 #endif
 

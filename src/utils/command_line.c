@@ -40,7 +40,7 @@
  */
 
 // TODO check whether this works on mingw
-#ifdef MINGW
+#ifdef _WIN32
 #define PCHAR '\\'
 #else
 #define PCHAR '/'
@@ -674,7 +674,7 @@ bool validate_integer_option(cmdline_parser_t *p, cmdline_elem_t *e, int32_t min
     } else if (min == 1) {
       fputs(" must be positiver\n", stderr);
     } else {
-      fprintf(stderr, " must be at least %"PRId32"\n", min);
+      fprintf(stderr, " must be at least %" PRId32 "\n", min);
     }
   } else if (min == INT32_MIN) {
     if (max == 0) {
@@ -682,10 +682,10 @@ bool validate_integer_option(cmdline_parser_t *p, cmdline_elem_t *e, int32_t min
     } else if (max == -1) {
       fputs(" must be negative\n", stderr);
     } else {
-      fprintf(stderr, " must be no more than %"PRId32"\n", max);
+      fprintf(stderr, " must be no more than %" PRId32 "\n", max);
     }
   } else {
-    fprintf(stderr, " must be between %"PRId32" and %"PRId32"\n", min, max);
+    fprintf(stderr, " must be between %" PRId32 " and %" PRId32 "\n", min, max);
   }
 
   return false;

@@ -23,7 +23,7 @@
 
 #include "utils/sparse_arrays.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -124,19 +124,19 @@ static void check_samples(ref_pair_t *a, uint32_t n, uint32_t max_idx) {
   assert(n > 0);
   x = a[0].idx;
   if (x >= max_idx) {
-    fprintf(stderr, "Bad sample array: limit = %"PRIu32", a[0]=%"PRIu32"\n", max_idx, x);
+    fprintf(stderr, "Bad sample array: limit = %" PRIu32 ", a[0]=%" PRIu32 "\n", max_idx, x);
     exit(1);
   }
 
   for (i=1; i<n; i++) {
     if (a[i].idx <= x) {
-      fprintf(stderr, "Bad sample array: not increasing: a[%"PRIu32"]=%"PRIu32", a[%"PRIu32"]=%"PRIu32"\n",
+      fprintf(stderr, "Bad sample array: not increasing: a[%" PRIu32 "]=%" PRIu32 ", a[%" PRIu32 "]=%" PRIu32 "\n",
 	      i-1, x, i, a[i].idx);
       exit(1);
     }
     x = a[i].idx;
     if (x >= max_idx) {
-      fprintf(stderr, "Bad sample array: limit = %"PRIu32", a[%"PRIu32"]=%"PRIu32"\n", max_idx, i, x);
+      fprintf(stderr, "Bad sample array: limit = %" PRIu32 ", a[%" PRIu32 "]=%" PRIu32 "\n", max_idx, i, x);
       exit(1);
     }
   }
@@ -155,7 +155,7 @@ static void check_all_zero(sparse_array_t *test, uint32_t lo, uint32_t hi) {
   for (i=lo; i<hi; i++) {
     c = sparse_array_read(test, i);
     if (c != 0) {
-      fprintf(stderr, "*** BUG: incorrect ref count for %"PRIu32": should be zero\n", i);
+      fprintf(stderr, "*** BUG: incorrect ref count for %" PRIu32 ": should be zero\n", i);
       exit(1);
     }
   }
@@ -177,7 +177,7 @@ static void check_sparse_array(sparse_array_t *test, ref_pair_t *a, uint32_t n, 
     x = a[i].idx;
     c = sparse_array_read(test, x);
     if (c != a[i].cnt) {
-      fprintf(stderr, "*** BUG: incorrect ref count for %"PRIu32": returned %"PRIu32" (%"PRIu32" was expected)\n",
+      fprintf(stderr, "*** BUG: incorrect ref count for %" PRIu32 ": returned %" PRIu32 " (%" PRIu32 " was expected)\n",
 	      x, c, a[i].cnt);
       exit(1);
     }
@@ -190,7 +190,7 @@ static void check_sparse_array(sparse_array_t *test, ref_pair_t *a, uint32_t n, 
   check_all_zero(test, base, max_idx);
 
   if (nelems != test->nelems) {
-    fprintf(stderr, "*** BUG: incorrect nelems %"PRIu32" (should be %"PRIu32")\n", test->nelems, nelems);
+    fprintf(stderr, "*** BUG: incorrect nelems %" PRIu32 " (should be %" PRIu32 ")\n", test->nelems, nelems);
     exit(1);
   }
 }
@@ -212,11 +212,11 @@ static void random_ops(sparse_array_t *test, ref_pair_t *a, uint32_t n, uint32_t
     x = a[i].idx;
     assert(a[i].cnt < UINT32_MAX);
     if (a[i].cnt == 0 || (random() & 0x800) == 0) {
-      printf("increment a[%"PRIu32"]\n", x);
+      printf("increment a[%" PRIu32 "]\n", x);
       sparse_array_incr(test, x);
       a[i].cnt ++;
     } else {
-      printf("decrement a[%"PRIu32"]\n", x);
+      printf("decrement a[%" PRIu32 "]\n", x);
       sparse_array_decr(test, x);
       a[i].cnt --;
     }
@@ -228,7 +228,7 @@ static void random_ops(sparse_array_t *test, ref_pair_t *a, uint32_t n, uint32_t
  * Iterate: print all elements with a positive count
  */
 static void print_elem(void *aux, uint32_t i) {
-  printf(" %"PRIu32, i);
+  printf(" %" PRIu32, i);
 }
 
 static void print_sparse_array(sparse_array_t *test) {
@@ -250,7 +250,7 @@ int main(void) {
     init_samples(test, 200, 10000);
     check_samples(test, 200, 10000);
 
-    printf("---- Test %"PRIu32" ---\n", ntests);
+    printf("---- Test %" PRIu32 " ---\n", ntests);
     printf("initial array: ");
     print_sparse_array(&array);
     check_sparse_array(&array, test, 200, 10000);

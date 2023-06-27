@@ -27,7 +27,7 @@
 #include "terms/bv64_interval_abstraction.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -117,9 +117,9 @@ static void sign2string(char aux[30], int32_t sign) {
   default:
     assert(sign >= 0);
     if ((sign & 1) == 0) {
-      snprintf(aux, 30, "p!%"PRId32, (sign >> 1));
+      snprintf(aux, 30, "p!%" PRId32, (sign >> 1));
     } else {
-      snprintf(aux, 30, "~p!%"PRId32, (sign >> 1));
+      snprintf(aux, 30, "~p!%" PRId32, (sign >> 1));
     }
     break;
   } 
@@ -129,7 +129,7 @@ static void show_interval(FILE *f, bv64_abs_t *a) {
   char aux[30];
 
   sign2string(aux, a->sign);
-  fprintf(f, "[%"PRId64", %"PRId64"] (%"PRIu32" bits, sign = %s)\n",
+  fprintf(f, "[%" PRId64 ", %" PRId64 "] (%" PRIu32 " bits, sign = %s)\n",
 	  a->low, a->high, a->nbits, aux);
 }
 
@@ -147,9 +147,9 @@ static void show_literal(FILE *f, int32_t l) {
 
   default:
     if ((l & 1) == 0) {
-      fprintf(f, "p!%"PRId32, (l >> 1));
+      fprintf(f, "p!%" PRId32, (l >> 1));
     } else {
-      fprintf(f, "~p!%"PRId32, (l >> 1));
+      fprintf(f, "~p!%" PRId32, (l >> 1));
     }
     break;
   }
@@ -244,7 +244,7 @@ static void test_constant(uint64_t c, uint32_t n) {
 
   assert(c == norm64(c, n));
 
-  printf("Testing abstraction of %"PRIu64" (%"PRIu32" bits): ", c, n);
+  printf("Testing abstraction of %" PRIu64 " (%" PRIu32 " bits): ", c, n);
   bv64_abs_constant(&tst, c, n);
   show_interval(stdout, &tst);  
 }
@@ -253,7 +253,7 @@ static void test_many_constants(uint32_t n) {
   uint64_t c;
   uint32_t i;
 
-  printf("\nTesting %"PRIu32"-bit constants\n", n);
+  printf("\nTesting %" PRIu32 "-bit constants\n", n);
   if (n < 6) {
     // exhaustive test
     for (c=0; c < ((uint64_t) 1) << n; c++) {
@@ -275,7 +275,7 @@ static void test_constant_array(uint32_t n, uint64_t c) {
   bv64_abs_t tst1, tst2;
   int32_t a[64];
 
-  printf("Testing constant array with %"PRIu64" (%"PRIu32" bits)\n", c, n);
+  printf("Testing constant array with %" PRIu64 " (%" PRIu32 " bits)\n", c, n);
   printf("  abs constant gives: ");
   bv64_abs_constant(&tst1, c, n);
   show_interval(stdout, &tst1);
@@ -297,7 +297,7 @@ static void test_constant_arrays(uint32_t n) {
   uint64_t c;
   uint32_t i;
 
-  printf("\nTesting %"PRIu32"-bit constant arrays\n", n);
+  printf("\nTesting %" PRIu32 "-bit constant arrays\n", n);
 
   if (n < 6) {
     for (c = 0; c < ((uint64_t) 1) << n; c++) {
@@ -316,7 +316,7 @@ static void test_random_arrays(uint32_t n) {
   int32_t aux[64];
   uint32_t i;
 
-  printf("\nTesting random %"PRIu32"-bit arrays\n", n);
+  printf("\nTesting random %" PRIu32 "-bit arrays\n", n);
 
   for (i=0; i<20; i++) {
     random_array(aux, n);

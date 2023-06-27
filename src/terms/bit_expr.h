@@ -374,7 +374,7 @@ static inline node_desc_t *node_table_elem(node_table_t *table, node_t x) {
 
 static inline node_kind_t node_kind(node_table_t *table, node_t x) {
   assert(valid_node(table, x));
-  return node_table_elem(table, x)->kind;
+  return (node_kind_t)node_table_elem(table, x)->kind;
 }
 
 static inline bool good_node(node_table_t *table, node_t x) {

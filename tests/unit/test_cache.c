@@ -28,7 +28,7 @@
 
 #include "utils/cache.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -61,7 +61,7 @@ static const char * const tag2string[NUMTAGS] = {
  */
 static void print_cache_elem(FILE *f, cache_elem_t *e) {
   assert(e->tag < NUMTAGS);
-  fprintf(f, "[%s %2"PRId32" %2"PRId32"]   (flag = %2"PRIu16")",
+  fprintf(f, "[%s %2" PRId32 " %2" PRId32 "]   (flag = %2" PRIu16 ")",
 	  tag2string[e->tag], e->data[0], e->data[1], e->flag);
 }
 
@@ -74,15 +74,15 @@ static void print_all_cache(FILE *f, cache_t *cache) {
   cache_elem_t *e;
 
   htbl = &cache->htbl;
-  fprintf(f, "Cache: %"PRIu32" elements, size = %"PRIu32"\n",
+  fprintf(f, "Cache: %" PRIu32 " elements, size = %" PRIu32 "\n",
 	  htbl->nelems, htbl->size);
   n = htbl->size;
   for (i=0; i<n; i++) {
     e = htbl->data[i];
     if (e != NULL && e != DELETED_ELEM) {
-      fprintf(f, "   %4"PRIu32": ", i);
+      fprintf(f, "   %4" PRIu32 ": ", i);
       print_cache_elem(f, e);
-      fprintf(f, "\t hash MOD size = %"PRIu32"\n", (e->hash % htbl->size));
+      fprintf(f, "\t hash MOD size = %" PRIu32 "\n", (e->hash % htbl->size));
     }
   }
   fprintf(f, "\n");
@@ -99,15 +99,15 @@ static void print_cache_stack(FILE *f, cache_t *cache) {
   stack = &cache->stack;
 
   fprintf(f, "push/pop stack:\n");
-  fprintf(f, "  size = %"PRIu32"\n", stack->size);
-  fprintf(f, "  current_level = %"PRIu32"\n", stack->current_level);
-  fprintf(f, "  top_level = %"PRIu32"\n", stack->top_level);
+  fprintf(f, "  size = %" PRIu32 "\n", stack->size);
+  fprintf(f, "  current_level = %" PRIu32 "\n", stack->current_level);
+  fprintf(f, "  top_level = %" PRIu32 "\n", stack->top_level);
   n = stack->nmarks;
   if (n == 0) {
     fprintf(f, "  no marks\n");
   } else {
     for (i=0; i<n; i++) {
-      fprintf(f, "  mark[%"PRIu32"]: level = %"PRIu32", blk_id = %"PRIu32", index = %"PRIu32"\n",
+      fprintf(f, "  mark[%" PRIu32 "]: level = %" PRIu32 ", blk_id = %" PRIu32 ", index = %" PRIu32 "\n",
 	      i, stack->data[i].level, stack->data[i].blk_id, stack->data[i].index);
     }
   }
@@ -123,13 +123,13 @@ static void print_cache_bank(FILE *f, cache_t *cache) {
 
   bnk = &cache->bank;
   fprintf(f, "bank:\n");
-  fprintf(f, "  capacity = %"PRIu32"\n", bnk->capacity);
-  fprintf(f, "  nblocks = %"PRIu32"\n", bnk->nblocks);
-  fprintf(f, "  free_block = %"PRIu32"\n", bnk->free_block);
-  fprintf(f, "  alloc_ptr = %"PRIu32"\n", bnk->alloc_ptr);
+  fprintf(f, "  capacity = %" PRIu32 "\n", bnk->capacity);
+  fprintf(f, "  nblocks = %" PRIu32 "\n", bnk->nblocks);
+  fprintf(f, "  free_block = %" PRIu32 "\n", bnk->free_block);
+  fprintf(f, "  alloc_ptr = %" PRIu32 "\n", bnk->alloc_ptr);
   n = bnk->nblocks;
   for (i=0; i<n; i++) {
-    fprintf(f, "  block[%"PRIu32"] = %p\n", i, bnk->block[i]);
+    fprintf(f, "  block[%" PRIu32 "] = %p\n", i, bnk->block[i]);
   }
 }
 
@@ -148,7 +148,7 @@ static void test_elem(uint16_t tag, int32_t x, int32_t y) {
   cache_elem_t *e, *e0;
 
   assert(tag < NUMTAGS);
-  printf("\n--- Testing element [%s %"PRId32" %"PRId32"] ---\n", tag2string[tag], x, y);
+  printf("\n--- Testing element [%s %" PRId32 " %" PRId32 "] ---\n", tag2string[tag], x, y);
 
   // find 1
   e0 = cache_find(&cache, tag, x, y);
@@ -276,7 +276,7 @@ static void test2(void) {
 
     if (e0 == NULL && e1->flag != NEW_CACHE_ELEM) {
       printf("*** caching bug ***\n");
-      printf("  element: [%s %"PRId32" %"PRId32"]\n", tag2string[tag], x, y);
+      printf("  element: [%s %" PRId32 " %" PRId32 "]\n", tag2string[tag], x, y);
       printf("  find: returned NULL\n");
       printf("  get:  returned %p: ", e1);
       print_cache_elem(stdout, e1);
@@ -285,7 +285,7 @@ static void test2(void) {
 
     if (e0 != NULL && e1 != e0) {
       printf("*** caching bug ***\n");
-      printf("  element: [%s %"PRId32" %"PRId32"]\n", tag2string[tag], x, y);
+      printf("  element: [%s %" PRId32 " %" PRId32 "]\n", tag2string[tag], x, y);
       printf("  find: returned %p: ", e0);
       print_cache_elem(stdout, e0);
       printf("\n");
@@ -299,7 +299,7 @@ static void test2(void) {
     }
 
     if (i % 100 == 49) {
-      printf("\n--- Push to level %"PRIu32" ---\n", level);
+      printf("\n--- Push to level %" PRIu32 " ---\n", level);
       cache_push(&cache);
       level ++;
       print_cache_stack(stdout, &cache);
@@ -307,14 +307,14 @@ static void test2(void) {
     }
   }
 
-  printf("\n--- After random additions (level = %"PRIu32") ---\n", level);
+  printf("\n--- After random additions (level = %" PRIu32 ") ---\n", level);
   print_all_cache(stdout, &cache);
   print_cache_stack(stdout, &cache);
   print_cache_bank(stdout, &cache);
 
   while (level > 1) {
     level --;
-    printf("\n--- Pop to level %"PRIu32" ---\n", level);
+    printf("\n--- Pop to level %" PRIu32 " ---\n", level);
     cache_pop(&cache);
     print_all_cache(stdout, &cache);
     print_cache_stack(stdout, &cache);

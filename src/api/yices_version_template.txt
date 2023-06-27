@@ -31,25 +31,16 @@
  * If NOYICES_DLL not defined, we must predix the version strings
  * with __declspec(dllexport)
  */
-#if defined(CYGWIN) || defined(MINGW)
-#if defined(NOYICES_DLL)
-#define EXPORTED
-#else
-#define EXPORTED __declspec(dllexport)
-#endif
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
+#include <yices.h>
 
-
-EXPORTED const char * const yices_version = "YICES_VERSION";
-EXPORTED const char * const yices_build_date = "YICES_COMPILATION_DATE";
-EXPORTED const char * const yices_build_arch = "YICES_ARCH";
+const char * const yices_version = "YICES_VERSION";
+const char * const yices_build_date = "YICES_COMPILATION_DATE";
+const char * const yices_build_arch = "YICES_ARCH";
 
 #if defined(YICES_STATIC)
-EXPORTED const char * const yices_build_mode = "YICES_BUILD_MODE/static";
+const char * const yices_build_mode = "YICES_BUILD_MODE/static";
 #else
-EXPORTED const char * const yices_build_mode = "YICES_BUILD_MODE";
+const char * const yices_build_mode = "YICES_BUILD_MODE";
 #endif
 
-EXPORTED const char * const yices_rev = "REVISION";
+const char * const yices_rev = "REVISION";

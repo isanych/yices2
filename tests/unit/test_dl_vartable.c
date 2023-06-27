@@ -23,7 +23,7 @@
 
 #include "solvers/floyd_warshall/dl_vartable.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -67,7 +67,7 @@ static void print_monomial(int32_t v, rational_t *coeff, bool first) {
       q_print_abs(stdout, coeff);
       printf(" * ");
     }
-    printf("x!%"PRId32, v-1);
+    printf("x!%" PRId32, v-1);
   }
 }
 
@@ -105,12 +105,12 @@ static void print_dl_triple(dl_triple_t *t) {
 
   space = false;
   if (t->target >= 0) {
-    printf("x!%"PRId32, t->target);
+    printf("x!%" PRId32, t->target);
     space = true;
   }
   if (t->source >= 0) {
     if (space) printf(" ");
-    printf("- x!%"PRId32, t->source);
+    printf("- x!%" PRId32, t->source);
   }
 
 
@@ -133,15 +133,15 @@ static void print_dl_vartable(dl_vartable_t *table) {
   uint32_t i, n;
 
   printf("DL vartable %p\n", table);
-  printf("  nvars = %"PRIu32"\n", table->nvars);
-  printf("  size = %"PRIu32"\n", table->size);
+  printf("  nvars = %" PRIu32 "\n", table->nvars);
+  printf("  size = %" PRIu32 "\n", table->size);
   n = table->nvars;
   if (n == 0) {
     printf("  empty table\n");
   } else {
     printf("  content:\n");
     for (i=0; i<n; i++) {
-      printf("    var[%"PRIu32"]: ", i);
+      printf("    var[%" PRIu32 "]: ", i);
       print_dl_triple(dl_var_triple(table, i));
       printf("\n");
     }
@@ -204,7 +204,7 @@ static void test_random_triple(dl_vartable_t *table) {
   print_dl_triple(&test);
   printf("\n");
   x = get_dl_var(table, &test);
-  printf(" ---> var = %"PRId32"\n", x);
+  printf(" ---> var = %" PRId32 "\n", x);
 
   check = dl_var_triple(table, x);
   if (check->target == test.target &&
@@ -212,7 +212,7 @@ static void test_random_triple(dl_vartable_t *table) {
       q_eq(&check->constant, &test.constant)) {
     printf("Checking descriptor: OK\n");
   } else {
-    printf("BUG: invalid descriptor for var %"PRId32"\n", x);
+    printf("BUG: invalid descriptor for var %" PRId32 "\n", x);
     fflush(stdout);
     exit(1);
   }
@@ -221,7 +221,7 @@ static void test_random_triple(dl_vartable_t *table) {
   if (x == y) {
     printf("Checking hash-consing: OK\n");
   } else {
-    printf("BUG: hash-consing fails for var %"PRId32"\n", x);
+    printf("BUG: hash-consing fails for var %" PRId32 "\n", x);
     fflush(stdout);
     exit(1);
   }
@@ -329,22 +329,22 @@ static void test_add_diff(dl_vartable_t *table) {
   n = table->nvars;
   for (i=0; i<n; i++) {
     for (j=0; j<n; j++) {
-      printf("Testing sum: var!%"PRIu32" + var!%"PRIu32":\n", i, j);
-      printf("--> var!%"PRIu32" : ", i);
+      printf("Testing sum: var!%" PRIu32 " + var!%" PRIu32 ":\n", i, j);
+      printf("--> var!%" PRIu32 " : ", i);
       print_dl_triple(dl_var_triple(table, i));
       printf("\n");
-      printf("--> var!%"PRIu32" : ", j);
+      printf("--> var!%" PRIu32 " : ", j);
       print_dl_triple(dl_var_triple(table, j));
       printf("\n");
       test_sum_buffer(table, &buffer, i, j, &test2);
       test_sum(table, i, j, &test);
       printf("\n");
 
-      printf("Testing diff: var!%"PRIu32" - var!%"PRIu32":\n", i, j);
-      printf("--> var!%"PRIu32" : ", i);
+      printf("Testing diff: var!%" PRIu32 " - var!%" PRIu32 ":\n", i, j);
+      printf("--> var!%" PRIu32 " : ", i);
       print_dl_triple(dl_var_triple(table, i));
       printf("\n");
-      printf("--> var!%"PRIu32" : ", j);
+      printf("--> var!%" PRIu32 " : ", j);
       print_dl_triple(dl_var_triple(table, j));
       printf("\n");
       test_diff_buffer(table, &buffer, i, j, &test2);

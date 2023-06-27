@@ -44,10 +44,10 @@ static void print_index(particle_t x) {
 
   switch (particle_kind(&store, x)) {
   case LABEL_PARTICLE:
-    printf("L%"PRId32, particle_label(&store, x));
+    printf("L%" PRId32, particle_label(&store, x));
     break;
   case FRESH_PARTICLE:
-    printf("p!%"PRId32, x);
+    printf("p!%" PRId32, x);
     break;
   case TUPLE_PARTICLE:
     tup = tuple_particle_desc(&store, x);
@@ -70,10 +70,10 @@ static void print_value(particle_t x) {
 
   switch (particle_kind(&store, x)) {
   case LABEL_PARTICLE:
-    printf("L%"PRId32, particle_label(&store, x));
+    printf("L%" PRId32, particle_label(&store, x));
     break;
   case FRESH_PARTICLE:
-    printf("p!%"PRId32, x);
+    printf("p!%" PRId32, x);
     break;
   case TUPLE_PARTICLE:
     tup = tuple_particle_desc(&store, x);
@@ -219,7 +219,7 @@ static void test1(void) {
 
   // add all maps
   for (i=0; i<5; i++) {
-    printf("adding map[%"PRIu32"]: ", i);
+    printf("adding map[%" PRIu32 "]: ", i);
     fflush(stdout);
     ok = fun_tree_add_map(&tree, map[i]);
     if (ok) {
@@ -300,7 +300,7 @@ static void test2(void) {
 
   // add all maps
   for (i=0; i<5; i++) {
-    printf("adding map[%"PRIu32"]: ", i);
+    printf("adding map[%" PRIu32 "]: ", i);
     fflush(stdout);
     ok = fun_tree_add_map(&tree, map[i]);
     if (ok) {
@@ -383,7 +383,7 @@ static void test3(void) {
 
   // add all maps
   for (i=0; i<5; i++) {
-    printf("adding map[%"PRIu32"]: ", i);
+    printf("adding map[%" PRIu32 "]: ", i);
     fflush(stdout);
     ok = fun_tree_add_map(&tree, map[i]);
     if (ok) {
@@ -464,7 +464,7 @@ static void test4(void) {
 
   // add all maps
   for (i=0; i<5; i++) {
-    printf("adding map[%"PRIu32"]: ", i);
+    printf("adding map[%" PRIu32 "]: ", i);
     fflush(stdout);
     ok = fun_tree_add_map(&tree, map[i]);
     if (ok) {
@@ -552,7 +552,7 @@ static void test5(void) {
 
   // add all maps
   for (i=0; i<5; i++) {
-    printf("adding map[%"PRIu32"]: ", i);
+    printf("adding map[%" PRIu32 "]: ", i);
     fflush(stdout);
     ok = fun_tree_add_map(&tree, map[i]);
     if (ok) {
@@ -616,7 +616,7 @@ static void test6(void) {
 
   // add all maps
   for (i=0; i<20; i++) {
-    printf("adding map[%"PRIu32"]: ", i);
+    printf("adding map[%" PRIu32 "]: ", i);
     fflush(stdout);
     ok = fun_tree_add_map(&tree, map[i]);
     if (ok) {

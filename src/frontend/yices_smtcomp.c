@@ -20,12 +20,6 @@
  * Yices solver for SMT benchmarks
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -927,7 +921,7 @@ static void handler(int signum) {
 static void init_handler(void) {
   signal(SIGINT, handler);
   signal(SIGABRT, handler);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, handler);
 #endif
 }
@@ -939,7 +933,7 @@ static void init_handler(void) {
 static void clear_handler(void) {
   signal(SIGINT, SIG_IGN);
   signal(SIGABRT, SIG_IGN);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, SIG_IGN);
 #endif
 }

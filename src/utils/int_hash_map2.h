@@ -106,7 +106,7 @@ extern int_hmap2_rec_t *int_hmap2_find(const int_hmap2_t *hmap, int32_t k0, int3
  * If a new record is created, val is not initialized.
  * - k0 and k1 must be non-negative.
  */
-extern int_hmap2_rec_t *int_hmap2_get(int_hmap2_t *hmap, int32_t k0, int32_t k1, bool *new);
+extern int_hmap2_rec_t *int_hmap2_get(int_hmap2_t *hmap, int32_t k0, int32_t k1, bool *new_);
 
 
 /*

@@ -57,7 +57,7 @@
  * by using an integer code > TSTACK_YICES_ERROR. This requires that the interrupt
  * handler knows how to deal with such codes.
  */
-extern void __attribute__((noreturn)) raise_exception(tstack_t *stack, stack_elem_t *e, int code);
+ATTRIBUTE_NORETURN extern void raise_exception(tstack_t *stack, stack_elem_t *e, int code);
 
 
 /*
@@ -66,7 +66,7 @@ extern void __attribute__((noreturn)) raise_exception(tstack_t *stack, stack_ele
  * - stack->error_string is set to s (not a copy)
  * then code is returned to the enclosing exception handler by longjmp
  */
-extern void __attribute__((noreturn)) push_exception(tstack_t *stack, loc_t *loc, char *s, int code);
+ATTRIBUTE_NORETURN extern void push_exception(tstack_t *stack, loc_t *loc, char *s, int code);
 
 
 /*
@@ -76,7 +76,7 @@ extern void __attribute__((noreturn)) push_exception(tstack_t *stack, loc_t *loc
  * - stack->error_op is set to the top_operator code
  * - stack->error_string is NULL
  */
-extern void __attribute__((noreturn)) report_yices_error(tstack_t *stack);
+ATTRIBUTE_NORETURN extern void report_yices_error(tstack_t *stack);
 
 
 /*

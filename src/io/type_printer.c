@@ -45,7 +45,7 @@ void print_type_id(FILE *f, type_t tau) {
   if (tau <= real_id) {
     fputs(type2string[tau], f);
   } else {
-    fprintf(f, "tau!%"PRId32, tau);
+    fprintf(f, "tau!%" PRId32, tau);
   }
 }
 
@@ -77,7 +77,7 @@ void print_type_name(FILE *f, type_table_t *tbl, type_t tau) {
     if (name != NULL) {
       fputs(name, f);
     } else {
-      fprintf(f, "tau!%"PRId32, tau);
+      fprintf(f, "tau!%" PRId32, tau);
     }
   }
 }
@@ -101,16 +101,16 @@ static void print_type_recur(FILE *f, type_table_t *tbl, type_t tau, int32_t lev
     } else {
       switch (type_kind(tbl, tau)) {
       case BITVECTOR_TYPE:
-        fprintf(f, "(bitvector %"PRIu32")", bv_type_size(tbl, tau));
+        fprintf(f, "(bitvector %" PRIu32 ")", bv_type_size(tbl, tau));
         break;
       case SCALAR_TYPE:
-        fprintf(f, "(enum!%"PRId32" %"PRIu32")", tau, scalar_type_cardinal(tbl, tau));
+        fprintf(f, "(enum!%" PRId32 " %" PRIu32 ")", tau, scalar_type_cardinal(tbl, tau));
         break;
       case UNINTERPRETED_TYPE:
-        fprintf(f, "unint!%"PRId32, tau);
+        fprintf(f, "unint!%" PRId32, tau);
         break;
       case VARIABLE_TYPE:
-        fprintf(f, "var!%"PRIu32, type_variable_id(tbl, tau));
+        fprintf(f, "var!%" PRIu32, type_variable_id(tbl, tau));
         break;
       case TUPLE_TYPE:
         fputs("(tuple", f);
@@ -184,7 +184,7 @@ void print_macro_def(FILE *f, type_table_t *tbl, int32_t id) {
 
   d = type_macro(tbl, id);
   if (d->body == NULL_TYPE) {
-    fprintf(f, "(declare-sort %s %"PRIu32")\n", d->name, d->arity);
+    fprintf(f, "(declare-sort %s %" PRIu32 ")\n", d->name, d->arity);
   } else {
     fprintf(f, "(define-sort %s (", d->name);
     n = d->arity;
@@ -315,9 +315,9 @@ void print_type_table(FILE *f, type_table_t *tbl) {
   for (i=0; i<n; i++) {
     if (type_kind(tbl, i) != UNUSED_TYPE) {
       // id, flags, card
-      fprintf(f, "%4"PRIu32" ", i);
+      fprintf(f, "%4" PRIu32 " ", i);
       print_type_flags(f, type_flags(tbl, i));
-      fprintf(f, " %10"PRIu32"   ", type_card(tbl, i));
+      fprintf(f, " %10" PRIu32 "   ", type_card(tbl, i));
 
       // name + one space
       print_padded_string(f, type_name(tbl, i), name_size);
@@ -331,16 +331,16 @@ void print_type_table(FILE *f, type_table_t *tbl) {
         fputc('\n', f);
         break;
       case BITVECTOR_TYPE:
-        fprintf(f, "(bitvector %"PRIu32")\n", bv_type_size(tbl, i));
+        fprintf(f, "(bitvector %" PRIu32 ")\n", bv_type_size(tbl, i));
         break;
       case SCALAR_TYPE:
-        fprintf(f, "(enum, card = %"PRIu32")\n", scalar_type_cardinal(tbl, i));
+        fprintf(f, "(enum, card = %" PRIu32 ")\n", scalar_type_cardinal(tbl, i));
         break;
       case UNINTERPRETED_TYPE:
         fputs("(uninterpreted)\n", f);
         break;
       case VARIABLE_TYPE:
-        fprintf(f, "(variable, id = %"PRIu32")\n", type_variable_id(tbl, i));
+        fprintf(f, "(variable, id = %" PRIu32 ")\n", type_variable_id(tbl, i));
         break;
       case TUPLE_TYPE:
         fputs("(tuple", f);
@@ -538,7 +538,7 @@ void pp_type_table(FILE *f, type_table_t *tbl) {
   n = ntypes(tbl);
   for (i=0; i<n; i++) {
     if (type_kind(tbl, i) != UNUSED_TYPE) {
-      fprintf(f, "type[%"PRIu32"]: ", i);
+      fprintf(f, "type[%" PRIu32 "]: ", i);
       if (i < 10) fputc(' ', f);
       if (i < 100) fputc(' ', f);
       pp_type(&printer, tbl, i);

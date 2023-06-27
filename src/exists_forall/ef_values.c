@@ -20,13 +20,6 @@
  * Build a value table mapping a value to a list of terms.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include <stdint.h>
 #include <stdio.h>
 
@@ -72,7 +65,7 @@ void delete_ef_table(ef_table_t *vtable) {
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t*)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -84,7 +77,7 @@ void delete_ef_table(ef_table_t *vtable) {
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t*)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -117,7 +110,7 @@ void reset_ef_table(ef_table_t *vtable, value_table_t *vtbl, term_manager_t *mgr
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t*)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -129,7 +122,7 @@ void reset_ef_table(ef_table_t *vtable, value_table_t *vtbl, term_manager_t *mgr
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t*)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -174,7 +167,7 @@ void print_ef_table(FILE *f, ef_table_t *vtable, bool detailed) {
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    v = p->val;
+    v = (ivector_t*)p->val;
     yices_pp_type(f, p->key, 100, 1, 10);
     fprintf(f, " -> ");
     yices_pp_term_array(f, v->size, v->data, 120, UINT32_MAX, 0, 1);
@@ -212,7 +205,7 @@ void print_ef_table(FILE *f, ef_table_t *vtable, bool detailed) {
   for (p = ptr_hmap_first_record(map);
        p != NULL;
        p = ptr_hmap_next_record(map, p)) {
-    v = p->val;
+    v = (ivector_t*)p->val;
     fprintf(f, "%s -> ", yices_term_to_string(p->key, 1200, 1, 0));
     yices_pp_term_array(f, v->size, v->data, 1200, UINT32_MAX, 0, 1);
   }
@@ -242,7 +235,7 @@ static void store_rep(ef_table_t *vtable, term_t tvalue, term_t var) {
   p = int_hmap_get(&vtable->var_rep, tvalue);
   if (p->val < 0) {
     p->val = var;
-#if TRACE
+#if YICES_TRACE
     printf("%s -rep-> %s\n", yices_term_to_string(tvalue, 120, 1, 0), yices_term_to_string(var, 120, 1, 0));
 #endif
   }
@@ -316,9 +309,9 @@ bool store_type_value(ef_table_t *vtable, value_t value, term_t tvalue, bool che
   r = ptr_hmap_get(&vtable->type_map, tau);
   if (r->val == NULL) {
     r->val = safe_malloc(sizeof(ivector_t));
-    init_ivector(r->val, 0);
+    init_ivector((ivector_t*)r->val, 0);
   }
-  ivector_push(r->val, tvalue);
+  ivector_push((ivector_t*)r->val, tvalue);
   return true;
 }
 
@@ -332,7 +325,7 @@ static void store_term_tvalue(ef_table_t *vtable, term_t var, term_t tvalue, uin
   m = ptr_hmap_get(&vtable->map, tvalue);
   assert (m->val != NULL);
 
-  ivector_push(m->val, var);
+  ivector_push((ivector_t*)m->val, var);
   if (term_is_atomic(vtable->terms, var)) {
     store_term_generation(vtable, var, gen);
     store_term_generation(vtable, tvalue, gen);
@@ -357,7 +350,7 @@ bool store_term_value(ef_table_t *vtable, term_t var, value_t value, uint32_t ge
     m = ptr_hmap_get(&vtable->map, tvalue);
     assert (m->val == NULL);
     m->val = safe_malloc(sizeof(ivector_t));
-    init_ivector(m->val, 0);
+    init_ivector((ivector_t*)m->val, 0);
     store_type_value(vtable, value, tvalue, false);
   }
   else {
@@ -443,7 +436,7 @@ static void store_func_values(ef_table_t *vtable, term_t func, value_t c) {
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
 
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
   assert(is_function_type(vtable->terms->types, fun->type));
 
   m = fun->arity;
@@ -563,7 +556,7 @@ void postprocess_ef_table(ef_table_t *vtable, bool check) {
     tvalue = int_queue_pop(&queue);
     p = ptr_hmap_find(map, tvalue);
     assert(p != NULL);
-    v = p->val;
+    v = (ivector_t*)p->val;
     n = v->size;
 
     best_gen = UINT32_MAX;
@@ -590,7 +583,7 @@ void postprocess_ef_table(ef_table_t *vtable, bool check) {
     else {
       j++;
       if (j >= m) {
-#if TRACE
+#if YICES_TRACE
         if (check) {
           print_ef_table(stdout, vtable, false);
           printf("Unable to clear dependency for %s\n", yices_term_to_string(tvalue, 120, 1, 0));
@@ -710,7 +703,7 @@ term_t ef_get_value_rep(ef_table_t *vtable, term_t value, int_hmap_t *requests) 
       best_x = p->val;
     }
     else {
-      v = r->val;
+      v = (ivector_t*)r->val;
       n = v->size;
       best_gen = UINT32_MAX;
       best_x = NULL_TERM;
@@ -825,7 +818,7 @@ term_t constraint_distinct(ef_table_t *vtable) {
        p = ptr_hmap_next_record(map, p)) {
     tau = p->key;
     if (yices_type_is_uninterpreted(tau)) {
-      v = p->val;
+      v = (ivector_t *)p->val;
       result = yices_and2(result, constraint_distinct_elements(v));
     }
   }
@@ -855,17 +848,17 @@ term_t constraint_distinct_filter(ef_table_t *vtable, uint32_t n, term_t *vars) 
       p = ptr_hmap_get(&map, tau);
       if (p->val == NULL) {
         p->val = safe_malloc(sizeof(ivector_t));
-        init_ivector(p->val, 0);
+        init_ivector((ivector_t *)p->val, 0);
       }
 
-      ivector_push(p->val, t);
+      ivector_push((ivector_t *)p->val, t);
     }
   }
 
   for (p = ptr_hmap_first_record(&map);
        p != NULL;
        p = ptr_hmap_next_record(&map, p)) {
-    v = p->val;
+    v = (ivector_t *)p->val;
     ivector_remove_duplicates(v);
     result = yices_and2(result, constraint_distinct_elements(v));
   }
@@ -873,7 +866,7 @@ term_t constraint_distinct_filter(ef_table_t *vtable, uint32_t n, term_t *vars) 
   for (p = ptr_hmap_first_record(&map);
        p != NULL;
        p = ptr_hmap_next_record(&map, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t *)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -905,7 +898,7 @@ static term_t constraint_scalar_element(ef_table_t *vtable, term_t t, int32_t ge
     r = ptr_hmap_find(&vtable->type_map, tau);
 
     if (r != NULL) {
-      v = r->val;
+      v = (ivector_t*)r->val;
       n = v->size;
 
       init_ivector(&eq, n);

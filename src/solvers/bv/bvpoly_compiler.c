@@ -26,11 +26,9 @@
 #include "solvers/bv/bvpoly_compiler.h"
 #include "terms/bv64_constants.h"
 #include "utils/bit_tricks.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -266,7 +264,7 @@ static void show_cmap(bvc_t *c) {
   for (i=1; i<c->vtbl->nvars; i++) {
     x = bvvar_compiles_to(c, i);
     if (x >= 0) {
-      printf("  cmap[%"PRId32"] = %"PRId32"\n", i, x);
+      printf("  cmap[%" PRId32 "] = %" PRId32 "\n", i, x);
     }
   }
   printf("\n");
@@ -327,7 +325,7 @@ static void bv_compiler_map_to_zero(bvc_t *c, thvar_t x, uint32_t n) {
  */
 static thvar_t bv_compiler_mk_bvadd(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) {
   thvar_t v;
-  bool new;
+  bool new_;
 
   assert(0 < x && x < c->vtbl->nvars && 0 < y && y < c->vtbl->nvars);
 
@@ -336,8 +334,8 @@ static thvar_t bv_compiler_mk_bvadd(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) 
     v = x; x = y; y = v;
   }
 
-  v = get_bvadd(c->vtbl, n, x, y, &new);
-  if (new) {
+  v = get_bvadd(c->vtbl, n, x, y, &new_);
+  if (new_) {
     bvc_queue_push(&c->elemexp, v);
   }
 
@@ -346,12 +344,12 @@ static thvar_t bv_compiler_mk_bvadd(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) 
 
 static thvar_t bv_compiler_mk_bvsub(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) {
   thvar_t v;
-  bool new;
+  bool new_;
 
   assert(0 < x && x < c->vtbl->nvars && 0 < y && y < c->vtbl->nvars);
 
-  v = get_bvsub(c->vtbl, n, x, y, &new);
-  if (new) {
+  v = get_bvsub(c->vtbl, n, x, y, &new_);
+  if (new_) {
     bvc_queue_push(&c->elemexp, v);
   }
 
@@ -360,7 +358,7 @@ static thvar_t bv_compiler_mk_bvsub(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) 
 
 static thvar_t bv_compiler_mk_bvmul(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) {
   thvar_t v;
-  bool new;
+  bool new_;
 
   assert(0 < x && x < c->vtbl->nvars && 0 < y && y < c->vtbl->nvars);
 
@@ -369,8 +367,8 @@ static thvar_t bv_compiler_mk_bvmul(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) 
     v = x; x = y; y = v;
   }
 
-  v = get_bvmul(c->vtbl, n, x, y, &new);
-  if (new) {
+  v = get_bvmul(c->vtbl, n, x, y, &new_);
+  if (new_) {
     bvc_queue_push(&c->elemexp, v);
   }
 
@@ -379,12 +377,12 @@ static thvar_t bv_compiler_mk_bvmul(bvc_t *c, uint32_t n, thvar_t x, thvar_t y) 
 
 static thvar_t bv_compiler_mk_bvneg(bvc_t *c, uint32_t n, thvar_t x) {
   thvar_t v;
-  bool new;
+  bool new_;
 
   assert(0 < x && x < c->vtbl->nvars);
 
-  v = get_bvneg(c->vtbl, n, x, &new);
-  if (new) {
+  v = get_bvneg(c->vtbl, n, x, &new_);
+  if (new_) {
     bvc_queue_push(&c->elemexp, v);
   }
 
@@ -1332,8 +1330,8 @@ static void bv_compiler_convert_elem_nodes(bvc_t *c) {
     if (j < 0) break;
     bvc_process_elem_node(c, j);
 
-#if TRACE
-    printf("\n=== After compiling node n%"PRId32" =====\n", j);
+#if YICES_TRACE
+    printf("\n=== After compiling node n%" PRId32 " =====\n", j);
     print_bvc_dag(stdout, &c->dag);
     fflush(stdout);
 #endif
@@ -1352,8 +1350,8 @@ static void bv_compiler_convert_simple_nodes(bvc_t *c) {
     if (j < 0) break;
     bvc_process_node_if_simple(c, j);
 
-#if TRACE
-    printf("\n=== After compiling node n%"PRId32" =====\n", j);
+#if YICES_TRACE
+    printf("\n=== After compiling node n%" PRId32 " =====\n", j);
     print_bvc_dag(stdout, &c->dag);
     fflush(stdout);
 #endif
@@ -1448,7 +1446,7 @@ static void bv_compiler_store_mapping(bvc_t *c, thvar_t x) {
 void bv_compiler_process_queue(bvc_t *c) {
   uint32_t i, n;
 
-  //  printf("\n=== bv compiler: process-queue: %"PRIu32" variables ===\n", c->vtbl->nvars);
+  //  printf("\n=== bv compiler: process-queue: %" PRIu32 " variables ===\n", c->vtbl->nvars);
   //  printf("Initial compile map\n");
   //  show_cmap(c);
 
@@ -1457,7 +1455,7 @@ void bv_compiler_process_queue(bvc_t *c) {
     bv_compiler_map_var_to_dag(c, c->queue.data[i]);
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("\n==== INIITIAL DAG ====\n");
   print_bvc_dag(stdout, &c->dag);
 #endif
@@ -1477,7 +1475,7 @@ void bv_compiler_process_queue(bvc_t *c) {
     assert(bvc_first_elem_node(&c->dag) < 0);
     if (bvc_first_complex_node(&c->dag) < 0) break;
 
-#if TRACE
+#if YICES_TRACE
     printf("\n==== FORCING ELEM NODES ====\n");
     print_bvc_dag(stdout, &c->dag);
     fflush(stdout);
@@ -1485,7 +1483,7 @@ void bv_compiler_process_queue(bvc_t *c) {
 
     bvc_dag_force_elem_node(&c->dag);
 
-#if TRACE
+#if YICES_TRACE
     printf("\n==== AFTER FORCING ====\n");
     print_bvc_dag(stdout, &c->dag);
     fflush(stdout);
@@ -1510,7 +1508,7 @@ void bv_compiler_process_queue(bvc_t *c) {
   reset_bvc_dag(&c->dag);
   reset_int_bvset(&c->in_queue);
 
-  //  printf("\n=== done: process-queue: %"PRIu32" variables ===\n", c->vtbl->nvars);
+  //  printf("\n=== done: process-queue: %" PRIu32 " variables ===\n", c->vtbl->nvars);
   //  printf("Final compile map\n");
   //  show_cmap(c);
 }

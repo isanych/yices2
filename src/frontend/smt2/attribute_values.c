@@ -297,7 +297,7 @@ void aval_decref(attr_vtbl_t *table, aval_t i) {
   table->refcount[i] --;
   if (table->refcount[i] == 0) {
     if (table->tag[i] == ATTR_LIST) {
-      list_decref(table, table->desc[i].ptr);
+      list_decref(table, (attr_list_t *)table->desc[i].ptr);
     }
     delete_aval(table, i);
   }

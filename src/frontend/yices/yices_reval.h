@@ -25,17 +25,11 @@
 #ifndef __YICES_REVAL_H
 #define __YICES_REVAL_H
 
+#include <yices_config.h>
 
 /*
  * Yices-main: takes two arguments like an ordinary main
  */
-extern int yices_main(int argc, char *argv[]);
-
-
-/*
- * Run-yices: like yices_main with no arguments
- */
-extern int run_yices(void);
-
+YICES_EXTERN int yices_main(int argc, char *argv[]);
 
 #endif

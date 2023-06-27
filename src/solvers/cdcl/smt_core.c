@@ -30,13 +30,9 @@
 #include "utils/int_hash_sets.h"
 #include "utils/int_queues.h"
 #include "utils/memalloc.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-#define TRACE_LIGHT 0
-#define DEBUG 0
-
-#if DEBUG || TRACE || TRACE_LIGHT
+#if YICES_DEBUG || YICES_TRACE || YICES_TRACE_LIGHT
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -48,7 +44,7 @@ extern void print_bvar(FILE *f, bvar_t x);
 #endif
 
 
-#if DEBUG
+#if YICES_DEBUG
 
 // All debugging functions are defined at the end of this file
 static void check_heap_content(smt_core_t *s);
@@ -1377,7 +1373,7 @@ static void test_eq_clause(smt_core_t *s, const char *msg, uint32_t n, literal_t
   }
 
   if (neq >= 0) {
-    printf("\n--- Learned clause %"PRIu64" %s ---\n", s->stats.conflicts, msg);
+    printf("\n--- Learned clause %" PRIu64 " %s ---\n", s->stats.conflicts, msg);
     printf("{");
     for (i=0; i<n; i++) {
       printf(" ");
@@ -1386,8 +1382,8 @@ static void test_eq_clause(smt_core_t *s, const char *msg, uint32_t n, literal_t
     printf(" }\n");
 
     for (i=0; i<n; i++) {
-      if (get_booleq(s->etable, not(a[i]), &u, &v)) {
-	print_literal(stdout, not(a[i]));
+      if (get_booleq(s->etable, not_(a[i]), &u, &v)) {
+	print_literal(stdout, not_(a[i]));
 	printf(" := (eq ");
 	print_literal(stdout, u);
 	printf(" ");
@@ -1411,7 +1407,7 @@ static void test_eq_conflict(smt_core_t *s) {
 
   if (! s->theory_conflict) {
     c = s->conflict;
-    printf("\n--- Conflict %"PRIu64" ---\n", s->stats.conflicts);
+    printf("\n--- Conflict %" PRIu64 " ---\n", s->stats.conflicts);
     printf("{");
     while (*c >= 0) {
       printf(" ");
@@ -1422,8 +1418,8 @@ static void test_eq_conflict(smt_core_t *s) {
 
     c = s->conflict;
     while (*c >= 0) {
-      if (get_booleq(s->etable, not(*c), &u, &v)) {
-	print_literal(stdout, not(*c));
+      if (get_booleq(s->etable, not_(*c), &u, &v)) {
+	print_literal(stdout, not_(*c));
 	printf(" := (eq ");
 	print_literal(stdout, u);
 	printf(" ");
@@ -1871,7 +1867,7 @@ static void init_variable(smt_core_t *s, bvar_t x) {
   s->heap.activity[x] = 0.0;
 
 #if 0
-  printf("bvar %"PRId32": activity = %f\n", x, s->heap.activity[x]);
+  printf("bvar %" PRId32 ": activity = %f\n", x, s->heap.activity[x]);
 #endif
   heap_insert(&s->heap, x);
 
@@ -2016,10 +2012,10 @@ void set_bvar_activity(smt_core_t *s, bvar_t x, double a) {
 static void assign_literal(smt_core_t *s, literal_t l) {
   bvar_t v;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("---> DPLL:   Assigning literal ");
   print_literal(stdout, l);
-  printf(", decision level = %"PRIu32"\n", s->decision_level);
+  printf(", decision level = %" PRIu32 "\n", s->decision_level);
   fflush(stdout);
 #endif
   assert(0 <= l && l < s->nlits);
@@ -2034,7 +2030,7 @@ static void assign_literal(smt_core_t *s, literal_t l) {
   s->antecedent[v] = mk_literal_antecedent(null_literal);
   set_bit(s->mark, v); // assigned at (or below) base_level
 
-  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not(l)) == VAL_FALSE);
+  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not_(l)) == VAL_FALSE);
 }
 
 
@@ -2066,17 +2062,17 @@ void decide_literal(smt_core_t *s, literal_t l) {
   s->level[v] = k;
   s->antecedent[v] = mk_literal_antecedent(null_literal);
 
-  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not(l)) == VAL_FALSE);
+  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not_(l)) == VAL_FALSE);
 
   // Notify the theory solver
   s->th_ctrl.increase_decision_level(s->th_solver);
 
   s->stats.decisions ++;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("\n---> DPLL:   Decision: literal ");
   print_literal(stdout, l);
-  printf(", decision level = %"PRIu32"\n", s->decision_level);
+  printf(", decision level = %" PRIu32 "\n", s->decision_level);
   fflush(stdout);
 #endif
 }
@@ -2089,10 +2085,10 @@ void decide_literal(smt_core_t *s, literal_t l) {
 void implied_literal(smt_core_t *s, literal_t l, antecedent_t a) {
   bvar_t v;
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("---> DPLL:   Implied literal ");
   print_literal(stdout, l);
-  printf(", decision level = %"PRIu32"\n", s->decision_level);
+  printf(", decision level = %" PRIu32 "\n", s->decision_level);
   fflush(stdout);
 #endif
 
@@ -2111,7 +2107,7 @@ void implied_literal(smt_core_t *s, literal_t l, antecedent_t a) {
     s->nb_unit_clauses ++;
   }
 
-  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not(l)) == VAL_FALSE);
+  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not_(l)) == VAL_FALSE);
 }
 
 
@@ -2121,10 +2117,10 @@ void propagate_literal(smt_core_t *s, literal_t l, void *expl) {
   assert(literal_is_unassigned(s, l));
   assert(bvar_has_atom(s, var_of(l)));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> DPLL:   Theory prop ");
   print_literal(stdout, l);
-  printf(", decision level = %"PRIu32"\n", s->decision_level);
+  printf(", decision level = %" PRIu32 "\n", s->decision_level);
   fflush(stdout);
 #endif
 
@@ -2142,7 +2138,7 @@ void propagate_literal(smt_core_t *s, literal_t l, void *expl) {
     s->nb_unit_clauses ++;
   }
 
-  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not(l)) == VAL_FALSE);
+  assert(literal_value(s, l) == VAL_TRUE && literal_value(s, not_(l)) == VAL_FALSE);
 }
 
 
@@ -2161,7 +2157,7 @@ literal_t select_unassigned_literal(smt_core_t *s) {
   bvar_t x;
   uint8_t *v;
 
-#if DEBUG
+#if YICES_DEBUG
   check_heap(s);
 #endif
 
@@ -2172,8 +2168,8 @@ literal_t select_unassigned_literal(smt_core_t *s) {
     if (rnd < s->scaled_random) {
       x = random_uint(s, s->nvars);
       assert(0 <= x && x < s->nvars);
-      if (bval_is_undef(v[x])) {
-#if TRACE_LIGHT
+      if (bval_is_undef((bval_t)v[x])) {
+#if YICES_TRACE_LIGTH
 	printf("---> DPLL:   Random selection: variable ");
 	print_bvar(stdout, x);
 	printf("\n");
@@ -2190,7 +2186,7 @@ literal_t select_unassigned_literal(smt_core_t *s) {
    */
   while (! heap_is_empty(&s->heap)) {
     x = heap_get_top(&s->heap);
-    if (bval_is_undef(v[x])) {
+    if (bval_is_undef((bval_t)v[x])) {
       goto var_found;
     }
   }
@@ -2217,7 +2213,7 @@ bvar_t select_most_active_bvar(smt_core_t *s) {
   v = s->value;
   while (! heap_is_empty(&s->heap)) {
     x = heap_get_top(&s->heap);
-    if (bval_is_undef(v[x])) {
+    if (bval_is_undef((bval_t)v[x])) {
       goto var_found;
     }
   }
@@ -2244,7 +2240,7 @@ bvar_t select_random_bvar(smt_core_t *s) {
   x = random_uint(s, n); // 0 ... n-1
   assert(0 <= x && x < n);
 
-  if (bval_is_undef(v[x])) return x;
+  if (bval_is_undef((bval_t)v[x])) return x;
 
   if (all_variables_assigned(s)) return null_bvar;
 
@@ -2258,7 +2254,7 @@ bvar_t select_random_bvar(smt_core_t *s) {
     y += d;
     if (y > n) y -= n;
     assert(x != y); // don't loop
-  } while (bval_is_def(v[y]));
+  } while (bval_is_def((bval_t)v[y]));
 
   return y;
 }
@@ -2272,14 +2268,14 @@ bvar_t select_random_bvar(smt_core_t *s) {
 static void increase_bvar_activity(smt_core_t *s, bvar_t x) {
   int32_t i;
   var_heap_t *heap;
-#if DEBUG
+#if YICES_DEBUG
   bool rescaled = false;
 #endif
 
   heap = &s->heap;
   if ((heap->activity[x] += heap->act_increment) > VAR_ACTIVITY_THRESHOLD) {
     rescale_var_activities(heap, s->nvars);
-#if DEBUG
+#if YICES_DEBUG
     rescaled = true;
 #endif
   }
@@ -2290,7 +2286,7 @@ static void increase_bvar_activity(smt_core_t *s, bvar_t x) {
     update_up(heap, x, i);
   }
 
-#if DEBUG
+#if YICES_DEBUG
   if (rescaled) {
     check_heap(s);
   }
@@ -2351,8 +2347,8 @@ static void backtrack(smt_core_t *s, uint32_t back_level) {
   literal_t *u, l;
   bvar_t x;
 
-#if TRACE_LIGHT
-  printf("---> DPLL:   Backtracking to level %"PRIu32"\n\n", back_level);
+#if YICES_TRACE_LIGTH
+  printf("---> DPLL:   Backtracking to level %" PRIu32 "\n\n", back_level);
   fflush(stdout);
 #endif
 
@@ -2418,7 +2414,7 @@ static void backtrack_to_base_level(smt_core_t *s) {
  * Record a two-literal conflict: clause {l0, l1} is false
  */
 static void record_binary_conflict(smt_core_t *s, literal_t l0, literal_t l1) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("\n---> DPLL:   Binary conflict: {");
   print_literal(stdout, l0);
   printf(", ");
@@ -2441,7 +2437,7 @@ static void record_binary_conflict(smt_core_t *s, literal_t l0, literal_t l1) {
  * Record cl as a conflict clause
  */
 static void record_clause_conflict(smt_core_t *s, clause_t *cl) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   uint32_t i;
   literal_t ll;
 
@@ -2475,7 +2471,7 @@ static void record_clause_conflict(smt_core_t *s, clause_t *cl) {
  * - all literals in a must be false in the current assignment
  */
 void record_theory_conflict(smt_core_t *s, literal_t *a) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   uint32_t i;
   literal_t l;
 
@@ -2497,7 +2493,7 @@ void record_theory_conflict(smt_core_t *s, literal_t *a) {
   fflush(stdout);
 #endif
 
-#if DEBUG
+#if YICES_DEBUG
   check_theory_conflict(s, a);
 #endif
 
@@ -2560,7 +2556,7 @@ void record_ternary_theory_conflict(smt_core_t *s, literal_t l1, literal_t l2, l
  * - v must be equal to solver->value
  */
 static inline bval_t lit_val(uint8_t *v, literal_t l) {
-  return v[var_of(l)] ^ sign_of_lit(l);
+  return (bval_t)(v[var_of(l)] ^ sign_of_lit(l));
 }
 
 /*
@@ -2706,7 +2702,7 @@ static bool boolean_propagation(smt_core_t *s) {
   val = s->value;
 
   for (i = s->stack.prop_ptr; i < s->stack.top; i++) {
-    l = not(s->stack.lit[i]);
+    l = not_(s->stack.lit[i]);
 
     bin = s->bin[l];
     if (bin != NULL && ! propagation_via_bin_vector(s, val, l, bin)) {
@@ -2721,7 +2717,7 @@ static bool boolean_propagation(smt_core_t *s) {
 
   s->stack.prop_ptr = i;
 
-#if DEBUG
+#if YICES_DEBUG
   check_propagation(s);
 #endif
 
@@ -2827,7 +2823,7 @@ static inline bool is_var_unmarked(smt_core_t *s, bvar_t x) {
   return ! tst_bit(s->mark, x);
 }
 
-#if DEBUG || !defined(NDEBUG)
+#if YICES_DEBUG || !defined(NDEBUG)
 static inline bool is_var_marked(smt_core_t *s, bvar_t x) {
   return tst_bit(s->mark, x);
 }
@@ -2878,7 +2874,7 @@ static inline uint32_t d_level(smt_core_t *s, literal_t l) {
  * - we put the function here because it's used by add_learned_clause
  */
 static void direct_binary_clause(smt_core_t *s, literal_t l1, literal_t l2) {
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
   printf("---> DPLL:   Add binary clause: { ");
   print_literal(stdout, l1);
   printf(" ");
@@ -2913,7 +2909,7 @@ static void add_learned_clause(smt_core_t *s, uint32_t n, literal_t *a) {
   uint32_t i, j, k, q;
   literal_t l0, l1;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> DPLL:   Learned clause: {");
   for (i=0; i<n; i++) {
     printf(" ");
@@ -2935,7 +2931,7 @@ static void add_learned_clause(smt_core_t *s, uint32_t n, literal_t *a) {
       s->conflict_buffer[0] = l0;
       s->conflict_buffer[1] = end_clause;
     } else {
-#if TRACE
+#if YICES_TRACE
       printf("---> DPLL:   Add learned unit clause: { ");
       print_literal(stdout, l0);
       printf(" }\n");
@@ -3016,7 +3012,7 @@ static bool try_cache_theory_clause(smt_core_t *s, uint32_t n, literal_t *a) {
     if (d_level(s, a[0]) == d && d_level(s, a[1]) == d) {
       direct_binary_clause(s, a[0], a[1]);
 
-#if TRACE
+#if YICES_TRACE
       printf("---> DPLL: cached theory clause: { ");
       print_literal(stdout, a[0]);
       printf(" ");
@@ -3059,7 +3055,7 @@ static bool try_cache_theory_clause(smt_core_t *s, uint32_t n, literal_t *a) {
     a[j] = a[0]; a[0] = l0;
     a[i] = a[1]; a[1] = l1;
 
-#if TRACE
+#if YICES_TRACE
     printf("---> DPLL: cached theory clause: {");
     for (i=0; i<n; i++) {
       printf(" ");
@@ -3152,7 +3148,7 @@ static void try_cache_theory_implication(smt_core_t *s, uint32_t n, literal_t *a
     l = a[i];
     assert(literal_value(s, l) == VAL_TRUE && d_level(s, l) <= s->decision_level);
     if (d_level(s, l) > s->base_level) {
-      ivector_push(v, not(l));
+      ivector_push(v, not_(l));
     }
   }
 
@@ -3185,7 +3181,7 @@ static void explain_antecedent(smt_core_t *s, literal_t l, antecedent_t a) {
   ivector_reset(&s->explanation);
   s->th_smt.expand_explanation(s->th_solver, l, generic_antecedent(a), &s->explanation);
 
-#if DEBUG
+#if YICES_DEBUG
   check_theory_explanation(s, l);
 #endif
 }
@@ -3216,12 +3212,12 @@ static inline bool check_level(smt_core_t *s, literal_t l, uint32_t sgn) {
 
 
 /*
- * Analyze literal antecedents of not(l) to check whether l is subsumed.
+ * Analyze literal antecedents of not_(l) to check whether l is subsumed.
  * - sgn = signature of the learned clause
  * level of l must match sgn (i.e., check_level(sol, l, sgn) is not 0).
  *
- * - returns false if l is not subsumed: either because not(l) has no antecedents
- *   or if an antecedent of not(l) has a decision level that does not match sgn.
+ * - returns false if l is not subsumed: either because not_(l) has no antecedents
+ *   or if an antecedent of not_(l) has a decision level that does not match sgn.
  * - returns true otherwise.
  *
  * Unmarked antecedents are marked and pushed into sol->buffer2.
@@ -3246,7 +3242,7 @@ static bool analyze_antecedents(smt_core_t *s, literal_t l, uint32_t sgn) {
   case clause1_tag:
     c = clause_antecedent(a)->cl;
     i = clause_index(a);
-    assert(c[i] == not(l));
+    assert(c[i] == not_(l));
     // other watched literal
     l1 = c[i^1];
     if (is_lit_unmarked(s, l1)) {
@@ -3285,11 +3281,11 @@ static bool analyze_antecedents(smt_core_t *s, literal_t l, uint32_t sgn) {
      * makes a difference here.
      */
     if (false) {
-      explain_antecedent(s, not(l), a);
+      explain_antecedent(s, not_(l), a);
       c = s->explanation.data;
       // (and c[0] ... c[n-1]) implies (not l)
       for (i=0; i<s->explanation.size; i++) {
-	l1 = not(c[i]);
+	l1 = not_(c[i]);
 	if (is_lit_unmarked(s, l1)) {
 	  if (check_level(s, l1, sgn)) {
 	    set_lit_mark(s, l1);
@@ -3357,7 +3353,7 @@ static void simplify_learned_clause(smt_core_t *s) {
 
   assert(s->buffer2.size == 0);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> DPLL:   Learned clause: {");
   for (i=0; i<n; i++) {
     printf(" ");
@@ -3507,7 +3503,7 @@ static void resolve_conflict(smt_core_t *s) {
     return;
   }
 
-#if DEBUG
+#if YICES_DEBUG
   check_marks(s);
 #endif
 
@@ -3560,7 +3556,7 @@ static void resolve_conflict(smt_core_t *s) {
     if (is_lit_marked(s, b)) {
       if (unresolved == 1) {
         // not b is the implied literal; we're done.
-        buffer->data[0] = not(b);
+        buffer->data[0] = not_(b);
         break;
 
       } else {
@@ -3603,7 +3599,7 @@ static void resolve_conflict(smt_core_t *s) {
           c = s->explanation.data;
           // explanation is c[0] ... c[n-1] where ((and c[0] ... c[n-1]) implies b)
           for (i=0; i<s->explanation.size; i++) {
-            l = not(c[i]);
+            l = not_(c[i]);
             assert(d_level(s, l) <= conflict_level);
             process_literal(l);
           }
@@ -3630,7 +3626,7 @@ static void resolve_conflict(smt_core_t *s) {
    */
   simplify_learned_clause(s);
 
-#if DEBUG
+#if YICES_DEBUG
   check_marks(s);
 #endif
 
@@ -3722,9 +3718,9 @@ void save_conflicting_assumption(smt_core_t *s, literal_t l) {
  * processing of clause antecedents:
  * - if l is implied by clause c then the clause looks like (l \/ c[0] ... \/ c[n-1])
  * - l is the only true literal in c.
- * - when we visit the clause, we call visit(not(l)), visit(not(c[0])), ..., visit(not c([n-1]))
+ * - when we visit the clause, we call visit(not_(l)), visit(not_(c[0])), ..., visit(not c([n-1]))
  * - at this point l has been visited so var_of(l) is in the set.
- * - since var_of(l) = var_of(not(l)) is already in the set, we don't add not(l) to the queue.
+ * - since var_of(l) = var_of(not_(l)) is already in the set, we don't add not_(l) to the queue.
  */
 static void unsat_core_visit_literal(smt_core_t *s, int_hset_t *set, int_queue_t *queue, literal_t l) {
   bvar_t x;
@@ -3748,7 +3744,7 @@ static void unsat_core_visit_clause(smt_core_t *s, int_hset_t *set, int_queue_t 
   c = cl->cl;
   l = *c;
   while (l >= 0) {
-    unsat_core_visit_literal(s, set, queue, not(l));
+    unsat_core_visit_literal(s, set, queue, not_(l));
     c ++;
     l = *c;
   }
@@ -3788,7 +3784,7 @@ static void unsat_core_visit_antecedents(smt_core_t *s, int_hset_t *set, int_que
     q = literal_antecedent(a);
     if (q != null_literal) {
       assert(literal_value(s, q) == VAL_FALSE);
-      unsat_core_visit_literal(s, set, queue, not(q));
+      unsat_core_visit_literal(s, set, queue, not_(q));
     }
     break;
 
@@ -3845,7 +3841,7 @@ void build_unsat_core(smt_core_t *s, ivector_t *v) {
     assert(literal_value(s, l) == VAL_FALSE);
 
     // collect all decision literals that imply not l
-    unsat_core_visit_antecedents(s, &visited, &queue, not(l));
+    unsat_core_visit_antecedents(s, &visited, &queue, not_(l));
     collect_decision_antecedents(s, &visited, &queue, v);
     // the literals in v imply (not l)
     // the core is (v and l)
@@ -3919,7 +3915,7 @@ static clause_t *new_problem_clause(smt_core_t *s, uint32_t n, literal_t *a) {
   clause_t *cl;
   literal_t l;
 
-#if TRACE
+#if YICES_TRACE
   uint32_t i;
   printf("---> DPLL:   Add problem clause: {");
   for (i=0; i<n; i++) {
@@ -3953,7 +3949,7 @@ static clause_t *new_problem_clause(smt_core_t *s, uint32_t n, literal_t *a) {
  * - l must not be assigned at the base level
  */
 static void add_simplified_unit_clause(smt_core_t *s, literal_t l) {
-#if TRACE
+#if YICES_TRACE
   printf("---> DPLL:   Add unit clause: { ");
   print_literal(stdout, l);
   printf(" }\n");
@@ -4110,7 +4106,7 @@ static void add_simplified_clause(smt_core_t *s, uint32_t n, literal_t *a) {
     }
   }
 
-#if DEBUG
+#if YICES_DEBUG
   check_watched_literals(s, n, a);
 #endif
 
@@ -4158,30 +4154,29 @@ static void add_simplified_clause(smt_core_t *s, uint32_t n, literal_t *a) {
  *   a literal true at the base level
  */
 static bool preprocess_clause(smt_core_t *s, uint32_t *n, literal_t *a) {
-  uint32_t i, j, m;
-  literal_t l, l_aux;
-
-  m = *n;
+  uint32_t m = *n;
   if (m == 0) return true;
 
   // remove duplicates/check for complementary literals
   int_array_sort(a, m);
-  l = a[0];
-  j = 1;
-  for (i=1; i<m; i++) {
-    l_aux = a[i];
-    if (l_aux != l) {
-      if (l_aux == not(l)) return false; // true clause
-      a[j++] = l_aux;
-      l = l_aux;
+  {
+    literal_t l = a[0];
+    uint32_t j = 1;
+    for (uint32_t i = 1; i < m; i++) {
+      const literal_t l_aux = a[i];
+      if (l_aux != l) {
+        if (l_aux == not_(l)) return false; // true clause
+        a[j++] = l_aux;
+        l = l_aux;
+      }
     }
+    m = j;
   }
-  m = j;
 
   // remove false literals/check for true literals
-  j = 0;
-  for (i=0; i<m; i++) {
-    l = a[i];
+  uint32_t j = 0;
+  for (uint32_t i = 0; i < m; i++) {
+    const literal_t l = a[i];
     switch (literal_base_value(s, l)) {
     case VAL_FALSE:
       break;
@@ -4231,7 +4226,7 @@ static bool on_the_fly(smt_core_t *s) {
 void record_empty_conflict(smt_core_t *s) {
   assert(s->decision_level == s->base_level);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> DPLL:   Add empty clause: {}\n");
   fflush(stdout);
 #endif
@@ -4258,14 +4253,14 @@ void add_empty_clause(smt_core_t *s) {
  */
 void add_unit_clause(smt_core_t *s, literal_t l) {
   if (on_the_fly(s) && s->decision_level > s->base_level) {
-#if DEBUG
+#if YICES_DEBUG
     check_lemma(s, 1, &l);
 #endif
     push_lemma(&s->lemmas, 1, &l);
     return;
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("---> DPLL:   Add unit clause: { ");
   print_literal(stdout, l);
   printf(" }\n");
@@ -4298,7 +4293,7 @@ void add_unit_clause(smt_core_t *s, literal_t l) {
  */
 void add_clause_unsafe(smt_core_t *s, uint32_t n, literal_t *a) {
   if (on_the_fly(s)) {
-#if DEBUG
+#if YICES_DEBUG
     check_lemma(s, n, a);
 #endif
     push_lemma(&s->lemmas, n, a);
@@ -4318,7 +4313,7 @@ void add_clause_unsafe(smt_core_t *s, uint32_t n, literal_t *a) {
       record_empty_conflict(s);
     }
   }
-#if TRACE
+#if YICES_TRACE
   else {
     printf("---> DPLL:   Skipped true clause\n");
     fflush(stdout);
@@ -4334,7 +4329,7 @@ void add_clause(smt_core_t *s, uint32_t n, literal_t *a) {
   ivector_t *v;
 
   if (on_the_fly(s)) {
-#if DEBUG
+#if YICES_DEBUG
     check_lemma(s, n, a);
 #endif
     push_lemma(&s->lemmas, n, a);
@@ -4362,7 +4357,7 @@ void add_clause(smt_core_t *s, uint32_t n, literal_t *a) {
       record_empty_conflict(s);
     }
   }
-#if TRACE
+#if YICES_TRACE
   else {
     printf("---> DPLL:   Skipped true clause\n");
     fflush(stdout);
@@ -4374,22 +4369,15 @@ void add_clause(smt_core_t *s, uint32_t n, literal_t *a) {
 
 
 /*
- * Short cuts
+ * Shortcuts
  */
 void add_binary_clause(smt_core_t *s, literal_t l1, literal_t l2) {
-  literal_t a[2];
-
-  a[0] = l1;
-  a[1] = l2;
+  literal_t a[2] = { l1, l2 };
   add_clause_unsafe(s, 2, a);
 }
 
 void add_ternary_clause(smt_core_t *s, literal_t l1, literal_t l2, literal_t l3) {
-  literal_t a[3];
-
-  a[0] = l1;
-  a[1] = l2;
-  a[2] = l3;
+  literal_t a[3] = { l1, l2, l3 };
   add_clause_unsafe(s, 3, a);
 }
 
@@ -4435,7 +4423,7 @@ static void add_lemma(smt_core_t *s, uint32_t n, literal_t *a) {
       record_empty_conflict(s);
     }
   }
-#if TRACE
+#if YICES_TRACE
   else {
     printf("---> DPLL:   Skipped true lemma\n");
     fflush(stdout);
@@ -4493,7 +4481,7 @@ static void add_quant_lemma(smt_core_t *s, uint32_t n, literal_t *a, literal_t l
   literal_t l;
   if (preprocess_clause(s, &n, a)) {
 
-#if TRACE_LIGHT
+#if YICES_TRACE_LIGTH
     uint32_t i;
     printf("---> DPLL:   Add quant clause: {");
     for (i=0; i<n; i++) {
@@ -4570,7 +4558,7 @@ static void add_quant_lemma(smt_core_t *s, uint32_t n, literal_t *a, literal_t l
     }
   }
 
-#if TRACE
+#if YICES_TRACE
   else {
     printf("---> DPLL:   Skipped true lemma\n");
     fflush(stdout);
@@ -4738,8 +4726,8 @@ static bool clause_is_locked(smt_core_t *s, clause_t *cl) {
   x0 = var_of(get_first_watch(cl));
   x1 = var_of(get_second_watch(cl));
 
-  return (bval_is_def(s->value[x0]) && s->antecedent[x0] == mk_clause0_antecedent(cl))
-    || (bval_is_def(s->value[x1]) && s->antecedent[x1] == mk_clause1_antecedent(cl));
+  return (bval_is_def((bval_t)s->value[x0]) && s->antecedent[x0] == mk_clause0_antecedent(cl))
+    || (bval_is_def((bval_t)s->value[x1]) && s->antecedent[x1] == mk_clause1_antecedent(cl));
 }
 
 
@@ -4898,9 +4886,9 @@ static inline bval_t unsafe_literal_value(smt_core_t *s, literal_t l) {
 /*
  * Variant of literal_is_unassigned (same reason)
  */
-static inline bval_t unsafe_literal_is_unassigned(smt_core_t *s, literal_t l) {
+static inline bool unsafe_literal_is_unassigned(smt_core_t *s, literal_t l) {
   assert(end_learned <= l && l <= (int32_t) s->nlits);
-  return bval_is_undef(s->value[var_of(l)]);
+  return bval_is_undef((bval_t)s->value[var_of(l)]);
 }
 
 
@@ -5157,8 +5145,8 @@ static void simplify_binary_vectors(smt_core_t *s) {
       s->aux_literals += n;
     }
 
-    // remove all binary clauses that contain not(l0)
-    l0 = not(l0);
+    // remove all binary clauses that contain not_(l0)
+    l0 = not_(l0);
     v0 = s->bin[l0];
     if (v0 != NULL) {
       s->aux_literals += get_lv_size(v0);
@@ -5958,7 +5946,7 @@ static void purge_all_dynamic_atoms(smt_core_t *s) {
 void internalization_start(smt_core_t *s) {
   assert(s->status == STATUS_IDLE && s->decision_level == s->base_level);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> DPLL START\n");
   fflush(stdout);
 #endif
@@ -5978,7 +5966,7 @@ void internalization_start(smt_core_t *s) {
 bool base_propagate(smt_core_t *s) {
   assert(s->status == STATUS_IDLE && s->decision_level == s->base_level);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> DPLL BASE PROPAGATE\n");
   fflush(stdout);
 #endif
@@ -6020,7 +6008,7 @@ bool base_propagate(smt_core_t *s) {
 void start_search(smt_core_t *s, uint32_t n, const literal_t *a) {
   assert(s->status == STATUS_IDLE && s->decision_level == s->base_level);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> DPLL START\n");
   fflush(stdout);
 #endif
@@ -6060,7 +6048,7 @@ void start_search(smt_core_t *s, uint32_t n, const literal_t *a) {
    */
   s->th_ctrl.start_search(s->th_solver);
 
-#if DEBUG
+#if YICES_DEBUG
   check_heap_content(s);
   check_heap(s);
 #endif
@@ -6335,7 +6323,7 @@ void smt_restart(smt_core_t *s) {
 
   assert(s->status == STATUS_SEARCHING || s->status == YICES_STATUS_INTERRUPTED);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> DPLL RESTART\n");
 #endif
   s->stats.restarts ++;
@@ -6357,7 +6345,7 @@ void smt_partial_restart(smt_core_t *s) {
 
   assert(s->status == STATUS_SEARCHING || s->status == YICES_STATUS_INTERRUPTED);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> DPLL PARTIAL RESTART\n");
 #endif
 
@@ -6409,7 +6397,7 @@ void smt_partial_restart_var(smt_core_t *s) {
 
   assert(s->status == STATUS_SEARCHING || s->status == YICES_STATUS_INTERRUPTED);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> DPLL PARTIAL RESTART (VARIANT)\n");
 #endif
 
@@ -6588,7 +6576,7 @@ bool smt_trivially_sat(smt_core_t *s) {
  * - n = number of variables
  */
 void init_free_bool_vars(free_bool_vars_t *fv, uint32_t n) {
-  fv->free = safe_malloc(n *  sizeof(uint8_t));
+  fv->free = (uint8_t*)safe_malloc(n *  sizeof(uint8_t));
   fv->nvars = n;
 }
 
@@ -6708,7 +6696,7 @@ void collect_free_bool_vars(free_bool_vars_t *fv, const smt_core_t *s) {
  *  DEBUGGING FUNCTIONS  *
  ************************/
 
-#if DEBUG
+#if YICES_DEBUG
 
 /*
  * Check that all unassigned variables are in the heap
@@ -6724,7 +6712,7 @@ static void check_heap_content(smt_core_t *s) {
 
   for (x=0; x<s->nvars; x++) {
     if (bval_is_undef(s->value[x]) && s->heap.heap_index[x] < 0) {
-      printf("ERROR: incorrect heap: unassigned variable %"PRIu32" is not in the heap\n", x);
+      printf("ERROR: incorrect heap: unassigned variable %" PRIu32 " is not in the heap\n", x);
       fflush(stdout);
     }
   }
@@ -6748,15 +6736,15 @@ static void check_heap(smt_core_t *s) {
   for (j=1; j<=last; j++) {
     x = h[j];
     if (index[x] != j) {
-      printf("ERROR: incorrect heap: inconsistent index for variable %"PRId32"\n", x);
-      printf("       heap_index is %"PRId32", should be %"PRIu32"\n", index[x], j);
+      printf("ERROR: incorrect heap: inconsistent index for variable %" PRId32 "\n", x);
+      printf("       heap_index is %" PRId32 ", should be %" PRIu32 "\n", index[x], j);
       fflush(stdout);
     }
 
     k = j>>1;
     if (k < j && act[h[k]] < act[x]) {
     //    if (k < j && heap_precedes(act, x, h[k])) {
-      printf("ERROR: incorrect heap order: child %"PRIu32" has higher activity than its parent %"PRIu32"\n", j, k);
+      printf("ERROR: incorrect heap order: child %" PRIu32 " has higher activity than its parent %" PRIu32 "\n", j, k);
       fflush(stdout);
     }
   }
@@ -6776,9 +6764,9 @@ static void check_propagation_bin(smt_core_t *s, literal_t l0) {
   l1 = *v ++;
   while (l1 >= 0) {
     if (literal_is_unassigned(s, l1)) {
-      printf("ERROR: missed propagation. Binary clause {%"PRId32", %"PRId32"}\n", l0, l1);
+      printf("ERROR: missed propagation. Binary clause {%" PRId32 ", %" PRId32 "}\n", l0, l1);
     } else if (literal_value(s, l1) == VAL_FALSE) {
-      printf("ERROR: missed conflict. Binary clause {%"PRId32", %"PRId32"}\n", l0, l1);
+      printf("ERROR: missed conflict. Binary clause {%" PRId32 ", %" PRId32 "}\n", l0, l1);
     }
     l1 = *v ++;
   }
@@ -6797,7 +6785,7 @@ static void check_watch_list(smt_core_t *s, literal_t l, clause_t *cl) {
     }
   }
 
-  printf("ERROR: missing watch, literal = %"PRId32", clause = %p\n", l, clause_of(lnk));
+  printf("ERROR: missing watch, literal = %" PRId32 ", clause = %p\n", l, clause_of(lnk));
 }
 
 
@@ -6838,11 +6826,11 @@ static void check_propagation_clause(smt_core_t *s, clause_t *cl) {
   }
 
   if (nt == 0 && nu == 0) {
-    printf("ERROR: missed conflict. Clause {%"PRId32", %"PRId32"", l0, l1);
+    printf("ERROR: missed conflict. Clause {%" PRId32 ", %" PRId32 "", l0, l1);
     i = 2;
     l = d[i];
     while (l >= 0) {
-      printf(", %"PRId32"", l);
+      printf(", %" PRId32 "", l);
       i ++;
       l = d[i];
     }
@@ -6850,11 +6838,11 @@ static void check_propagation_clause(smt_core_t *s, clause_t *cl) {
   }
 
   if (nt == 0 && nu == 1) {
-    printf("ERROR: missed propagation. Clause {%"PRId32", %"PRId32"", l0, l1);
+    printf("ERROR: missed propagation. Clause {%" PRId32 ", %" PRId32 "", l0, l1);
     i = 2;
     l = d[i];
     while (l >= 0) {
-      printf(", %"PRId32"", l);
+      printf(", %" PRId32 "", l);
       i ++;
       l = d[i];
     }
@@ -6899,7 +6887,7 @@ static void check_marks(smt_core_t *s) {
 
   for (x=0; x<s->nvars; x++) {
     if (is_var_marked(s, x) && s->level[x] > s->base_level) {
-      printf("Warning: var %"PRId32" marked but level[%"PRId32"] = %"PRIu32"\n", x, x, s->level[x]);
+      printf("Warning: var %" PRId32 " marked but level[%" PRId32 "] = %" PRIu32 "\n", x, x, s->level[x]);
       fflush(stdout);
     }
   }
@@ -6908,7 +6896,7 @@ static void check_marks(smt_core_t *s) {
   for (i=0; i<n; i++) {
     l = s->stack.lit[i];
     if (is_lit_unmarked(s, l)) {
-      printf("Warning: literal %"PRId32" assigned at level %"PRIu32" but not marked\n",
+      printf("Warning: literal %" PRId32 " assigned at level %" PRIu32 " but not marked\n",
              l, s->level[var_of(l)]);
       fflush(stdout);
     }
@@ -6948,7 +6936,7 @@ static void check_theory_conflict(smt_core_t *s, literal_t *a) {
   l = a[i];
   while (l >= 0) {
     if (literal_value(s, l) != VAL_FALSE) {
-      printf("Warning: invalid theory conflict. Literal %"PRId32" is not false\n", l);
+      printf("Warning: invalid theory conflict. Literal %" PRId32 " is not false\n", l);
       printf("Conflict: ");
       print_literal_array(a);
       printf("\n");
@@ -7025,15 +7013,15 @@ static void check_theory_explanation(smt_core_t *s, literal_t l) {
 
     if (literal_value(s, l0) != VAL_TRUE) {
       print_theory_explanation_warning(&s->explanation, l, &print);
-      printf("Literal %"PRId32" should be true\n", l0);
+      printf("Literal %" PRId32 " should be true\n", l0);
 
     } else if (d_level(s, l0) > k) {
       print_theory_explanation_warning(&s->explanation, l, &print);
-      printf("Literal %"PRId32" has higher decision level than %"PRId32"\n", l0, l);
+      printf("Literal %" PRId32 " has higher decision level than %" PRId32 "\n", l0, l);
 
     } else if (d_level(s, l0) == k && ! check_precedence(s, l0, l)) {
       print_theory_explanation_warning(&s->explanation, l, &print);
-      printf("Literal %"PRId32" is after %"PRId32" in the assignment queue\n", l0, l);
+      printf("Literal %" PRId32 " is after %" PRId32 " in the assignment queue\n", l0, l);
 
     }
   }
@@ -7053,7 +7041,7 @@ static void print_lit_val_level(literal_t l, bval_t v, uint32_t k) {
   printf(": value = ");
   print_bval(stdout, v);
   if (bval_is_def(v)) {
-    printf(" at level %"PRIu32, k);
+    printf(" at level %" PRIu32, k);
   }
   printf("\n");
 }
@@ -7111,7 +7099,7 @@ static void check_lemma(smt_core_t *s, uint32_t n, literal_t *a) {
   for (i=0; i<n; i++) {
     l = a[i];
     if (l < 0 || l >= s->nlits) {
-      printf("Error: invalid literal in lemma (l = %"PRId32")\n", l);
+      printf("Error: invalid literal in lemma (l = %" PRId32 ")\n", l);
       fflush(stdout);
     }
   }

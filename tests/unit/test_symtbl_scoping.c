@@ -28,7 +28,7 @@
 #include "utils/refcount_strings.h"
 #include "utils/symbol_tables.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -89,13 +89,13 @@ static void check(void) {
     k = stbl_find(&sym_table, name[i]);
     if (k < 0) {
       if (scope[i] != 0) {
-	printf("*** BUG: %s is not mapped. Should be mapped to %"PRIu32" ***\n", name[i], scope[i]);
+	printf("*** BUG: %s is not mapped. Should be mapped to %" PRIu32 " ***\n", name[i], scope[i]);
 	fflush(stdout);
 	exit(1);
       }
     } else {
       if (k != scope[i]) {
-	printf("*** BUG: %s is mapped to %"PRId32". It should be mapped to %"PRIu32" ***\n", name[i], k, scope[i]);
+	printf("*** BUG: %s is mapped to %" PRId32 ". It should be mapped to %" PRIu32 " ***\n", name[i], k, scope[i]);
 	fflush(stdout);
 	exit(1);
       }

@@ -4791,8 +4791,8 @@ static void test_width(term_manager_t *manager, term_t t) {
   bv64_abstract_term(manager->terms, t, &abs);
   n = term_bitsize(manager->terms, t);
   if (bv64_abs_nontrivial(&abs, n)) {
-    printf("---> non-trivial abstraction for term t%"PRId32" (%"PRIu32" bits)\n", t, n);
-    printf("     [%"PRId64", %"PRId64"] (%"PRIu32" bits)\n", abs.low, abs.high, abs.nbits);
+    printf("---> non-trivial abstraction for term t%" PRId32 " (%" PRIu32 " bits)\n", t, n);
+    printf("     [%" PRId64 ", %" PRId64 "] (%" PRIu32 " bits)\n", abs.low, abs.high, abs.nbits);
     fflush(stdout);
   }
 }
@@ -4852,8 +4852,8 @@ static term_t mk_pprod64_term(term_manager_t *manager, uint32_t n, pprod_t *p) {
 
 #if 0
   if (bv64_abs_nontrivial(&abs, n)) {
-    printf("---> reducible power product: %"PRIu32" bits\n", n);
-    printf("     [%"PRId64", %"PRId64"] (%"PRIu32" bits)\n", abs.low, abs.high, abs.nbits);
+    printf("---> reducible power product: %" PRIu32 " bits\n", n);
+    printf("     [%" PRId64 ", %" PRId64 "] (%" PRIu32 " bits)\n", abs.low, abs.high, abs.nbits);
     fflush(stdout);
   }
 #endif
@@ -4933,8 +4933,8 @@ static term_t try_bvarith64_truncation(term_manager_t *manager, bvarith64_buffer
 
 #if 0
   if (bv64_abs_nontrivial(&abs, n)) {
-    printf("---> reducible polynomial: %"PRIu32" bits\n", n);
-    printf("     [%"PRId64", %"PRId64"] (%"PRIu32" bits)\n", abs.low, abs.high, abs.nbits);
+    printf("---> reducible polynomial: %" PRIu32 " bits\n", n);
+    printf("     [%" PRId64 ", %" PRId64 "] (%" PRIu32 " bits)\n", abs.low, abs.high, abs.nbits);
     fflush(stdout);
   }
 #endif

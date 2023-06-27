@@ -302,7 +302,7 @@ static void restore_sizes(fun_tree_t *tree, map_t *m) {
  * - return true if the addition works, false otherwise
  */
 bool fun_tree_add_map(fun_tree_t *tree, map_t *m) {
-  fun_node_t *n, *new, *c;
+  fun_node_t *n, *new_, *c;
   ivector_t *v;
   particle_t idx, x;
 
@@ -344,15 +344,15 @@ bool fun_tree_add_map(fun_tree_t *tree, map_t *m) {
     c = search_list(n->u.child, x);
     if (c == NULL) {
       // add m in a new leaf, first child of n
-      new = fun_tree_make_leaf(tree, m, x);
-      new->next = n->u.child;
-      n->u.child = new;
+      new_ = fun_tree_make_leaf(tree, m, x);
+      new_->next = n->u.child;
+      n->u.child = new_;
       goto done;
     } else if (c->value < x) {
       // add m in a new leaf, after child c
-      new = fun_tree_make_leaf(tree, m, x);
-      new->next = c->next;
-      c->next = new;
+      new_ = fun_tree_make_leaf(tree, m, x);
+      new_->next = c->next;
+      c->next = new_;
       goto done;
     } else {
       assert(c->value == x);

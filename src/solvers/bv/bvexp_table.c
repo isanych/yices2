@@ -145,11 +145,11 @@ static void bvexp_table_remove_var(bvexp_table_t *table, thvar_t x) {
   if (p != NULL) {
     n = bvvar_bitsize(table->vtbl, x);
     if (n > 64) {
-      h = hash_bvmlist(p, n);
-      free_bvmlist(p, &table->store, n);
+      h = hash_bvmlist((bvmlist_t*)p, n);
+      free_bvmlist((bvmlist_t*)p, &table->store, n);
     } else {
-      h = hash_bvmlist64(p, n);
-      free_bvmlist64(p, &table->store64);
+      h = hash_bvmlist64((bvmlist64_t*)p, n);
+      free_bvmlist64((bvmlist64_t*)p, &table->store64);
     }
     int_htbl_erase_record(&table->htbl, h, x);
   }
@@ -228,7 +228,7 @@ void delete_bvexp_table(bvexp_table_t *table) {
     if (p != NULL) {
       b = bvvar_bitsize(table->vtbl, i);
       if (b > 64) {
-        delete_bvmlist_coeffs(p, b);
+        delete_bvmlist_coeffs((bvmlist_t*)p, b);
       }
     }
   }
@@ -286,9 +286,9 @@ static bool eq_hash_bvexp_hobj(bvexp_hobj_t *o, thvar_t i) {
 
   if (bvvar_bitsize(table->vtbl, i) == n) {
     if (n <= 64) {
-      result = equal_bvmlists64(o->def, table->def[i]);
+      result = equal_bvmlists64((bvmlist64_t*)o->def, (bvmlist64_t*)table->def[i]);
     } else {
-      result = equal_bvmlists(o->def, table->def[i], n);
+      result = equal_bvmlists((bvmlist_t*)o->def, (bvmlist_t*)table->def[i], n);
     }
   }
 

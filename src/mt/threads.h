@@ -22,10 +22,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "yices_config.h"
 #include "utils/error.h"
 
 /* the thread main */
-#ifdef MINGW
+#ifdef _WIN32
 #define YICES_THREAD_ATTR  __stdcall
 typedef unsigned yices_thread_result_t;
 typedef yices_thread_result_t ( YICES_THREAD_ATTR *yices_thread_main_t)(void *);
@@ -66,7 +67,7 @@ extern yices_thread_result_t yices_thread_exit(void);
  * Wrap around a thread API call. If the API call indicates error,
  * print the message, a description of the error, and exit.
  */
-#ifndef MINGW
+#ifndef _WIN32
 #define check_thread_api(expr, msg) (expr)
 #else
 static inline void check_thread_api(int expr, const char *msg) {

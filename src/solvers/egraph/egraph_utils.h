@@ -394,7 +394,7 @@ static inline bool egraph_same_class(egraph_t *egraph, occ_t x, occ_t y) {
  */
 static inline bval_t egraph_term_truth_value(egraph_t *egraph, eterm_t t) {
   assert(egraph_term_class(egraph, t) == bool_constant_class);
-  return VAL_TRUE ^ egraph_term_label(egraph, t);
+  return (bval_t)(VAL_TRUE ^ egraph_term_label(egraph, t));
 }
 
 // variants: check whether t is true or false

@@ -38,7 +38,7 @@ static void convert_int32_test(rational_t *r1) {
   if (q_get_int32(r1, &a, &b)) {
     printf("Rational: ");
     q_print(stdout, r1);
-    printf(" decomposed to %"PRId32"/%"PRIu32" (32 bits)\n", a, b);
+    printf(" decomposed to %" PRId32 "/%" PRIu32 " (32 bits)\n", a, b);
     q_init(&check);
     q_set_int32(&check, a, b);
     if (! q_eq(r1, &check)) {
@@ -73,7 +73,7 @@ static void convert_int64_test(rational_t *r1) {
   if (q_get_int64(r1, &a, &b)) {
     printf("Rational: ");
     q_print(stdout, r1);
-    printf(" decomposed to %"PRId64"/%"PRIu64" (64 bits)\n", a, b);
+    printf(" decomposed to %" PRId64 "/%" PRIu64 " (64 bits)\n", a, b);
     q_init(&check);
     q_set_int64(&check, a, b);
     if (! q_eq(r1, &check)) {
@@ -110,7 +110,7 @@ static void convert32_test(rational_t *r1) {
   if (q_get32(r1, &a)) {
     printf("Rational: ");
     q_print(stdout, r1);
-    printf(" equal to %"PRId32" (32 bits)\n", a);
+    printf(" equal to %" PRId32 " (32 bits)\n", a);
     q_init(&check);
     q_set32(&check, a);
     if (! q_eq(r1, &check)) {
@@ -144,7 +144,7 @@ static void convert64_test(rational_t *r1) {
   if (q_get64(r1, &a)) {
     printf("Rational: ");
     q_print(stdout, r1);
-    printf(" equal to %"PRId64" (64 bits)\n", a);
+    printf(" equal to %" PRId64 " (64 bits)\n", a);
     q_init(&check);
     q_set64(&check, a);
     if (! q_eq(r1, &check)) {

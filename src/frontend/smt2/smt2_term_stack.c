@@ -20,12 +20,6 @@
  * OPERATIONS FOR SMT-LIB 2.0
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <string.h>
 
 #include "api/yices_extensions.h"
@@ -1834,7 +1828,7 @@ void tstack_push_sort_name(tstack_t *stack, char *s, uint32_t n, loc_t *loc) {
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_TYPE:
     tstack_push_type(stack, smt2_val[symbol], loc);
@@ -1864,7 +1858,7 @@ void tstack_push_free_sort_name(tstack_t *stack, char *s, uint32_t n, loc_t *loc
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
     /*
      * The standard allows predefined symbols to be used anywhere
@@ -1894,7 +1888,7 @@ void tstack_push_idx_sort(tstack_t *stack, char *s, uint32_t n, loc_t *loc) {
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_IDX_TYPE:
     tstack_push_op(stack, smt2_val[symbol], loc);
@@ -1920,7 +1914,7 @@ void tstack_push_sort_constructor(tstack_t *stack, char *s, uint32_t n, loc_t *l
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_TYPE_OP:
     tstack_push_op(stack, smt2_val[symbol], loc);
@@ -1947,7 +1941,7 @@ void tstack_push_idx_sort_constructor(tstack_t *stack, char *s, uint32_t n, loc_
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_IDX_TYPE_OP:
     tstack_push_op(stack, smt2_val[symbol], loc);
@@ -1972,7 +1966,7 @@ void tstack_push_term_name(tstack_t *stack, char *s, uint32_t n, loc_t *loc) {
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_TERM:
     tstack_push_term(stack, smt2_val[symbol], loc);
@@ -2004,7 +1998,7 @@ void tstack_push_free_fun_name(tstack_t *stack, char *s, uint32_t n, loc_t *loc)
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
     /*
      * The standard allows predefined symbols to be used anywhere
@@ -2034,7 +2028,7 @@ void tstack_push_smt2_op(tstack_t *stack, char *s, uint32_t n, loc_t *loc) {
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_TERM_OP:
     tstack_push_op(stack, smt2_val[symbol], loc);
@@ -2066,7 +2060,7 @@ void tstack_push_smt2_idx_op(tstack_t *stack, char *s, uint32_t n, loc_t *loc) {
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_IDX_TERM_OP:
     tstack_push_op(stack, smt2_val[symbol], loc);
@@ -2092,7 +2086,7 @@ void tstack_push_idx_term(tstack_t *stack, char *s, uint32_t n, loc_t *loc) {
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_IDX_TERM:
     tstack_push_op(stack, smt2_val[symbol], loc);
@@ -2139,7 +2133,7 @@ void tstack_push_qual_idx_term_name(tstack_t *stack, char *s, uint32_t n, loc_t 
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_IDX_TERM:
     tstack_push_opcode(stack, smt2_val[symbol], loc);
@@ -2177,7 +2171,7 @@ void tstack_push_qual_smt2_op(tstack_t *stack, char *s, uint32_t n, loc_t *loc) 
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_TERM_OP:
     tstack_push_opcode(stack, smt2_val[symbol], loc);
@@ -2205,7 +2199,7 @@ void tstack_push_qual_smt2_idx_op(tstack_t *stack, char *s, uint32_t n, loc_t *l
   smt2_key_t key;
 
   symbol = smt2_string_to_symbol(s, n);
-  key = smt2_key[symbol];
+  key = (smt2_key_t)smt2_key[symbol];
   switch (key) {
   case SMT2_KEY_IDX_TERM_OP:
     tstack_push_opcode(stack, smt2_val[symbol], loc);

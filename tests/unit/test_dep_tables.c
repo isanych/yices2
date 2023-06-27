@@ -23,7 +23,7 @@
 #include "utils/dep_tables.h"
 #include "utils/index_vectors.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -37,7 +37,7 @@ static void print_vector(int32_t *v) {
   assert(v != NULL);
   n = iv_size(v);
   for (i=0; i<n; i++) {
-    printf(" %"PRId32, v[i]);
+    printf(" %" PRId32, v[i]);
   }
 }
 
@@ -46,15 +46,15 @@ static void print_dep_table(dep_table_t *table) {
   uint32_t i, n;
 
   printf("dep table %p\n", table);
-  printf("  size = %"PRIu32"\n", table->size);
-  printf("  nelems = %"PRIu32"\n", table->nelems);
+  printf("  size = %" PRIu32 "\n", table->size);
+  printf("  nelems = %" PRIu32 "\n", table->nelems);
   printf("  content:\n");
 
   n = table->nelems;
   for (i=0; i<n; i++) {
     v = get_dependents(table, i);
     if (v != NULL) {
-      printf("   dep[%"PRId32"] = {", i);
+      printf("   dep[%" PRId32 "] = {", i);
       print_vector(v);
       printf(" }\n");
     }
@@ -74,7 +74,7 @@ static void test_additions(dep_table_t *table, uint32_t n) {
   while (n > 0) {
     i = (int32_t) (random() & 255);
     j = (int32_t) (random() & 255);
-    printf("test add %"PRId32" to dep[%"PRId32"]: ", j, i);
+    printf("test add %" PRId32 " to dep[%" PRId32 "]: ", j, i);
     add_dependent(table, i, j);
     // check that j is the last element of dep[i];
     v = get_dependents(table, i);

@@ -112,7 +112,7 @@ extern void booleq_table_record_eq(booleq_table_t *table, literal_t l, literal_t
  * Record the constraint l := (xor a b)
  */
 static inline void booleq_table_record_xor(booleq_table_t *table, literal_t l, literal_t a, literal_t b) {
-  booleq_table_record_eq(table, l, not(a), b);
+  booleq_table_record_eq(table, l, not_(a), b);
 }
 
 

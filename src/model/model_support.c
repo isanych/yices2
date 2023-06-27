@@ -58,7 +58,7 @@ static harray_t *lookup_support(support_constructor_t *constructor, int32_t i) {
   a = NULL;
   p = ptr_hmap_find(&constructor->map, i);
   if (p != NULL) {
-    a = p->val;
+    a = (harray_t*)p->val;
     assert(a != NULL);
   }
   return a;
@@ -142,21 +142,21 @@ static harray_t *support_of_ite(support_constructor_t *constructor, composite_te
  * - if one t[i] evaluates to true, then it's sufficient for (or ... t[i] ...)
  * - if several t[i]s evaluate to true, we choose the one with smallest support
  */
-static harray_t *support_of_or(support_constructor_t *constructor, composite_term_t *or) {
+static harray_t *support_of_or(support_constructor_t *constructor, composite_term_t *or_) {
   harray_t *result;
   uint32_t i, n;
 
   result = NULL;
-  n = or->arity;
+  n = or_->arity;
   for (i=0; i<n; i++) {
-    if (eval_to_true_in_model(&constructor->eval, or->arg[i])) {
-      result = best_support(result, get_term_support(constructor, or->arg[i]));
+    if (eval_to_true_in_model(&constructor->eval, or_->arg[i])) {
+      result = best_support(result, get_term_support(constructor, or_->arg[i]));
     }
   }
 
   if (result == NULL) {
     // all sub-terms evaluate to false
-    result = support_of_composite(constructor, or);
+    result = support_of_composite(constructor, or_);
   }
 
   return result;

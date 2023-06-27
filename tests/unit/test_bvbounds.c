@@ -51,13 +51,13 @@ static void test_bounds(term_t t) {
   uint32_t n;
   uint64_t c;
 
-  printf("Testing term t%"PRId32"\n", t);
+  printf("Testing term t%" PRId32 "\n", t);
   yices_pp_term(stdout, t, 100, 10, 0);
   printf("\n");
 
   n = yices_term_bitsize(t);
   assert(n > 0);
-  printf("Number of bits: %"PRIu32"\n\n", n);
+  printf("Number of bits: %" PRIu32 "\n\n", n);
 
   init_bvconstant(&aux);
   bvconstant_set_bitsize(&aux, n);
@@ -88,22 +88,22 @@ static void test_bounds(term_t t) {
     c = upper_bound_unsigned64(__yices_globals.terms, t);
     printf("\nupper bound64, unsigned: ");
     bvconst64_print(stdout, c, n);
-    printf(" (%"PRIu64")\n", c);
+    printf(" (%" PRIu64 ")\n", c);
 
     c = lower_bound_unsigned64(__yices_globals.terms, t);
     printf("lower bound64, unsigned: ");
     bvconst64_print(stdout, c, n);
-    printf(" (%"PRIu64")\n", c);
+    printf(" (%" PRIu64 ")\n", c);
 
     c = upper_bound_signed64(__yices_globals.terms, t);
     printf("upper bound64, signed:   ");
     bvconst64_print(stdout, c, n);
-    printf(" (%"PRId64")\n", signed_bv64(c, n));
+    printf(" (%" PRId64 ")\n", signed_bv64(c, n));
 
     c = lower_bound_signed64(__yices_globals.terms, t);
     printf("lower bound64, signed:   ");
     bvconst64_print(stdout, c, n);
-    printf(" (%"PRId64")\n", signed_bv64(c, n));
+    printf(" (%" PRId64 ")\n", signed_bv64(c, n));
   }
 
   printf("----\n\n");

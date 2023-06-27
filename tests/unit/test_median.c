@@ -29,7 +29,7 @@
 #include "utils/prng.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -147,7 +147,7 @@ static void print_array(int32_t *a, int32_t n) {
       l = 20;
     }
     l --;
-    printf(" %4"PRId32, a[i]);
+    printf(" %4" PRId32, a[i]);
   }
   printf("\n");
 }
@@ -173,9 +173,9 @@ static void check_median(int32_t x, int32_t *a, uint32_t n) {
     }
   }
 
-  printf("  below median: %"PRIu32"\n", b);
-  printf("  equal median: %"PRIu32"\n", e);
-  printf("  above median: %"PRIu32"\n", u);
+  printf("  below median: %" PRIu32 "\n", b);
+  printf("  equal median: %" PRIu32 "\n", e);
+  printf("  above median: %" PRIu32 "\n", u);
 
   if (e == 0) {
     printf("BUG: median not in array\n\n");
@@ -204,7 +204,7 @@ static void run_test(int32_t *a, uint32_t n) {
   printf("\nInput:  ");
   print_array(a, n);
   x = median(a, n);
-  printf("Median:  %4"PRId32"\n", x);
+  printf("Median:  %4" PRId32 "\n", x);
   check_median(x, a, n);
 }
 

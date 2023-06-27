@@ -42,7 +42,7 @@ void print_bval(FILE *f, bval_t b) {
   // cast to (int) prevents compilation warnings with clang
   // because it uses (unsigned) for the bval_t enum.
   if ((int) b < 0 || b > VAL_TRUE) {
-    b = VAL_TRUE + 1;
+    b = (bval_t)(VAL_TRUE + 1);
   }
   fputs(bval2string[b], f);
 }
@@ -52,7 +52,7 @@ void print_bval(FILE *f, bval_t b) {
  */
 void print_status(FILE *f, smt_status_t s) {
   if (s > YICES_STATUS_INTERRUPTED) {
-    s = YICES_STATUS_INTERRUPTED + 1;
+    s = (smt_status_t)(YICES_STATUS_INTERRUPTED + 1);
   }
   fputs(status2string[s], f);
 }
@@ -65,12 +65,12 @@ void print_bvar(FILE *f, bvar_t x) {
     if (x == null_bvar) {
       fputs("null_bvar", f);
     } else {
-      fprintf(f, "BVAR%"PRId32, x);
+      fprintf(f, "BVAR%" PRId32, x);
     }
   } else if (x == const_bvar) {
     fputs("true", f);
   } else {
-    fprintf(f, "p!%"PRId32, x);
+    fprintf(f, "p!%" PRId32, x);
   }
 }
 
@@ -83,7 +83,7 @@ void print_literal(FILE *f, literal_t l) {
       //      fputs("null_literal", f);
       fputs("nil", f);
     } else {
-      fprintf(f, "LIT%"PRId32, l);
+      fprintf(f, "LIT%" PRId32, l);
     }
   } else if (l == true_literal) {
     fputs("tt", f);
@@ -91,7 +91,7 @@ void print_literal(FILE *f, literal_t l) {
     fputs("ff", f);
   } else {
     if (is_neg(l)) fputc('~', f);
-    fprintf(f, "p!%"PRId32, var_of(l));
+    fprintf(f, "p!%" PRId32, var_of(l));
   }
 }
 
@@ -338,7 +338,7 @@ void print_boolean_assignment(FILE *f, smt_core_t *core) {
     fputc(' ', f);
     if (is_pos(l)) fputc(' ', f);
     print_literal(f, l);
-    fprintf(f, " level = %"PRIu32"\n", core->level[var_of(l)]);
+    fprintf(f, " level = %" PRIu32 "\n", core->level[var_of(l)]);
   }
 }
 
@@ -384,14 +384,14 @@ static inline uint32_t cv_size(clause_t **v) {
  */
 void print_smt_core(FILE *f, smt_core_t *core) {
   fprintf(f, "SMT Core %p\n", core);
-  fprintf(f, "  %"PRIu32" variables\n", core->nvars);
-  fprintf(f, "  %"PRIu32" unit clauses\n", core->nb_unit_clauses);
-  fprintf(f, "  %"PRIu32" binary clauses\n", core->nb_bin_clauses);
-  fprintf(f, "  %"PRIu32" problem clauses\n", cv_size(core->problem_clauses));
-  fprintf(f, "  %"PRIu32" learned clauses\n", cv_size(core->learned_clauses));
+  fprintf(f, "  %" PRIu32 " variables\n", core->nvars);
+  fprintf(f, "  %" PRIu32 " unit clauses\n", core->nb_unit_clauses);
+  fprintf(f, "  %" PRIu32 " binary clauses\n", core->nb_bin_clauses);
+  fprintf(f, "  %" PRIu32 " problem clauses\n", cv_size(core->problem_clauses));
+  fprintf(f, "  %" PRIu32 " learned clauses\n", cv_size(core->learned_clauses));
   fprintf(f, "status = %s\n", status2string[core->status]);
-  fprintf(f, "base_level = %"PRIu32"\n", core->base_level);
-  fprintf(f, "decision_level = %"PRIu32"\n", core->decision_level);
+  fprintf(f, "base_level = %" PRIu32 "\n", core->base_level);
+  fprintf(f, "decision_level = %" PRIu32 "\n", core->decision_level);
   print_conflict(f, core);
   fprintf(f, "Assignment:\n");
   print_boolean_assignment(f, core);

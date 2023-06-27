@@ -104,9 +104,9 @@ static void print_ptr_set(FILE *f, ptr_set_t *s) {
 static void show_ptr_set_details(FILE *f, ptr_set_t *s) {
   fprintf(f, "Set: %p\n", s);
   if (s != NULL) {
-    fprintf(f, "  size = %"PRIu32"\n", s->size);
-    fprintf(f, "  nelems = %"PRIu32"\n", s->nelems);
-    fprintf(f, "  ndeleted = %"PRIu32"\n", s->ndeleted);
+    fprintf(f, "  size = %" PRIu32 "\n", s->size);
+    fprintf(f, "  nelems = %" PRIu32 "\n", s->nelems);
+    fprintf(f, "  ndeleted = %" PRIu32 "\n", s->ndeleted);
   }
   fprintf(f, "  content:\n");
   print_ptr_set(f, s);
@@ -143,7 +143,7 @@ static void speed_test(ptr_set_t **s, void *a[], uint32_t n) {
   }
 
   end = get_cpu_time();
-  printf("Speed test: %"PRIu32" add/remove operations in %.3f s\n", 4 * n * 2000, time_diff(end, start));  
+  printf("Speed test: %" PRIu32 " add/remove operations in %.3f s\n", 4 * n * 2000, time_diff(end, start));  
 }
 
 

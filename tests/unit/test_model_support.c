@@ -31,7 +31,7 @@
 
 #include "yices.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -98,7 +98,7 @@ static void declare_booleans(void) {
   uint32_t i;
 
   for (i=0; i<N; i++) {
-    snprintf(name, 10, "b%"PRIu32, i);
+    snprintf(name, 10, "b%" PRIu32, i);
     boolVar[i] = declare_bool(name);
   }
 }
@@ -108,7 +108,7 @@ static void declare_reals(void) {
   uint32_t i;
 
   for (i=0; i<N; i++) {
-    snprintf(name, 10, "x%"PRIu32, i);
+    snprintf(name, 10, "x%" PRIu32, i);
     realVar[i] = declare_real(name);
   }
 }
@@ -118,7 +118,7 @@ static void declare_integers(void) {
   uint32_t i;
 
   for (i=0; i<N; i++) {
-    snprintf(name, 10, "i%"PRIu32, i);
+    snprintf(name, 10, "i%" PRIu32, i);
     intVar[i] = declare_int(name);
   }
 }

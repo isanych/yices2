@@ -94,10 +94,10 @@ static void test_enum_type(type_t tau) {
   printf("==== Enumerating elements of type ");
   print_type(stdout, &types, tau);
   printf(" ====\n");
-  printf("cardinality: %"PRIu32"\n", n);
+  printf("cardinality: %" PRIu32 "\n", n);
   for (i=0; i<n; i++) {
     x = vtbl_gen_object(&vtbl, tau, i);
-    printf("elem[%"PRIu32"] = ", i);
+    printf("elem[%" PRIu32 "] = ", i);
     vtbl_print_object(stdout, &vtbl, x);
     printf("\n");
     if (vtbl_queue_is_nonempty(&vtbl)) {

@@ -23,7 +23,7 @@
 #include <inttypes.h>
 
 
-#ifdef MINGW
+#ifdef _WIN32
 /*
  * Need some version of random() and srandom()
  * rand() exists on mingw
@@ -181,7 +181,7 @@ int main(void) {
   for (i=0; i<NKEYWORDS; i++) {
     h = hash_string(kw[i]);
     hash[i] = h;
-    printf("%20s    %10"PRIu32" %3"PRIu32" %3"PRIu32" %3"PRIu32"\n", kw[i], h, (h & 0x1ff), (h & 0xff), (h & 0x7f));
+    printf("%20s    %10" PRIu32 " %3" PRIu32 " %3" PRIu32 " %3" PRIu32 "\n", kw[i], h, (h & 0x1ff), (h & 0xff), (h & 0x7f));
   }
 
   for (i=0; i<256; i++) test[i] = 0;
@@ -193,10 +193,10 @@ int main(void) {
     test[h] ++;
   }
 
-  printf("\n%"PRIu32" collisions:\n", n);
+  printf("\n%" PRIu32 " collisions:\n", n);
   for (h=0; h<256; h++) {
     if (test[h] > 1) {
-      printf("%3"PRIu32" ", h);
+      printf("%3" PRIu32 " ", h);
     }
   }
   printf("\n");

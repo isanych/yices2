@@ -55,7 +55,7 @@ static void resize_flevel_table(flevel_table_t *table, uint32_t n) {
   if (s <= n) s = n+1;
 
   assert(s > n && s <= MAX_FLEVEL_TABLE_SIZE);
-  table->level = safe_realloc(table->level, s * sizeof(int32_t));
+  table->level = (int32_t*)safe_realloc(table->level, s * sizeof(int32_t));
   for (i=table->size; i<s; i++) {
     table->level[i] = -1; // mark as unknown
   }

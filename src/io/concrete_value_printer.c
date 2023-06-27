@@ -76,7 +76,7 @@ static void vtbl_print_unint_name(FILE *f, value_table_t *table, value_t c, valu
   }
 
   if (s == NULL) {
-    fprintf(f, "const!%"PRId32, c);
+    fprintf(f, "const!%" PRId32, c);
   } else {
     fputs(s, f);
   }
@@ -88,7 +88,7 @@ static void vtbl_print_unint_name(FILE *f, value_table_t *table, value_t c, valu
  */
 static void vtbl_print_fun_name(FILE *f, value_t c, value_fun_t *fun) {
   if (fun->name == NULL) {
-    fprintf(f, "fun!%"PRId32, c);
+    fprintf(f, "fun!%" PRId32, c);
   } else {
     fputs(fun->name, f);
   }
@@ -172,23 +172,23 @@ void vtbl_print_object(FILE *f, value_table_t *table, value_t c) {
     vtbl_print_algebraic(f, table->desc[c].ptr);
     break;
   case BITVECTOR_VALUE:
-    vtbl_print_bitvector(f, table->desc[c].ptr);
+    vtbl_print_bitvector(f, (value_bv_t*)table->desc[c].ptr);
     break;
   case TUPLE_VALUE:
-    vtbl_print_tuple(f, table, table->desc[c].ptr);
+    vtbl_print_tuple(f, table, (value_tuple_t*)table->desc[c].ptr);
     break;
   case UNINTERPRETED_VALUE:
-    vtbl_print_unint_name(f, table, c, table->desc[c].ptr);
+    vtbl_print_unint_name(f, table, c, (value_unint_t*)table->desc[c].ptr);
     break;
   case FUNCTION_VALUE:
-    vtbl_print_fun_name(f, c, table->desc[c].ptr);
+    vtbl_print_fun_name(f, c, (value_fun_t*)table->desc[c].ptr);
     vtbl_push_object(table, c);
     break;
   case MAP_VALUE:
-    vtbl_print_map(f, table, table->desc[c].ptr);
+    vtbl_print_map(f, table, (value_map_t*)table->desc[c].ptr);
     break;
   case UPDATE_VALUE:
-    vtbl_print_update(f, table, table->desc[c].ptr);
+    vtbl_print_update(f, table, (value_update_t*)table->desc[c].ptr);
     break;
   default:
     assert(false);
@@ -207,7 +207,7 @@ void vtbl_print_object(FILE *f, value_table_t *table, value_t c) {
  */
 static void vtbl_print_function_header(FILE *f, value_table_t *table, value_t c, type_t tau, const char *name) {
   if (name == NULL) {
-    fprintf(f, "(function fun!%"PRId32"\n", c);
+    fprintf(f, "(function fun!%" PRId32 "\n", c);
   } else {
     fprintf(f, "(function %s\n", name);
   }
@@ -228,7 +228,7 @@ void vtbl_print_function(FILE *f, value_table_t *table, value_t c, bool show_def
   uint32_t j, m;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
 
   vtbl_print_function_header(f, table, c, fun->type, fun->name);
 
@@ -277,7 +277,7 @@ void vtbl_normalize_and_print_update(FILE *f, value_table_t *table, const char *
   assert(hset != NULL);
 
   if (name == NULL) {
-    sprintf(fake_name, "fun!%"PRId32, c);
+    sprintf(fake_name, "fun!%" PRId32, c);
     name = fake_name;
   }
 
@@ -456,23 +456,23 @@ void vtbl_pp_object(yices_pp_t *printer, value_table_t *table, value_t c) {
     pp_algebraic(printer, table->desc[c].ptr);
     break;
   case BITVECTOR_VALUE:
-    vtbl_pp_bitvector(printer, table->desc[c].ptr);
+    vtbl_pp_bitvector(printer, (value_bv_t*)table->desc[c].ptr);
     break;
   case TUPLE_VALUE:
-    vtbl_pp_tuple(printer, table, table->desc[c].ptr);
+    vtbl_pp_tuple(printer, table, (value_tuple_t*)table->desc[c].ptr);
     break;
   case UNINTERPRETED_VALUE:
-    vtbl_pp_unint_name(printer, table, c, table->desc[c].ptr);
+    vtbl_pp_unint_name(printer, table, c, (value_unint_t*)table->desc[c].ptr);
     break;
   case FUNCTION_VALUE:
-    vtbl_pp_fun_name(printer, c, table->desc[c].ptr);
+    vtbl_pp_fun_name(printer, c, (value_fun_t*)table->desc[c].ptr);
     vtbl_push_object(table, c);
     break;
   case MAP_VALUE:
-    vtbl_pp_map(printer, table, table->desc[c].ptr);
+    vtbl_pp_map(printer, table, (value_map_t*)table->desc[c].ptr);
     break;
   case UPDATE_VALUE:
-    vtbl_pp_update(printer, table, table->desc[c].ptr);
+    vtbl_pp_update(printer, table, (value_update_t*)table->desc[c].ptr);
     break;
   default:
     assert(false);
@@ -512,7 +512,7 @@ void vtbl_pp_function(yices_pp_t *printer, value_table_t *table, value_t c, bool
   uint32_t j, m;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
 
   vtbl_pp_function_header(printer, table, c, fun->type, fun->name);
 
@@ -562,7 +562,7 @@ void vtbl_normalize_and_pp_update(yices_pp_t *printer, value_table_t *table, con
   assert(hset != NULL);
 
   if (name == NULL) {
-    sprintf(fake_name, "fun!%"PRId32, c);
+    sprintf(fake_name, "fun!%" PRId32, c);
     name = fake_name;
   }
 

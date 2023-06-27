@@ -144,7 +144,7 @@ void delete_arith_vartable(arith_vartable_t *table) {
       break;
 
     case AVAR_POLY:
-      free_polynomial(p);
+      free_polynomial((polynomial_t*)p);
       break;
 
     case AVAR_PPROD:
@@ -152,7 +152,7 @@ void delete_arith_vartable(arith_vartable_t *table) {
       break;
 
     case AVAR_CONST:
-      q_clear(p);
+      q_clear((rational_t*)p);
       safe_free(p);
       break;
     }
@@ -197,7 +197,7 @@ void reset_arith_vartable(arith_vartable_t *table) {
       break;
 
     case AVAR_POLY:
-      free_polynomial(p);
+      free_polynomial((polynomial_t*)p);
       break;
 
     case AVAR_PPROD:
@@ -205,7 +205,7 @@ void reset_arith_vartable(arith_vartable_t *table) {
       break;
 
     case AVAR_CONST:
-      q_clear(p);
+      q_clear((rational_t*)p);
       safe_free(p);
       break;
     }
@@ -260,21 +260,21 @@ void arith_vartable_remove_vars(arith_vartable_t *table, uint32_t nvars) {
       break;
 
     case AVAR_POLY:
-      k = hash_polynomial(p);
+      k = hash_polynomial((polynomial_t*)p);
       int_htbl_erase_record(&table->htbl, k, i);
-      free_polynomial(p);
+      free_polynomial((polynomial_t*)p);
       break;
 
     case AVAR_PPROD:
-      k = hash_pprod2(p);
+      k = hash_pprod2((pprod_t*)p);
       int_htbl_erase_record(&table->htbl, k, i);
       safe_free(p);
       break;
 
     case AVAR_CONST:
-      k = hash_rational(p);
+      k = hash_rational((rational_t*)p);
       int_htbl_erase_record(&table->htbl, k, i);
-      q_clear(p);
+      q_clear((rational_t*)p);
       safe_free(p);
       break;
     }
@@ -723,7 +723,7 @@ static bool eq_poly_hobj(poly_hobj_t *o, thvar_t x) {
 
   table = o->table;
   if (arith_var_def_is_poly(table, x)) {
-    p = table->def[x];
+    p = (polynomial_t*)table->def[x];
     return p->nterms == o->len && equal_monarrays(p->mono, o->poly);
   }
 

@@ -167,8 +167,8 @@ static inline bool rbtree_is_present(rbtree_t *tree, uint32_t x) {
  * Add x to the tree: no change if x is already in there
  */
 static inline void rbtree_add(rbtree_t *tree, uint32_t x) {
-  bool new;
-  (void) rbtree_get(tree, x, &new);
+  bool new_;
+  (void) rbtree_get(tree, x, &new_);
 }
 
 

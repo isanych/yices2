@@ -69,7 +69,7 @@ static gmap_elem_t *extend_gmap_elem(gmap_elem_t *e) {
     n = GMAP_ELEM_MAX_SIZE;
   }
 
-  e = safe_realloc(e, sizeof(gmap_elem_t) + n * sizeof(gmap_entry_t));
+  e = (gmap_elem_t*)safe_realloc(e, sizeof(gmap_elem_t) + n * sizeof(gmap_entry_t));
   e->size = n;
 
   return e;
@@ -102,7 +102,7 @@ static gmap_elem_t *gmap_elem_add(gmap_elem_t *e, uint32_t ttbl, literal_t l) {
  *
  * A pair <tt, lit> matches b either if tt == ttbl or tt == ~ttbl.
  * In the first case, the matching literal is lit. In the other
- * case, the matching literal is not(lit).
+ * case, the matching literal is not_(lit).
  */
 static literal_t gmap_elem_find_ttbl(gmap_elem_t *e, uint32_t ttbl) {
   uint32_t i, n;
@@ -114,7 +114,7 @@ static literal_t gmap_elem_find_ttbl(gmap_elem_t *e, uint32_t ttbl) {
   n = e->nelems;
   for (i=0; i<n; i++) {
     if (e->data[i].ttbl == ttbl) return e->data[i].lit;
-    if (e->data[i].ttbl == flipped) return not(e->data[i].lit);
+    if (e->data[i].ttbl == flipped) return not_(e->data[i].lit);
   }
   return null_literal;
 }

@@ -24,7 +24,7 @@
 #include "solvers/egraph/egraph_types.h"
 #include "solvers/egraph/theory_explanations.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -53,7 +53,7 @@ static void show_atoms(atom_vector_t *av) {
       printf("\n        ");
     }
     k ++;
-    printf(" %"PRId32, av->data[i]);
+    printf(" %" PRId32, av->data[i]);
   }
 }
 
@@ -68,7 +68,7 @@ static void show_eqs(eq_vector_t *eqv) {
       printf("\n      ");
     }
     k ++;
-    printf(" (t%"PRId32" = t%"PRId32")", eqv->data[i].lhs, eqv->data[i].rhs);
+    printf(" (t%" PRId32 " = t%" PRId32 ")", eqv->data[i].lhs, eqv->data[i].rhs);
   }
 }
 
@@ -98,7 +98,7 @@ static void show_th_explanation(th_explanation_t *e) {
     show_eqs(eqv_header(eqs));
     printf("\n");
   }
-  printf("  %"PRIu32" atoms, %"PRId32" equalities\n", na, ne);
+  printf("  %" PRIu32 " atoms, %" PRId32 " equalities\n", na, ne);
 }
 
 
@@ -146,7 +146,7 @@ static void duplicate_eq(th_explanation_t *e) {
       i = random() % n;
       x = eqs[i].lhs;
       y = eqs[i].rhs;
-      printf("  duplicate: (t%"PRId32" = t%"PRId32")\n", y, x);
+      printf("  duplicate: (t%" PRId32 " = t%" PRId32 ")\n", y, x);
       th_explanation_add_eq(e, y, x);
     }
   }

@@ -44,7 +44,7 @@
 
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -281,7 +281,7 @@ static bool low_degree(type_t tau, term_t t) {
  * GLOBAL STORE + int/real types + a buffer
  */
 static term_store_t all_terms;
-static type_t boolean, integers, reals;
+static type_t boolean_, integers, reals;
 static ivector_t buffer;
 
 
@@ -298,7 +298,7 @@ static void init_store(void) {
 
   integers = yices_int_type();
   reals = yices_real_type();
-  boolean = yices_bool_type();
+  boolean_ = yices_bool_type();
 
   term_store_add_term(&all_terms, yices_true());
   term_store_add_term(&all_terms, yices_false());
@@ -310,14 +310,14 @@ static void init_store(void) {
   // five integer and five real variables
   for (i=0; i<5; i++) {
     t = yices_new_uninterpreted_term(integers);
-    sprintf(name, "i%"PRIu32, i);
+    sprintf(name, "i%" PRIu32, i);
     yices_set_term_name(t, name);
     term_store_add_term(&all_terms, t);
   }
 
   for (i=0; i<5; i++) {
     t = yices_new_uninterpreted_term(reals);
-    sprintf(name, "x%"PRIu32, i);
+    sprintf(name, "x%" PRIu32, i);
     yices_set_term_name(t, name);
     term_store_add_term(&all_terms, t);
   }
@@ -341,7 +341,7 @@ static void test_constant(int32_t a) {
 
   mpz_init(z);
 
-  printf("test: constant %"PRId32, a);
+  printf("test: constant %" PRId32, a);
   t = yices_int32(a);
   u = yices_int64(a);
   assert(u == t);
@@ -362,7 +362,7 @@ static void test_constant_pair(int32_t a, uint32_t b) {
 
   mpq_init(q);
 
-  printf("test: constant %"PRId32"/%"PRIu32, a, b);
+  printf("test: constant %" PRId32 "/%" PRIu32, a, b);
   t = yices_rational32(a, b);
   u = yices_rational64(a, b);
   assert(u == t);
@@ -522,7 +522,7 @@ static term_t test_power(term_t t1, uint32_t d) {
 
   printf("test: (power ");
   print_term(stdout, __yices_globals.terms, t1);
-  printf(" %"PRIu32") --> ", d);
+  printf(" %" PRIu32 ") --> ", d);
   fflush(stdout);
   t = yices_power(t1, d);
   print_term(stdout, __yices_globals.terms, t);
@@ -566,9 +566,9 @@ static void random_binary_tests(uint32_t n) {
   term_t t1, t2;
 
   while (n > 0) {
-    t1 = term_store_sample(&all_terms, boolean, is_arith);
-    t2 = term_store_sample(&all_terms, boolean, is_arith);
-    printf("--- Test %"PRIu32" ---\n", n);
+    t1 = term_store_sample(&all_terms, boolean_, is_arith);
+    t2 = term_store_sample(&all_terms, boolean_, is_arith);
+    printf("--- Test %" PRIu32 " ---\n", n);
     all_binary_tests(t1, t2);
     printf("\n\n");
     n --;
@@ -583,8 +583,8 @@ static void random_unary_tests(uint32_t n) {
   term_t t;
 
   while (n > 0) {
-    t = term_store_sample(&all_terms, boolean, is_arith);
-    printf("--- Test %"PRIu32" ---\n", n);
+    t = term_store_sample(&all_terms, boolean_, is_arith);
+    printf("--- Test %" PRIu32 " ---\n", n);
     all_unary_tests(t);
     printf("\n\n");
     n --;
@@ -600,9 +600,9 @@ static void random_ite(uint32_t n) {
 
   printf("\n---- Test if-then-else ----\n");
   while (n > 0) {
-    c = term_store_sample(&all_terms, boolean, has_type);
-    t1 = term_store_sample(&all_terms, boolean, is_arith);
-    t2 = term_store_sample(&all_terms, boolean, is_arith);
+    c = term_store_sample(&all_terms, boolean_, has_type);
+    t1 = term_store_sample(&all_terms, boolean_, is_arith);
+    t2 = term_store_sample(&all_terms, boolean_, is_arith);
 
     test_ite(c, t1, t2);
     printf("\n");
@@ -621,7 +621,7 @@ static void random_power(uint32_t n) {
 
   printf("\n---- Test exponentiation ----\n");
   while (n > 0) {
-    t1 = term_store_sample(&all_terms, boolean, low_degree);
+    t1 = term_store_sample(&all_terms, boolean_, low_degree);
     d = random() % 10;
     test_power(t1, d);
 
@@ -640,23 +640,23 @@ static void add_random_terms(uint32_t n) {
 
   while (n > 0) {
     i = random() % (NUM_BINOPS + NUM_UNOPS + 2);
-    printf("---> random term: n = %"PRIu32" i = %"PRIu32"\n", n, i);
+    printf("---> random term: n = %" PRIu32 " i = %" PRIu32 "\n", n, i);
     fflush(stdout);
     if (i < NUM_BINOPS) {
-      t1 = term_store_sample(&all_terms, boolean, is_arith);
-      t2 = term_store_sample(&all_terms, boolean, is_arith);
+      t1 = term_store_sample(&all_terms, boolean_, is_arith);
+      t2 = term_store_sample(&all_terms, boolean_, is_arith);
       t = test_binop(i, t1, t2);
     } else if (i < NUM_BINOPS + NUM_UNOPS) {
-      t1 = term_store_sample(&all_terms, boolean, is_arith);
+      t1 = term_store_sample(&all_terms, boolean_, is_arith);
       t = test_unary_op(i - NUM_BINOPS, t1);
     } else if (i < NUM_BINOPS + NUM_UNOPS + 1) {
-      c = term_store_sample(&all_terms, boolean, has_type);
-      t1 = term_store_sample(&all_terms, boolean, is_arith);
-      t2 = term_store_sample(&all_terms, boolean, is_arith);
+      c = term_store_sample(&all_terms, boolean_, has_type);
+      t1 = term_store_sample(&all_terms, boolean_, is_arith);
+      t2 = term_store_sample(&all_terms, boolean_, is_arith);
       t = test_ite(c, t1, t2);
     } else {
       d = random() % 10;
-      t1 = term_store_sample(&all_terms, boolean, low_degree);
+      t1 = term_store_sample(&all_terms, boolean_, low_degree);
       t = test_power(t1, d);
     }
     if (t >= 0) {

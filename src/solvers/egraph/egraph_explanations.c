@@ -480,7 +480,7 @@ static void explain_eq(egraph_t *egraph, occ_t x, occ_t y, ivector_t *v) {
     l = literal_for_eq(egraph, x, y);
     if (l >= 0) {
       if (egraph_opposite_occ(egraph, x, y)) {
-	l = not(l);
+	l = not_(l);
       }
 
       if (l == true_literal) {
@@ -1039,13 +1039,13 @@ static void build_explanation_vector(egraph_t *egraph, ivector_t *v) {
     case EXPL_OR_CONGRUENCE:
       t1 = term_of_occ(eq[i].lhs);
       t2 = term_of_occ(eq[i].rhs);
-      explain_or_congruence(egraph, body[t1], body[t2], edata[i].ptr, v);
+      explain_or_congruence(egraph, body[t1], body[t2], (occ_t*)edata[i].ptr, v);
       break;
 
     case EXPL_DISTINCT_CONGRUENCE:
       t1 = term_of_occ(eq[i].lhs);
       t2 = term_of_occ(eq[i].rhs);
-      explain_distinct_congruence(egraph, body[t1], body[t2], edata[i].ptr, v);
+      explain_distinct_congruence(egraph, body[t1], body[t2], (occ_t*)edata[i].ptr, v);
       break;
 
     case EXPL_ARITH_PROPAGATION:
@@ -1053,7 +1053,7 @@ static void build_explanation_vector(egraph_t *egraph, ivector_t *v) {
     case EXPL_FUN_PROPAGATION:
       t1 = term_of_occ(eq[i].lhs);
       t2 = term_of_occ(eq[i].rhs);
-      explain_theory_equality(egraph, etag[i], t1, t2, edata[i].ptr, v);
+      explain_theory_equality(egraph, (expl_tag_t)etag[i], t1, t2, edata[i].ptr, v);
       break;
 
     case EXPL_RECONCILE:
@@ -1598,7 +1598,7 @@ bool egraph_inconsistent_not_distinct(egraph_t *egraph, composite_t *d, ivector_
  */
 static bool interface_lemma_candidate(egraph_t *egraph, occ_t t1, occ_t t2) {
   void *satellite;
-  th_egraph_interface_t *interface;
+  th_egraph_interface_t *interface_;
   thvar_t x1, x2;
 
   x1 = egraph_base_thvar(egraph, t1);
@@ -1609,13 +1609,13 @@ static bool interface_lemma_candidate(egraph_t *egraph, occ_t t1, occ_t t2) {
     case ETYPE_INT:
     case ETYPE_REAL:
       satellite = egraph->th[ETYPE_REAL];
-      interface = egraph->eg[ETYPE_REAL];
-      return interface->equal_in_model(satellite, x1, x2);
+      interface_ = egraph->eg[ETYPE_REAL];
+      return interface_->equal_in_model(satellite, x1, x2);
 
     case ETYPE_BV:
       satellite = egraph->th[ETYPE_BV];
-      interface = egraph->eg[ETYPE_BV];
-      return interface->equal_in_model(satellite, x1, x2);
+      interface_ = egraph->eg[ETYPE_BV];
+      return interface_->equal_in_model(satellite, x1, x2);
 
     default:
       break;
@@ -1760,13 +1760,13 @@ static int32_t egraph_search_for_reconcile_edge(egraph_t *egraph, int32_t source
     case EXPL_OR_CONGRUENCE:
       t1 = term_of_occ(eq[i].lhs);
       t2 = term_of_occ(eq[i].rhs);
-      explain_or_congruence(egraph, body[t1], body[t2], edata[i].ptr, NULL);
+      explain_or_congruence(egraph, body[t1], body[t2], (occ_t*)edata[i].ptr, NULL);
       break;
 
     case EXPL_DISTINCT_CONGRUENCE:
       t1 = term_of_occ(eq[i].lhs);
       t2 = term_of_occ(eq[i].rhs);
-      explain_distinct_congruence(egraph, body[t1], body[t2], edata[i].ptr, NULL);
+      explain_distinct_congruence(egraph, body[t1], body[t2], (occ_t*)edata[i].ptr, NULL);
       break;
 
     case EXPL_ARITH_PROPAGATION:

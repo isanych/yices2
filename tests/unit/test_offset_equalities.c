@@ -191,7 +191,7 @@ static void print_mono(const char *prefix, rational_t *coeff, int32_t x, bool fi
       q_print_abs(stdout, coeff);
       printf(" * ");
     }
-    printf("%s%"PRId32, prefix, x);
+    printf("%s%" PRId32, prefix, x);
   }
 }
 
@@ -217,7 +217,7 @@ static void show_polys(void) {
   printf("===== Polynomials =====\n");
   for (i=0; i<NPOLYS; i++) {
     if (poly[i] != NULL) {
-      printf("x%"PRId32" := ", var[i]);
+      printf("x%" PRId32 " := ", var[i]);
       show_poly(poly[i]);
       printf("\n");
     }
@@ -293,7 +293,7 @@ static void print_var_array(var_array_t *a) {
       n = a->ndeps;
       printf("[");
       for (i=0; i<n; i++) {
-	printf(" (z%"PRId32", %"PRIu32")", a->data[i].var, a->data[i].idx);
+	printf(" (z%" PRId32 ", %" PRIu32 ")", a->data[i].var, a->data[i].idx);
       }
       printf(" ]");
     }
@@ -316,9 +316,9 @@ static void print_ptable(offset_manager_t *mngr) {
   printf("===== ptable ====\n");
   n = table->npolys;
   for (i=0; i<n; i++) {
-    printf("poly[%"PRIu32"] := ", i);
+    printf("poly[%" PRIu32 "] := ", i);
     show_poly(table->def[i]);
-    printf("        (eterm: t!%"PRId32, table->eterm[i]);
+    printf("        (eterm: t!%" PRId32, table->eterm[i]);
     printf(", active: ");
     print_flag(tst_bit(table->active, i));
     printf(", mark: ");
@@ -343,7 +343,7 @@ static void print_var2poly(offset_manager_t *mngr) {
   printf("==== var2poly map ====\n");
   for (i=0; i<n; i++) {
     if (map->data[i] >= 0) {
-      printf(" var2poly[%"PRIu32"] = %"PRId32"\n", i, map->data[i]);
+      printf(" var2poly[%" PRIu32 "] = %" PRId32 "\n", i, map->data[i]);
     }
   }
   printf("\n");
@@ -364,10 +364,10 @@ static void print_dep(dep_t *v) {
       k = v->data[i];
       if (k >= 0) {
 	if (first) {
-	  printf("%"PRId32, k);
+	  printf("%" PRId32, k);
 	  first = false;
 	} else {
-	  printf(", %"PRId32, k);
+	  printf(", %" PRId32, k);
 	}
       }
     }
@@ -386,7 +386,7 @@ static void print_vtable(offset_manager_t *mngr) {
   n = table->nvars;
   for (i=0; i<n; i++) {
     d = table->desc + i;
-    printf("z%"PRIu32" = z%"PRId32, i, d->root);
+    printf("z%" PRIu32 " = z%" PRId32, i, d->root);
     if (q_is_neg(&d->offset)) {
       printf(" - ");
     } else {
@@ -409,7 +409,7 @@ static void print_var2offset_var(offset_manager_t *mngr) {
   printf("==== renaming: var2offset var ====\n");
   for (i=0; i<n; i++) {
     if (map->data[i] >= 0) {
-      printf("var2offset_var[x%"PRIu32"] = z%"PRId32"\n", i, map->data[i]);
+      printf("var2offset_var[x%" PRIu32 "] = z%" PRId32 "\n", i, map->data[i]);
     }
   }
   printf("\n");
@@ -440,7 +440,7 @@ static void test_eq_explanation(eterm_t t1, eterm_t t2) {
   printf("---> Explanation:");
   n = v.size;
   for (i=0; i<n; i++) {
-    printf(" eq[%"PRId32"]", v.data[i]);
+    printf(" eq[%" PRId32 "]", v.data[i]);
   }
   printf("\n\n");
 
@@ -451,7 +451,7 @@ static void test_eq_explanation(eterm_t t1, eterm_t t2) {
  * Callback to report equality
  */
 static void notify_equality(void *aux, eterm_t t1, eterm_t t2) {
-  printf("---> t!%"PRId32" == t!%"PRId32"\n", t1, t2);
+  printf("---> t!%" PRId32 " == t!%" PRId32 "\n", t1, t2);
   fflush(stdout);
   test_eq_explanation(t1, t2);
 }
@@ -459,20 +459,20 @@ static void notify_equality(void *aux, eterm_t t1, eterm_t t2) {
 static void test_equality(int32_t x, int32_t y, int32_t offset, int32_t id) {
   rational_t q;
 
-  printf("\n\n*** Asserting: eq[%"PRId32"]: ", id);
+  printf("\n\n*** Asserting: eq[%" PRId32 "]: ", id);
   if (x < 0) {
     printf("0 = ");
   } else {
-    printf("x%"PRId32" = ", x);
+    printf("x%" PRId32 " = ", x);
   }
   if (y < 0) {
-    printf("%"PRId32" ****\n", offset);
+    printf("%" PRId32 " ****\n", offset);
   } else {
-    printf("x%"PRId32, y);
+    printf("x%" PRId32, y);
     if (offset > 0) {
-      printf(" + %"PRId32" ****\n", offset);
+      printf(" + %" PRId32 " ****\n", offset);
     } else if (offset< 0) {
-      printf(" - %"PRId32" ****\n", -offset);
+      printf(" - %" PRId32 " ****\n", -offset);
     } else {
       printf(" ****\n");
     }

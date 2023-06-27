@@ -310,7 +310,7 @@ static int lit_collector_sign_in_model(lit_collector_t *collect, term_t t) {
  * - the ordering is: t1 < t2 if value of t1 < value of t2 in the model
  */
 static bool lt_in_model(void *d, term_t t1, term_t t2) {
-  return arith_cmp_in_model(d, t1, t2) < 0;
+  return arith_cmp_in_model((lit_collector_t*)d, t1, t2) < 0;
 }
 
 static void lit_collector_sort_in_model(lit_collector_t *collect, uint32_t n, term_t *a) {
@@ -333,8 +333,8 @@ static void lit_collector_sort_in_model(lit_collector_t *collect, uint32_t n, te
 static bool lt_in_model2(void *d, term_t t1, term_t t2) {
   value_t v1, v2;
 
-  v1 = lit_collector_eval(d, t1);
-  v2 = lit_collector_eval(d, t2);
+  v1 = lit_collector_eval((lit_collector_t*)d, t1);
+  v2 = lit_collector_eval((lit_collector_t*)d, t2);
   return v1 < v2;
 }
 
@@ -397,7 +397,7 @@ static bool simple_bool_term(lit_collector_t *collect, term_t t) {
 /*
  * Found an atom t:
  * - if collect->bool_are_terms is true and t is simple, we do nothing and return t
- * - otherwise we add either t or not(t) to the set of literals
+ * - otherwise we add either t or not_(t) to the set of literals
  *   and we return true_term or false_term (i.e., value of t in the model)
  */
 static term_t register_atom(lit_collector_t *collect, term_t t) {
@@ -961,28 +961,28 @@ static term_t lit_collector_visit_tuple(lit_collector_t *collect, term_t t, comp
 }
 
 // t is (or t1 ... t_n): treat it as a formula
-static term_t lit_collector_visit_or_formula(lit_collector_t *collect, term_t t, composite_term_t *or) {
+static term_t lit_collector_visit_or_formula(lit_collector_t *collect, term_t t, composite_term_t *or_) {
   term_t u;
   uint32_t i, n;
 
-  n = or->arity;
+  n = or_->arity;
   assert(n > 0);
 
   u = false_term; // prevent compilation warning
 
   if (term_is_true_in_model(collect, t)) {
     for (i=0; i<n; i++) {
-      if (term_is_true_in_model(collect, or->arg[i])) break;
+      if (term_is_true_in_model(collect, or_->arg[i])) break;
     }
     assert(i < n);
-    u = lit_collector_visit_formula(collect, or->arg[i]);
+    u = lit_collector_visit_formula(collect, or_->arg[i]);
     assert(u == true_term);
 
   } else {
     // (or t1 ... t_n) is false --> visit all subterms
     // they should all reduce to false_term
     for (i=0; i<n; i++) {
-      u = lit_collector_visit_formula(collect, or->arg[i]);
+      u = lit_collector_visit_formula(collect, or_->arg[i]);
       assert(u == false_term);
     }
   }
@@ -991,15 +991,15 @@ static term_t lit_collector_visit_or_formula(lit_collector_t *collect, term_t t,
 }
 
 // (xor t1 ... t_n): treat is as a formula
-static term_t lit_collector_visit_xor_formula(lit_collector_t *collect, term_t t, composite_term_t *xor) {
+static term_t lit_collector_visit_xor_formula(lit_collector_t *collect, term_t t, composite_term_t *xor_) {
   uint32_t i, n;
   term_t u;
   bool b;
 
   b = false;
-  n = xor->arity;
+  n = xor_->arity;
   for (i=0; i<n; i++) {
-    u = lit_collector_visit_formula(collect, xor->arg[i]);
+    u = lit_collector_visit_formula(collect, xor_->arg[i]);
     assert(u == false_term || u == true_term);
     b ^= (u == true_term);
   }

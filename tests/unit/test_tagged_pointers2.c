@@ -35,9 +35,9 @@
 static void test_int(int32_t x) {
   void *p;
 
-  printf("Test int: x = %"PRId32, x);
+  printf("Test int: x = %" PRId32, x);
   p = tag_i32(x);
-  printf(", tagged: %p, untagged: %"PRId32, p, untag_i32(p));
+  printf(", tagged: %p, untagged: %" PRId32, p, untag_i32(p));
   assert(has_int_tag(p));
   assert(untag_i32(p) == x);
   printf(": OK\n");
@@ -48,9 +48,9 @@ static void test_int(int32_t x) {
 static void test_uint(uint32_t x) {
   void *p;
 
-  printf("Test uint: x = %"PRIu32, x);
+  printf("Test uint: x = %" PRIu32, x);
   p = tag_u32(x);
-  printf(", tagged: %p, untagged: %"PRIu32, p, untag_u32(p));
+  printf(", tagged: %p, untagged: %" PRIu32, p, untag_u32(p));
   assert(has_int_tag(p));
   assert(untag_u32(p) == x);
   printf(": OK\n");

@@ -47,7 +47,7 @@ static void print_table(wide_ttbl_t *table) {
     printf("constant function: %d\n", (int) table->val[0]);
   } else {
     for (i=0; i<n; i++) {
-      printf("  x%"PRId32, table->var[i]);
+      printf("  x%" PRId32, table->var[i]);
     }
     printf("\n");
 
@@ -74,15 +74,15 @@ static void print_table(wide_ttbl_t *table) {
  * - f = integer between 0 and 255
  */
 static void show_function(uint32_t f, int32_t var[3]) {
-  printf("  x%"PRId32"  x%"PRId32"  x%"PRId32"\n", var[0], var[1], var[2]);
-  printf("   0   0   0   |  %"PRIu32"\n", f & 1);
-  printf("   0   0   1   |  %"PRIu32"\n", (f >> 1) & 1);
-  printf("   0   1   0   |  %"PRIu32"\n", (f >> 2) & 1);
-  printf("   0   1   1   |  %"PRIu32"\n", (f >> 3) & 1);
-  printf("   1   0   0   |  %"PRIu32"\n", (f >> 4) & 1);
-  printf("   1   0   1   |  %"PRIu32"\n", (f >> 5) & 1);
-  printf("   1   1   0   |  %"PRIu32"\n", (f >> 6) & 1);
-  printf("   1   1   1   |  %"PRIu32"\n", (f >> 7) & 1);
+  printf("  x%" PRId32 "  x%" PRId32 "  x%" PRId32 "\n", var[0], var[1], var[2]);
+  printf("   0   0   0   |  %" PRIu32 "\n", f & 1);
+  printf("   0   0   1   |  %" PRIu32 "\n", (f >> 1) & 1);
+  printf("   0   1   0   |  %" PRIu32 "\n", (f >> 2) & 1);
+  printf("   0   1   1   |  %" PRIu32 "\n", (f >> 3) & 1);
+  printf("   1   0   0   |  %" PRIu32 "\n", (f >> 4) & 1);
+  printf("   1   0   1   |  %" PRIu32 "\n", (f >> 5) & 1);
+  printf("   1   1   0   |  %" PRIu32 "\n", (f >> 6) & 1);
+  printf("   1   1   1   |  %" PRIu32 "\n", (f >> 7) & 1);
   printf("\n");
 }
 
@@ -249,11 +249,11 @@ static void validate_import(const wide_ttbl_t *table, const ttbl_t *ttbl, const 
     b = eval_table(table, 3, var, val);
     if (a != b) {
       fprintf(stderr, "*** BUG: bad import ***\n");
-      fprintf(stderr, "value to ttbl = %"PRIu32"\n", a);
-      fprintf(stderr, "value for table = %"PRIu32"\n", b);
+      fprintf(stderr, "value to ttbl = %" PRIu32 "\n", a);
+      fprintf(stderr, "value for table = %" PRIu32 "\n", b);
       exit(1);
     }
-    printf(" --> %"PRIu32"\n", a);
+    printf(" --> %" PRIu32 "\n", a);
     next_val_array(val, 3);
   }
 }
@@ -341,12 +341,12 @@ static void validate_merge(const wide_ttbl_t *table, const wide_ttbl_t *table0, 
     c = eval_table(table0, table0->nvars, table0->var, aux);
     if (a != c) {
       fprintf(stderr, "*** BUG: bad merge ***\n");
-      fprintf(stderr, "value for table = %"PRIu32"\n", a);
-      fprintf(stderr, "value for  ttbl = %"PRIu32"\n", b);
-      fprintf(stderr, "value for comp  = %"PRIu32"\n", c);
+      fprintf(stderr, "value for table = %" PRIu32 "\n", a);
+      fprintf(stderr, "value for  ttbl = %" PRIu32 "\n", b);
+      fprintf(stderr, "value for comp  = %" PRIu32 "\n", c);
       exit(1);
     }
-    printf(" --> %"PRIu32"\n", a);
+    printf(" --> %" PRIu32 "\n", a);
     next_val_array(val, n);
   }
 
@@ -377,7 +377,7 @@ static void test_merge(wide_ttbl_t *test, uint32_t f, int32_t var[3]) {
   init_wide_ttbl(&result, 8);
   set_function(&ttbl, f, var);
   for (i=0; i<test->nvars; i++) {
-    printf("replacing x%"PRId32" by f in g\n", test->var[i]);
+    printf("replacing x%" PRId32 " by f in g\n", test->var[i]);
     if (!wide_ttbl_compose(&result, test, &ttbl, i)) {
       printf("*** compose failed ***\n");
       exit(1);

@@ -27,7 +27,7 @@
 
 #include "yices.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -53,11 +53,11 @@ static term_t make_a_term(uint32_t i) {
   tau = yices_real_type();
 
   x = yices_new_uninterpreted_term(tau);
-  sprintf(name, "x%"PRIu32, i);
+  sprintf(name, "x%" PRIu32, i);
   yices_set_term_name(x, name);
 
   y = yices_new_uninterpreted_term(tau);
-  sprintf(name, "y%"PRIu32, i);
+  sprintf(name, "y%" PRIu32, i);
   yices_set_term_name(y, name);
 
   z = make_arith_constant();
@@ -128,7 +128,7 @@ int main(void) {
     n = 0;
     for (;;) {
       t = make_a_term(n);
-      printf("term[%"PRIu32"]: ", n);
+      printf("term[%" PRIu32 "]: ", n);
       yices_pp_term(stdout, t, 120, 10, 0);
       n ++;
     }
@@ -137,7 +137,7 @@ int main(void) {
 
   } else {
     // out-of-memory exception caught here
-    fprintf(stderr, "Out of memory caught after %"PRIu32" iterations\n", n);
+    fprintf(stderr, "Out of memory caught after %" PRIu32 " iterations\n", n);
   }
 
   return 0;

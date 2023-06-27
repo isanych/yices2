@@ -25,9 +25,9 @@
 
 static void print_assumption(FILE *f, assumption_t *a) {
   if (a->polarity) {
-    fprintf(f, "%s: t!%"PRId32, a->name, a->term);
+    fprintf(f, "%s: t!%" PRId32, a->name, a->term);
   } else {
-    fprintf(f, "(not %s): t!%"PRId32, a->name, a->term);
+    fprintf(f, "(not %s): t!%" PRId32, a->name, a->term);
   }
 }
 
@@ -35,8 +35,8 @@ static void print_table(FILE *f, assumption_table_t *table) {
   uint32_t i, n;
 
   fprintf(f, "Table: %p\n", table);
-  fprintf(f, "  size:   %"PRIu32"\n", table->size);
-  fprintf(f, "  nelems: %"PRIu32"\n", table->nelems);
+  fprintf(f, "  size:   %" PRIu32 "\n", table->size);
+  fprintf(f, "  nelems: %" PRIu32 "\n", table->nelems);
   fprintf(f, "  content:\n");
   
   n = table->nelems;
@@ -53,11 +53,11 @@ static void print_table_index(FILE *f, assumption_table_t *table) {
 
   fprintf(f, "Table: %p\n", table);
   fprintf(f, "  index: %p\n", table->index);
-  fprintf(f, "  index_size: %"PRIu32"\n", table->index_size);
+  fprintf(f, "  index_size: %" PRIu32 "\n", table->index_size);
   fprintf(f, "  indices:\n");
   n = table->index_size;
   for (i=0; i<n; i++) {
-    fprintf(f, "    %"PRId32"\n", table->index[i]);
+    fprintf(f, "    %" PRId32 "\n", table->index[i]);
   }
   fprintf(f, "\n");
 }
@@ -68,15 +68,15 @@ static void check_present(assumption_table_t *table, term_t x) {
 
   a = assumption_table_get(table, x);
   if (a == NULL) {
-    fprintf(stderr, "*** BUG: failed to find assumption t!%"PRId32" ***\n", x);
+    fprintf(stderr, "*** BUG: failed to find assumption t!%" PRId32 " ***\n", x);
     exit(1);
   }
   if (a->term != x) {
-    fprintf(stderr, "*** BUG: wrong record for assumption  t!%"PRId32" ***\n", x);
+    fprintf(stderr, "*** BUG: wrong record for assumption  t!%" PRId32 " ***\n", x);
     exit(1);
   }
 
-  printf("Success: found term t!%"PRId32": ", x);
+  printf("Success: found term t!%" PRId32 ": ", x);
   print_assumption(stdout, a);
   printf("\n");
 }
@@ -86,11 +86,11 @@ static void check_absent(assumption_table_t *table, term_t x) {
 
   a = assumption_table_get(table, x);
   if (a != NULL) {
-    fprintf(stderr, "*** BUG: found assumption t%"PRId32" ***\n", x);
+    fprintf(stderr, "*** BUG: found assumption t%" PRId32 " ***\n", x);
     print_assumption(stderr, a);
     exit(1);
   }
-  printf("Success: term t!%"PRId32" not found as expected\n", x);
+  printf("Success: term t!%" PRId32 " not found as expected\n", x);
 }
 
 
@@ -126,7 +126,7 @@ int main(void) {
   collect_assumptions(&table, &v);
   printf("--- assumed terms ---\n");
   for (i=0; i<v.size; i++) {
-    printf(" t!%"PRId32, v.data[i]);
+    printf(" t!%" PRId32, v.data[i]);
   }
   printf("\n\n");
 
@@ -145,7 +145,7 @@ int main(void) {
   print_table_index(stdout, &table);
 
   for (i=0; i<200; i++) {
-    snprintf(buffer, 20, "A%"PRId32, i);
+    snprintf(buffer, 20, "A%" PRId32, i);
     assumption_table_add(&table, i, buffer, true);
   }
 

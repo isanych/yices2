@@ -115,7 +115,7 @@ static void test_assign(int32_t num, uint32_t den) {
   q_set_int32(&r0, num, den);
   mpq_set_si(q0, num, den);
   mpq_canonicalize(q0);
-  printf("test assign: %"PRId32"/%"PRIu32"\n", num, den);
+  printf("test assign: %" PRId32 "/%" PRIu32 "\n", num, den);
   test_equal(&r0, q0);
 }
 
@@ -123,7 +123,7 @@ static void test_assign(int32_t num, uint32_t den) {
 static void test_add(int32_t num, uint32_t den) {
   q_set_int32(&r0, num, den);
   q_add(&r0, &r1);
-  printf("test add: %"PRId32"/%"PRIu32" + ", num, den);
+  printf("test add: %" PRId32 "/%" PRIu32 " + ", num, den);
   q_print(stdout, &r1);
   printf(" = ");
   q_print(stdout, &r0);
@@ -143,7 +143,7 @@ static void test_add(int32_t num, uint32_t den) {
 static void test_sub(int32_t num, uint32_t den) {
   q_set_int32(&r0, num, den);
   q_sub(&r0, &r1);
-  printf("test sub: %"PRId32"/%"PRIu32" - ", num, den);
+  printf("test sub: %" PRId32 "/%" PRIu32 " - ", num, den);
   q_print(stdout, &r1);
   printf(" = ");
   q_print(stdout, &r0);
@@ -164,7 +164,7 @@ static void test_sub2(int32_t num, uint32_t den) {
   q_sub(&r0, &r2);
   printf("test sub2: ");
   q_print(stdout, &r1);
-  printf(" - %"PRId32"/%"PRIu32" = ", num, den);
+  printf(" - %" PRId32 "/%" PRIu32 " = ", num, den);
   q_print(stdout, &r0);
   printf("\n");
 
@@ -182,7 +182,7 @@ static void test_sub2(int32_t num, uint32_t den) {
 static void test_mul(int32_t num, uint32_t den) {
   q_set_int32(&r0, num, den);
   q_mul(&r0, &r1);
-  printf("test mul: %"PRId32"/%"PRIu32" * ", num, den);
+  printf("test mul: %" PRId32 "/%" PRIu32 " * ", num, den);
   q_print(stdout, &r1);
   printf(" = ");
   q_print(stdout, &r0);
@@ -200,7 +200,7 @@ static void test_mul(int32_t num, uint32_t den) {
 static void test_div(int32_t num, uint32_t den) {
   q_set_int32(&r0, num, den);
   q_div(&r0, &r1);
-  printf("test div: (%"PRId32"/%"PRIu32") / ", num, den);
+  printf("test div: (%" PRId32 "/%" PRIu32 ") / ", num, den);
   q_print(stdout, &r1);
   printf(" = ");
   q_print(stdout, &r0);
@@ -220,7 +220,7 @@ static void test_div2(int32_t num, uint32_t den) {
   q_div(&r0, &r2);
   printf("test div: ");
   q_print(stdout, &r1);
-  printf(" / (%"PRId32"/%"PRIu32") = ", num, den);
+  printf(" / (%" PRId32 "/%" PRIu32 ") = ", num, den);
   q_print(stdout, &r0);
   printf("\n");
 
@@ -236,9 +236,9 @@ static void test_addmul(int32_t num1, uint32_t den1, int32_t num2, uint32_t den2
   q_set_int32(&r0, num1, den1);
   q_set_int32(&r2, num2, den2);
   q_addmul(&r0, &r1, &r2);
-  printf("test_addmul: %"PRId32"/%"PRIu32" + ", num1, den1);
+  printf("test_addmul: %" PRId32 "/%" PRIu32 " + ", num1, den1);
   q_print(stdout, &r1);
-  printf(" * %"PRId32"/%"PRIu32" = ", num2, den2);
+  printf(" * %" PRId32 "/%" PRIu32 " = ", num2, den2);
   q_print(stdout, &r0);
   printf("\n");
 
@@ -416,7 +416,7 @@ int main(void) {
   int32_t i;
 
   init_rationals();
-  printf("GMP %s (bits per limb = %"PRId32")\n", gmp_version, GMP_LIMB_BITS);
+  printf("GMP %s (bits per limb = %" PRId32 ")\n", gmp_version, GMP_LIMB_BITS);
   printf("MAX_NUM = %d\n", MAX_NUMERATOR);
   printf("MIN_NUM = %d\n", MIN_NUMERATOR);
   printf("MAX_DEN = %d\n", MAX_DENOMINATOR);
@@ -440,8 +440,8 @@ int main(void) {
   printf("r0 = ");
   q_print(stdout, &r0);
   printf("\n");
-  printf("hash num = %"PRIu32"\n", q_hash_numerator(&r0));
-  printf("hash den = %"PRIu32"\n", q_hash_denominator(&r0));
+  printf("hash num = %" PRIu32 "\n", q_hash_numerator(&r0));
+  printf("hash den = %" PRIu32 "\n", q_hash_denominator(&r0));
 
   mpq_set_int32(q0, MIN_NUMERATOR-1, 23);
   mpq_canonicalize(q0);
@@ -449,8 +449,8 @@ int main(void) {
   printf("r1 = ");
   q_print(stdout, &r1);
   printf("\n");
-  printf("hash num = %"PRIu32"\n", q_hash_numerator(&r1));
-  printf("hash den = %"PRIu32"\n", q_hash_denominator(&r1));
+  printf("hash num = %" PRIu32 "\n", q_hash_numerator(&r1));
+  printf("hash den = %" PRIu32 "\n", q_hash_denominator(&r1));
 
 
   printf("\n\n");

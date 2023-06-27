@@ -32,7 +32,7 @@
  * - return mode (as positive integer) if this mode is supported.
  * - return -1 otherwise.
  */
-int32_t supported_ematch_mode(const char *mode) {
+YICES_EXTERN int32_t supported_ematch_mode(const char *mode) {
   if (strcmp("all", mode) == 0) {
     return ITERATE_ALL;
   }

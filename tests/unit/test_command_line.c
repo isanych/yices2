@@ -65,7 +65,7 @@ static void show_cmdline_details(cmdline_elem_t *e) {
   if (e->s_value == NULL) {
     printf("  no parameter\n");
   } else {
-    printf("  parameter %s (i_value = %"PRId32")\n", e->s_value, e->i_value);
+    printf("  parameter %s (i_value = %" PRId32 ")\n", e->s_value, e->i_value);
   }
 }
 
@@ -101,7 +101,7 @@ static void show_cmdline_error(cmdline_elem_t *e) {
 static void show_cmdline_element(cmdline_elem_t *e, uint32_t i) {
   int32_t k;
 
-  printf("option[%"PRId32"]: ", i);
+  printf("option[%" PRId32 "]: ", i);
   switch (e->status) {
   case cmdline_done:
     printf("end\n");

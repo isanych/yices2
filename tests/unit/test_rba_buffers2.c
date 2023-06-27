@@ -39,22 +39,22 @@ static void print_varexp_array(FILE *f, varexp_t *a, uint32_t n) {
     return;
   }
   d = a[0].exp;
-  fprintf(f, "x_%"PRId32, a[0].var);
+  fprintf(f, "x_%" PRId32, a[0].var);
   if (d != 1) {
-    fprintf(f, "^%"PRIu32, d);
+    fprintf(f, "^%" PRIu32, d);
   }
   for (i=1; i<n; i++) {
     d = a[i].exp;
-    fprintf(f, " x_%"PRId32, a[i].var);
+    fprintf(f, " x_%" PRId32, a[i].var);
     if (d != 1) {
-      fprintf(f, "^%"PRIu32, d);
+      fprintf(f, "^%" PRIu32, d);
     }
   }
 }
 
 static void print_pprod0(FILE *f, pprod_t *p) {
   if (pp_is_var(p)) {
-    fprintf(f, "x_%"PRId32, var_of_pp(p));
+    fprintf(f, "x_%" PRId32, var_of_pp(p));
   } else if (pp_is_empty(p)) {
     fprintf(f, "1");
   } else {
@@ -151,8 +151,8 @@ static void test_buffer(rba_buffer_t *b) {
   test_buffer_pred("is_nonneg", b, rba_buffer_is_nonneg);
   test_buffer_pred("is_nonpos", b, rba_buffer_is_nonpos);
 
-  printf("  size: %"PRIu32"\n", rba_buffer_num_terms(b));
-  printf("  degree: %"PRIu32"\n", rba_buffer_degree(b));
+  printf("  size: %" PRIu32 "\n", rba_buffer_num_terms(b));
+  printf("  degree: %" PRIu32 "\n", rba_buffer_degree(b));
   if (! rba_buffer_is_zero(b)) {
     printf("  main term: ");
     print_pprod0(stdout, rba_buffer_main_term(b));
@@ -166,7 +166,7 @@ static void test_buffer(rba_buffer_t *b) {
   }
 
   for (x=0; x<5; x++) {
-    printf("  degree in x_%"PRId32": %"PRIu32"\n",
+    printf("  degree in x_%" PRId32 ": %" PRIu32 "\n",
 	   x, rba_buffer_var_degree(b, x));
   }
   printf("---\n");

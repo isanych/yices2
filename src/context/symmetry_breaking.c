@@ -29,10 +29,9 @@
 #include "utils/int_array_sort.h"
 #include "utils/memalloc.h"
 #include "utils/ptr_array_sort2.h"
+#include "yices_config.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 #include "io/term_printer.h"
 #endif
 
@@ -1112,7 +1111,7 @@ static bool check_perm_invariance(context_t *ctx, ctx_subst_t *s, term_t *c, uin
     ctx_subst_assertions(s, ctx, b);
     norm1 = mk_and(&s->mngr, m, b);
 
-#if TRACE
+#if YICES_TRACE
     printf("perm invariance: norm1\n");
     pretty_print_term_full(stdout, NULL, ctx->terms, norm1);
 #endif
@@ -1122,7 +1121,7 @@ static bool check_perm_invariance(context_t *ctx, ctx_subst_t *s, term_t *c, uin
     ctx_subst_assertions(s, ctx, b);
     norm2 = mk_and(&s->mngr, m, b);
 
-#if TRACE
+#if YICES_TRACE
     printf("perm invariance: norm2\n");
     pretty_print_term_full(stdout, NULL, ctx->terms, norm2);
 #endif
@@ -1134,7 +1133,7 @@ static bool check_perm_invariance(context_t *ctx, ctx_subst_t *s, term_t *c, uin
     ctx_subst_assertions(s, ctx, b);
     norm3 = mk_and(&s->mngr, m, b);
 
-#if TRACE
+#if YICES_TRACE
     printf("perm invariance: norm3\n");
     pretty_print_term_full(stdout, NULL, ctx->terms, norm3);
 #endif
@@ -1671,7 +1670,7 @@ static void add_symmetry_breaking_clause(sym_breaker_t *breaker, term_t t, term_
   context_t *ctx;
   intern_tbl_t *intern;
   ivector_t *v;
-  term_t eq, or;
+  term_t eq, or_;
   uint32_t i;
 
   terms = breaker->terms;
@@ -1686,7 +1685,7 @@ static void add_symmetry_breaking_clause(sym_breaker_t *breaker, term_t t, term_
      */
     add_aux_eq(ctx, t, c[0]);
 
-#if TRACE
+#if YICES_TRACE
     printf("Adding symmetry-breaking constraint\n");
     pretty_print_term_full(stdout, NULL, terms, make_aux_eq(terms, t, c[0]));
     printf("\n");
@@ -1711,25 +1710,25 @@ static void add_symmetry_breaking_clause(sym_breaker_t *breaker, term_t t, term_
      * add it as a top-level formula
      */
     int_array_sort(v->data, n);
-    or = or_term(terms, n, v->data);
-    assert(intern_tbl_is_root(intern, or) && !term_is_false(ctx, or));
+    or_ = or_term(terms, n, v->data);
+    assert(intern_tbl_is_root(intern, or_) && !term_is_false(ctx, or_));
 
-#if TRACE
+#if YICES_TRACE
     printf("Symmetry breaking constraint\n");
-    pretty_print_term_full(stdout, NULL, terms, or);
-    if (intern_tbl_root_is_mapped(intern, or)) {
+    pretty_print_term_full(stdout, NULL, terms, or_);
+    if (intern_tbl_root_is_mapped(intern, or_)) {
       printf("Redundant\n\n");
     } else {
       printf("Added\n\n");
     }
 #endif
 
-    if (! intern_tbl_root_is_mapped(intern, or)) {
-      intern_tbl_map_root(intern, or, bool2code(true));
-      ivector_push(&ctx->top_formulas, or);
+    if (! intern_tbl_root_is_mapped(intern, or_)) {
+      intern_tbl_map_root(intern, or_, bool2code(true));
+      ivector_push(&ctx->top_formulas, or_);
 
       trace_puts(ctx->trace, 5, "Adding symmetry-breaking constraint\n");
-      trace_pp_term(ctx->trace, 5, terms, or);
+      trace_pp_term(ctx->trace, 5, terms, or_);
     }
 
     ivector_reset(v);

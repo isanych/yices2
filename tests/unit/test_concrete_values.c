@@ -90,7 +90,7 @@ static void dump_vtbl(void) {
   printf("\n=== Value table ===\n");
   n = vtbl.nobjects;
   for (i=0; i<n; i++) {
-    printf("obj[%"PRIu32"] = ", i);
+    printf("obj[%" PRIu32 "] = ", i);
     vtbl_print_object(stdout, &vtbl, i);
     printf("\n");
   }
@@ -128,31 +128,31 @@ static void test_constants(void) {
 
   printf("\n=== Constants ===\n");
   v = vtbl_mk_unknown(&vtbl);
-  printf("unknown: v = %"PRId32"\n", v);
+  printf("unknown: v = %" PRId32 "\n", v);
   v1 = vtbl_mk_unknown(&vtbl);
   assert_true(v == v1);
 
   v = vtbl_mk_true(&vtbl);
-  printf("true: v = %"PRId32"\n", v);
+  printf("true: v = %" PRId32 "\n", v);
   v1 = vtbl_mk_true(&vtbl);
   assert_true(v == v1);
 
 
   v = vtbl_mk_false(&vtbl);
-  printf("false: v = %"PRId32"\n", v);
+  printf("false: v = %" PRId32 "\n", v);
   v1 = vtbl_mk_false(&vtbl);
   assert_true(v == v1);
 
   q_init(&q);
   q_set_int32(&q, -1, 2);
   v = vtbl_mk_rational(&vtbl, &q);
-  printf("-1/2: v  = %"PRId32"\n", v);
+  printf("-1/2: v  = %" PRId32 "\n", v);
   v1 = vtbl_mk_rational(&vtbl, &q);
   assert_true(v == v1);
 
   q_set32(&q, 24);
   v = vtbl_mk_rational(&vtbl, &q);
-  printf("24: v = %"PRId32"\n", v);
+  printf("24: v = %" PRId32 "\n", v);
   v1 = vtbl_mk_rational(&vtbl, &q);
   assert_true(v == v1);
   v1 = vtbl_mk_int32(&vtbl, 24);
@@ -161,7 +161,7 @@ static void test_constants(void) {
   // all bitvector constants of size 5
   for (i=0; i<32; i++) {
     v = vtbl_mk_bv_from_bv(&vtbl, 5, &i);
-    printf("(mk-bv %"PRIu32" 5): v = %"PRId32"\n", i, v);
+    printf("(mk-bv %" PRIu32 " 5): v = %" PRId32 "\n", i, v);
     v1 = vtbl_mk_bv_from_bv(&vtbl, 5, &i);
     assert_true(v == v1);
     bits_of_uint32(i, 5, b);
@@ -174,7 +174,7 @@ static void test_constants(void) {
   // bitvector constants: 0 to 31, size 35
   for (i=0; i<32; i++) {
     v = vtbl_mk_bv_from_bv64(&vtbl, 35, (uint64_t) i);
-    printf("(mk-bv %"PRIu32" 35): v = %"PRId32"\n", i, v);
+    printf("(mk-bv %" PRIu32 " 35): v = %" PRId32 "\n", i, v);
     v1 = vtbl_mk_bv_from_bv64(&vtbl, 35, (uint64_t) i);
     assert_true(v == v1);
   }
@@ -182,19 +182,19 @@ static void test_constants(void) {
   // bitvector constants: -0 to -31, size 35
   for (i=0; i<32; i++) {
     v = vtbl_mk_bv_from_bv64(&vtbl, 35, - ((uint64_t) i));
-    printf("(mk-bv %"PRId32" 35): v = %"PRId32"\n", -((int32_t) i), v);
+    printf("(mk-bv %" PRId32 " 35): v = %" PRId32 "\n", -((int32_t) i), v);
     v1 = vtbl_mk_bv_from_bv64(&vtbl, 35, - ((uint64_t) i));
     assert_true(v == v1);
   }
 
   // bitvector constructors for zero and one: size 64
   v = vtbl_mk_bv_zero(&vtbl, 64);
-  printf("(mk-bv-zero 64): v = %"PRId32"\n", v);
+  printf("(mk-bv-zero 64): v = %" PRId32 "\n", v);
   v1 = vtbl_mk_bv_from_bv64(&vtbl, 64, 0);
   assert_true(v == v1);
 
   v = vtbl_mk_bv_one(&vtbl, 64);
-  printf("(mk-bv-zero 64): v = %"PRId32"\n", v);
+  printf("(mk-bv-zero 64): v = %" PRId32 "\n", v);
   v1 = vtbl_mk_bv_from_bv64(&vtbl, 64, 1);
   assert_true(v == v1);
 

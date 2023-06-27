@@ -20,7 +20,7 @@
 
 #include "threads.h"
 
-#ifndef MINGW
+#ifndef _WIN32
 #include "threads_posix.c"
 #else
 #include "threads_win.c"

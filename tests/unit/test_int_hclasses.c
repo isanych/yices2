@@ -48,15 +48,15 @@ static void print_iclass(int_hclass_t *table) {
   uint32_t i, n;
 
   printf("iclass: %p\n", table);
-  printf("  size = %"PRIu32"\n", table->size);
-  printf("  nelems = %"PRIu32"\n", table->nelems);
+  printf("  size = %" PRIu32 "\n", table->size);
+  printf("  nelems = %" PRIu32 "\n", table->nelems);
 
   if (table->nelems > 0) {
     printf("  Content\n");
     n = table->size;
     for (i=0; i<n; i++) {
       if (table->data[i] != null_index) {
-	printf("   data[%"PRIu32"]: %"PRId32"\n", i, table->data[i]);
+	printf("   data[%" PRIu32 "]: %" PRId32 "\n", i, table->data[i]);
       }
     }
   }
@@ -80,8 +80,8 @@ int main(void) {
   for (i=0; i<100; i++) {
     x = int_hclass_find_rep(&iclass, i);
     y = int_hclass_get_rep(&iclass, i);
-    printf("find %"PRId32" = %"PRId32"\n", i, x);
-    printf("get  %"PRId32" = %"PRId32"\n\n", i, y);
+    printf("find %" PRId32 " = %" PRId32 "\n", i, x);
+    printf("get  %" PRId32 " = %" PRId32 "\n\n", i, y);
     fflush(stdout);
     assert((x >= 0 && x == y) || (x < 0 && y == i));
   }
@@ -100,8 +100,8 @@ int main(void) {
     z = 200 - i;
     x = int_hclass_find_rep(&iclass, z);
     y = int_hclass_get_rep(&iclass, z);
-    printf("find %"PRId32" = %"PRId32"\n", z, x);
-    printf("get  %"PRId32" = %"PRId32"\n\n", z, y);
+    printf("find %" PRId32 " = %" PRId32 "\n", z, x);
+    printf("get  %" PRId32 " = %" PRId32 "\n\n", z, y);
     fflush(stdout);
     assert((x >= 0 && x == y) || (x < 0 && y == z));
   }

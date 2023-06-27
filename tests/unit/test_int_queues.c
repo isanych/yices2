@@ -27,21 +27,21 @@ static void print_queue(int_queue_t *q) {
   uint32_t i;
 
   printf("queue %p\n", q);
-  printf("  size = %"PRIu32"\n", q->capacity);
-  printf("  head = %"PRIu32"\n", q->head);
-  printf("  tail = %"PRIu32"\n", q->tail);
+  printf("  size = %" PRIu32 "\n", q->capacity);
+  printf("  head = %" PRIu32 "\n", q->head);
+  printf("  tail = %" PRIu32 "\n", q->tail);
   printf("  content:");
   if (q->head < q->tail) {
     for (i=q->head; i<q->tail; i++) {
-      printf(" %"PRId32, q->data[i]);
+      printf(" %" PRId32, q->data[i]);
     }
     printf("\n");
   } else if (q->tail < q->head) {
     for (i=q->head; i<q->capacity; i++) {
-      printf(" %"PRId32, q->data[i]);
+      printf(" %" PRId32, q->data[i]);
     }
     for (i=0; i<q->tail; i++) {
-      printf(" %"PRId32, q->data[i]);
+      printf(" %" PRId32, q->data[i]);
     }
     printf("\n");
   } else {
@@ -51,9 +51,9 @@ static void print_queue(int_queue_t *q) {
 
 static void print_queue_data(int_queue_t *q) {
   uint32_t i;
-  printf("head = %"PRIu32", tail = %"PRIu32"\n", q->head, q->tail);
+  printf("head = %" PRIu32 ", tail = %" PRIu32 "\n", q->head, q->tail);
   printf("data:");
-  for (i=0; i<q->capacity; i++) printf(" %"PRId32, q->data[i]);
+  for (i=0; i<q->capacity; i++) printf(" %" PRId32, q->data[i]);
   printf("\n");
 }
 
@@ -71,14 +71,14 @@ int main(void) {
   printf("\nremoving elements\n");
   while (! int_queue_is_empty(&q)) {
     x = int_queue_pop(&q);
-    printf("%"PRId32" ", x);
+    printf("%" PRId32 " ", x);
   }
   printf("\n");
 
   print_queue(&q);
 
   for (x=1; x<=100; x++) {
-    printf("\nadding element %"PRId32"\n", x);
+    printf("\nadding element %" PRId32 "\n", x);
     int_queue_push(&q, x);
     print_queue_data(&q);
   }
@@ -89,7 +89,7 @@ int main(void) {
   printf("\nremoving elements\n");
   while (! int_queue_is_empty(&q)) {
     x = int_queue_pop(&q);
-    printf("%"PRId32" ", x);
+    printf("%" PRId32 " ", x);
   }
   printf("\n");
 

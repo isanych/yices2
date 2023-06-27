@@ -21,26 +21,16 @@
  */
 #include <assert.h>
 
+#include "yices_config.h"
 #include "exists_forall/ef_analyze.h"
 #include "terms/elim_subst.h"
 #include "terms/term_sets.h"
 #include "terms/term_utils.h"
-
 #include "exists_forall/ef_skolemize.h"
 
-#define EF_VERBOSE 0
-#define TRACE 0
-
-#if EF_VERBOSE || TRACE
-// need yices.h for the pretty printer
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
+#if YICES_EF_VERBOSE || YICES_TRACE
 #include "yices.h"
 #endif
-
 
 /*
  * EF CLAUSES
@@ -100,7 +90,7 @@ static void ef_clause_add_uvars(ef_clause_t *cl, term_t *a, uint32_t n) {
 }
 
 
-#if EF_VERBOSE
+#if YICES_EF_VERBOSE
 /*
  * Print a clause
  */
@@ -718,14 +708,14 @@ static bool ef_get_vars(ef_analyzer_t *ef, term_t t, ivector_t *uvar, ivector_t 
       r = int_hmap_find(&ef->existentials, t);
       if (r != NULL) {
         ivector_push(evar, r->val);
-#if TRACE
+#if YICES_TRACE
         printf("EVAR: %s\n", yices_term_to_string(t, 120, 1, 0));
 #endif
         // evars already skolemized!
         assert(0);
       } else {
         ivector_push(uvar, t);
-#if TRACE
+#if YICES_TRACE
         printf("UVAR: %s\n", yices_term_to_string(t, 120, 1, 0));
 #endif
       }
@@ -733,7 +723,7 @@ static bool ef_get_vars(ef_analyzer_t *ef, term_t t, ivector_t *uvar, ivector_t 
 
     case UNINTERPRETED_TERM:
       ivector_push(evar, t);
-#if TRACE
+#if YICES_TRACE
       printf("APP: %s\n", yices_term_to_string(t, 120, 1, 0));
 #endif
       break;
@@ -1253,7 +1243,7 @@ static void ef_add_clause(ef_analyzer_t *ef, ef_prob_t *prob, term_t t, ef_claus
     ef_make_array_ground(ef, c->guarantees.data, c->guarantees.size);
 
     // simplify the clause: attempt to eliminate some universal variables.
-#if EF_VERBOSE
+#if YICES_EF_VERBOSE
     printf("\nINITIAL CLAUSE\n\n");
     print_ef_clause(stdout, c);
 #endif

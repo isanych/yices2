@@ -26,9 +26,9 @@ static action_t get_action(state_t s, token_t tk) {
 
   i = base[s] + tk;
   if (check[i] == s) {
-    return value[i];
+    return (action_t)value[i];
   } else {
-    return default_value[s];
+    return (action_t)default_value[s];
   }
 }
 
@@ -205,7 +205,7 @@ static const char *action2string[] = {
 
 
 int main(void) {
-  state_t s;
+  int s;
   token_t tk;
   lexer_t lex;
   char *c0;
@@ -216,8 +216,8 @@ int main(void) {
   for (s=0; s<NSTATES; s++) {
     printf("Source state %s\n", state2string[s]);
     for (tk=TK_DEFINE_TYPE; tk<NUM_YICES_TOKENS; tk++) {
-      c0 = yices_token_to_string(tk);
-      c1 = action2string[get_action(s, tk)];
+      c0 = yices_token_to_string((yices_token_t)tk);
+      c1 = action2string[get_action((state_t)s, tk)];
       printf("   %20s     %s\n", c0, c1);
     }
     printf("\n");

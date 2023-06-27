@@ -39,15 +39,15 @@ static void print_map(ptr_hmap_t *map) {
   ptr_hmap_pair_t *d;
 
   printf("map %p\n", map);
-  printf("  size = %"PRIu32"\n", map->size);
-  printf("  nelems = %"PRIu32"\n", map->nelems);
-  printf("  ndeleted = %"PRIu32"\n", map->ndeleted);
+  printf("  size = %" PRIu32 "\n", map->size);
+  printf("  nelems = %" PRIu32 "\n", map->nelems);
+  printf("  ndeleted = %" PRIu32 "\n", map->ndeleted);
   printf("  content:\n");
 
   d = map->data;
   for (i=0; i<map->size; i++) {
     if (d->key >= 0) {
-      printf("    [key = %"PRId32", val = %s]\n", d->key, (char*) d->val);
+      printf("    [key = %" PRId32 ", val = %s]\n", d->key, (char*) d->val);
     }
     d ++;
   }
@@ -68,9 +68,9 @@ int main(void) {
     d = ptr_hmap_get(&map, i);
     if (d->val == NULL) {
       d->val = test[i];
-      printf("added new record %p: [key = %"PRId32", val = %s]\n", d, i, (char*) d->val);
+      printf("added new record %p: [key = %" PRId32 ", val = %s]\n", d, i, (char*) d->val);
     } else {
-      printf("found record %p: [key = %"PRId32", val = %s]\n", d, i, (char *) d->val);
+      printf("found record %p: [key = %" PRId32 ", val = %s]\n", d, i, (char *) d->val);
     }
   }
 
@@ -79,7 +79,7 @@ int main(void) {
 
   // search
   for (i=0; i<20; i++) {
-    printf("searching: key = %"PRId32": ", i);
+    printf("searching: key = %" PRId32 ": ", i);
     fflush(stdout);
     d = ptr_hmap_find(&map, i);
     if (d == NULL) {
@@ -93,7 +93,7 @@ int main(void) {
   for (i=0; i<9; i+=3) {
     d = ptr_hmap_find(&map, i);
     if (d != NULL) {
-      printf("erasing record %p: key = %"PRId32", val = %s\n", d, i, (char*) d->val);
+      printf("erasing record %p: key = %" PRId32 ", val = %s\n", d, i, (char*) d->val);
       ptr_hmap_erase(&map, d);
     } else {
       printf("*** BUG ***\n");
@@ -105,7 +105,7 @@ int main(void) {
 
   // search
   for (i=0; i<9; i++) {
-    printf("searching: key = %"PRId32": ", i);
+    printf("searching: key = %" PRId32 ": ", i);
     fflush(stdout);
     d = ptr_hmap_find(&map, i);
     if (d == NULL) {

@@ -26,13 +26,14 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <malloc.h>
 
 #include "solvers/bv/bit_blaster.h"
 #include "solvers/cdcl/smt_core.h"
 #include "solvers/cdcl/smt_core_printer.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -177,7 +178,7 @@ static void pseudo_convert(uint32_t n, literal_t *u, literal_t *a) {
  * - n must be no more than 32
  */
 static void print_pseudo_vector(uint32_t n, literal_t *u) {
-  literal_t a[n];
+  literal_t* a = (literal_t*)alloca(n * sizeof(literal_t));
 
   pseudo_convert(n, u, a);
   print_bitvector(n, a);
@@ -214,7 +215,7 @@ static void init_random(uint32_t n) {
   lit[1] = false_literal;
   for (i=2; i<n; i += 2) {
     lit[i] = fresh_lit();
-    lit[i+1] = not(lit[i]);
+    lit[i+1] = not_(lit[i]);
   }
 
   for (i=0; i<n; i++) {
@@ -246,7 +247,7 @@ static void refresh_random(uint32_t n) {
   for (i=2; i<n; i += 2) {
     if (used[i] || used[i+1]) {
       lit[i] = fresh_lit();
-      lit[i+1] = not(lit[i]);
+      lit[i+1] = not_(lit[i]);
       used[i] = false;
       used[i+1] = false;
     }
@@ -402,7 +403,7 @@ static void test_size1(void (*f)(uint32_t, literal_t c, literal_t *, literal_t *
   f(1, c, a, b);
   c = fresh_lit();
   a[0] = fresh_lit();
-  b[0] = not(a[0]);
+  b[0] = not_(a[0]);
   f(1, c, a, b);
 
   c = fresh_lit();
@@ -475,7 +476,7 @@ static void base_test4(void (*f)(uint32_t, literal_t, literal_t *, literal_t *))
   f(4, c, a, b);
 
   x = fresh_lit();
-  c = not(x);
+  c = not_(x);
   for (i=0; i<4; i++) {
     a[i] = true_literal;
     b[i] = x;

@@ -90,7 +90,7 @@ static void bfs_explorer_push_term(bfs_explorer_t *explorer, term_t t) {
  */
 static void bfs_collect_conjuncts(bfs_explorer_t *explorer, ivector_t *v) {
   term_table_t *terms;
-  composite_term_t *or;
+  composite_term_t *or_;
   uint32_t i, n;
   term_t t;
 
@@ -105,10 +105,10 @@ static void bfs_collect_conjuncts(bfs_explorer_t *explorer, ivector_t *v) {
        * t is (not (or a[0] ... a[n-1])), 
        * we push (not a[0]) ... (not a[n-1]) into the queue.
        */
-      or = or_term_desc(terms, t);
-      n = or->arity;
+      or_ = or_term_desc(terms, t);
+      n = or_->arity;
       for (i=0; i<n; i++) {
-	bfs_explorer_push_term(explorer, opposite_term(or->arg[i]));
+	bfs_explorer_push_term(explorer, opposite_term(or_->arg[i]));
       }
     } else {
       /*
@@ -148,7 +148,7 @@ void bfs_get_conjuncts(bfs_explorer_t *explorer, term_t f, ivector_t *v) {
  */
 static void bfs_collect_disjuncts(bfs_explorer_t *explorer, ivector_t *v) {
   term_table_t *terms;
-  composite_term_t *or;
+  composite_term_t *or_;
   uint32_t i, n;
   term_t t;
 
@@ -163,10 +163,10 @@ static void bfs_collect_disjuncts(bfs_explorer_t *explorer, ivector_t *v) {
        * t is (or a[0] ... a[n-1])), 
        * we push a[0] ... a[n-1] into the queue.
        */
-      or = or_term_desc(terms, t);
-      n = or->arity;
+      or_ = or_term_desc(terms, t);
+      n = or_->arity;
       for (i=0; i<n; i++) {
-	bfs_explorer_push_term(explorer, or->arg[i]);
+	bfs_explorer_push_term(explorer, or_->arg[i]);
       }
     } else {
       /*

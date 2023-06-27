@@ -116,7 +116,7 @@ static term_t convert_func(val_converter_t *convert, value_table_t *table, value
   term_t *eq;
 
   assert(0 <= c && c < table->nobjects && table->kind[c] == FUNCTION_VALUE);
-  fun = table->desc[c].ptr;
+  fun = (value_fun_t*)table->desc[c].ptr;
   result = NULL_TERM;
 
   m = fun->arity;

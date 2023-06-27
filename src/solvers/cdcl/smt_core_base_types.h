@@ -104,7 +104,7 @@ static inline bool is_neg(literal_t l) {
 
 
 // negation of literal l
-static inline literal_t not(literal_t l) {
+static inline literal_t not_(literal_t l) {
   return l ^ 1;
 }
 
@@ -138,7 +138,7 @@ static inline literal_t mk_signed_lit(bvar_t x, bool tt) {
 /*
  * Remove the sign of l (i.e., force the sign bit to 0)
  * - if l is pos_lit(x) return l
- * - if l is neg_lit(x) return not(l)
+ * - if l is neg_lit(x) return not_(l)
  */
 static inline literal_t unsigned_literal(literal_t l) {
   return l & ~1;
@@ -198,7 +198,7 @@ static inline bool true_preferred(bval_t val) {
 
 // opposite value of v: flip the low order bit
 static inline bval_t opposite_val(bval_t val) {
-  return val ^ 1;
+  return (bval_t)(val ^ 1);
 }
 
 /*

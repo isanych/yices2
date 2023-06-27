@@ -24,10 +24,9 @@
 #include <stdint.h>
 
 #include "context/eq_learner.h"
+#include "yices_config.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 
@@ -87,7 +86,7 @@ void delete_eq_learner(eq_learner_t *learner) {
   for (p = ptr_hmap_first_record(cache);
        p != NULL;
        p = ptr_hmap_next_record(cache, p)) {
-    delete_epartition(m, p->val);
+    delete_epartition(m, (epartition_t *)p->val);
   }
   delete_ptr_hmap(cache);
   delete_epartition_manager(m);
@@ -106,7 +105,7 @@ static epartition_t *find_cached_abstraction(eq_learner_t *learner, term_t f) {
   p = ptr_hmap_find(&learner->cache, f);
   if (p != NULL) {
     assert(p->val != NULL);
-    return p->val;
+    return (epartition_t*)p->val;
   } else {
     return NULL;
   }
@@ -137,7 +136,7 @@ static epartition_t *get_cached_abstraction(eq_learner_t *learner, term_t f) {
   p = ptr_hmap_find(&learner->cache, f);
   assert(p != NULL);
 
-  return p->val;
+  return (epartition_t*)p->val;
 }
 
 
@@ -155,17 +154,17 @@ static epartition_t *eq_abstract(eq_learner_t *learner, term_t f, bool polarity)
  * - if polarity is false: abstraction of not (OR t1 ... tn)
  *   (i.e., abstraction of (AND (not t1) ... (not tn)))
  */
-static epartition_t *eq_abstract_or(eq_learner_t *learner, composite_term_t *or, bool polarity) {
+static epartition_t *eq_abstract_or(eq_learner_t *learner, composite_term_t *or_, bool polarity) {
   uint32_t i, n;
   epartition_manager_t *m;
   epartition_t *p;
 
-  assert(or->arity > 1);
+  assert(or_->arity > 1);
 
   // abstract the arguments
-  n = or->arity;
+  n = or_->arity;
   for (i=0; i<n; i++) {
-    (void) eq_abstract(learner, or->arg[i], polarity);
+    (void) eq_abstract(learner, or_->arg[i], polarity);
   }
 
   /*
@@ -176,20 +175,20 @@ static epartition_t *eq_abstract_or(eq_learner_t *learner, composite_term_t *or,
   m = &learner->manager;
   if (polarity) {
     // (OR t1 ... t_n)
-    p = get_cached_abstraction(learner, or->arg[0]);
+    p = get_cached_abstraction(learner, or_->arg[0]);
     epartition_init_for_join(m, p);
     for (i=1; i<n; i++) {
-      p = get_cached_abstraction(learner, or->arg[i]);
+      p = get_cached_abstraction(learner, or_->arg[i]);
       epartition_join(m, p);
     }
     return epartition_get_join(m);
 
   } else {
     // (AND (not t1) ... (not t_n))
-    p = get_cached_abstraction(learner, opposite_term(or->arg[0]));
+    p = get_cached_abstraction(learner, opposite_term(or_->arg[0]));
     epartition_init_for_meet(m, p);
     for (i=1; i<n; i++) {
-      p = get_cached_abstraction(learner, opposite_term(or->arg[i]));
+      p = get_cached_abstraction(learner, opposite_term(or_->arg[i]));
       epartition_meet(m, p);
     }
     return epartition_get_meet(m);
@@ -365,7 +364,7 @@ epartition_t *eq_learner_process(eq_learner_t *learner, term_t f) {
 
   p = eq_abstract(learner, f, true);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> ABS: ");
   print_term_def(stdout, learner->terms, f);
   printf("\n---> result = ");

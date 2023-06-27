@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <malloc.h>
 
 #include "solvers/bv/bvpoly_dag.h"
 #include "terms/bv64_constants.h"
@@ -39,9 +40,9 @@
  */
 static void print_nocc(FILE *f, node_occ_t n) {
   if (sign_of_occ(n) == 0) {
-    fprintf(f, "+n%"PRId32, (n>>1));
+    fprintf(f, "+n%" PRId32, (n>>1));
   } else {
-    fprintf(f, "-n%"PRId32, (n>>1));
+    fprintf(f, "-n%" PRId32, (n>>1));
   }
 }
 
@@ -49,9 +50,9 @@ static void print_nocc(FILE *f, node_occ_t n) {
 // variable occurrence x
 static void print_vocc(FILE *f, int32_t x) {
   if (sign_of_occ(x) == 0) {
-    fprintf(f, "+u!%"PRId32, (x>>1));
+    fprintf(f, "+u!%" PRId32, (x>>1));
   } else {
-    fprintf(f, "-u!%"PRId32, (x>>1));
+    fprintf(f, "-u!%" PRId32, (x>>1));
   }
 }
 #endif
@@ -88,11 +89,11 @@ static void print_bvconst(FILE *f, uint32_t *c, uint32_t n) {
  * Print a node in the dag
  */
 static void print_leaf_node(FILE *f, bvc_leaf_t *d) {
-  fprintf(f, "[LEAF u!%"PRId32" (%"PRIu32" bits)]", d->map, d->header.bitsize);
+  fprintf(f, "[LEAF u!%" PRId32 " (%" PRIu32 " bits)]", d->map, d->header.bitsize);
 }
 
 static void print_zero_node(FILE *f, bvc_zero_t *d) {
-  fprintf(f, "[ZERO (%"PRIu32" bits)]", d->header.bitsize);
+  fprintf(f, "[ZERO (%" PRIu32 " bits)]", d->header.bitsize);
 }
 
 static void print_offset_node(FILE *f, bvc_offset_t *d) {
@@ -107,7 +108,7 @@ static void print_offset_node(FILE *f, bvc_offset_t *d) {
   }
   fputc(' ', f);
   print_nocc(f, d->nocc);
-  fprintf(f, " (%"PRIu32" bits)]", n);
+  fprintf(f, " (%" PRIu32 " bits)]", n);
 }
 
 static void print_mono_node(FILE *f, bvc_mono_t *d) {
@@ -122,7 +123,7 @@ static void print_mono_node(FILE *f, bvc_mono_t *d) {
   }
   fputc(' ', f);
   print_nocc(f, d->nocc);
-  fprintf(f, " (%"PRIu32" bits)]", n);
+  fprintf(f, " (%" PRIu32 " bits)]", n);
 }
 
 static void print_prod_node(FILE *f, bvc_prod_t *d) {
@@ -134,10 +135,10 @@ static void print_prod_node(FILE *f, bvc_prod_t *d) {
     fputc(' ', f);
     print_nocc(f, d->prod[i].var);
     if (d->prod[i].exp > 1) {
-      fprintf(f, "^%"PRId32, d->prod[i].exp);
+      fprintf(f, "^%" PRId32, d->prod[i].exp);
     }
   }
-  fprintf(f, " (%"PRIu32" bits)]", d->header.bitsize);
+  fprintf(f, " (%" PRIu32 " bits)]", d->header.bitsize);
 }
 
 static void print_sum_node(FILE *f, bvc_sum_t *d) {
@@ -149,7 +150,7 @@ static void print_sum_node(FILE *f, bvc_sum_t *d) {
     fputc(' ', f);
     print_nocc(f, d->sum[i]);
   }
-  fprintf(f, " (%"PRIu32" bits)]", d->header.bitsize);
+  fprintf(f, " (%" PRIu32 " bits)]", d->header.bitsize);
 }
 
 static void print_node_descriptor(FILE *f, bvc_header_t *d) {
@@ -194,7 +195,7 @@ static void print_use_list(FILE *f, int32_t *a) {
     fprintf(f, "(");
     for (i=0; i<n; i++) {
       if (i > 0) fputc(' ', f);
-      fprintf(f, "n%"PRId32, a[i]);
+      fprintf(f, "n%" PRId32, a[i]);
     }
     fprintf(f, ")");
   }
@@ -207,7 +208,7 @@ static void print_use_list(FILE *f, int32_t *a) {
 static void print_node(FILE *f, bvc_dag_t *dag, bvnode_t q) {
   assert(0 < q && q <= dag->nelems);
 
-  fprintf(f, "Node n%"PRId32"\n", q);
+  fprintf(f, "Node n%" PRId32 "\n", q);
   fprintf(f, "   ");
   print_node_descriptor(f, dag->desc[q]);
   fprintf(f, "\n");
@@ -229,7 +230,7 @@ static void print_list(FILE *f, bvc_dag_t *dag, int32_t k) {
     fprintf(f, " empty");
   } else {
     do {
-      fprintf(f, " n%"PRId32, i);
+      fprintf(f, " n%" PRId32, i);
       i = dag->list[i].next;
     } while (i != k);
   }
@@ -243,7 +244,7 @@ static void print_dag(FILE *f, bvc_dag_t *dag) {
   uint32_t i, n;
 
   n = dag->nelems;
-  fprintf(f, "DAG %p: %"PRIu32" nodes\n", dag, n);
+  fprintf(f, "DAG %p: %" PRIu32 " nodes\n", dag, n);
   for (i=1; i <= n; i++) {
     print_node(f, dag, i);
   }
@@ -288,7 +289,7 @@ static node_occ_t test_leaf(bvc_dag_t *dag, int32_t v, uint32_t b) {
     exit(1);
   }
 
-  printf("---> created leaf node n!%"PRId32" for var u!%"PRId32" (%"PRIu32" bits)\n", q, v, b);
+  printf("---> created leaf node n!%" PRId32 " for var u!%" PRId32 " (%" PRIu32 " bits)\n", q, v, b);
   if (sign_of_occ(r) == 0 && bvc_dag_node_is_leaf(dag, q)) {
     d = bvc_dag_node_leaf(dag, q);
     if (d->map != v || d->header.bitsize != b) {
@@ -332,7 +333,7 @@ static node_occ_t test_mono64(bvc_dag_t *dag, uint64_t a, node_occ_t r, uint32_t
   print_bvconst64(stdout, a, b);
   printf(" * ");
   print_nocc(stdout, r);
-  printf(" (%"PRIu32" bits)\n", b);
+  printf(" (%" PRIu32 " bits)\n", b);
 
   if (tst != chk) {
     printf("---> ERROR: Hash-consing failed\n");
@@ -403,7 +404,7 @@ static node_occ_t test_mono(bvc_dag_t *dag, uint32_t *a, node_occ_t r, uint32_t 
   print_bvconst(stdout, a, b);
   printf(" * ");
   print_nocc(stdout, r);
-  printf(" (%"PRIu32" bits)\n", b);
+  printf(" (%" PRIu32 " bits)\n", b);
 
   if (tst != chk) {
     printf("---> ERROR: Hash-consing failed\n");
@@ -468,11 +469,11 @@ static node_occ_t test_offset64(bvc_dag_t *dag, uint64_t a, node_occ_t r, uint32
   chk = bvc_dag_offset64(dag, a, r, b);
   q = tst >> 1;
 
-  printf("---> created offset node n!%"PRId32" for ", q);
+  printf("---> created offset node n!%" PRId32 " for ", q);
   print_bvconst64(stdout, a, b);
   printf(" ");
   print_nocc(stdout, r);
-  printf(" (%"PRIu32" bits)\n", b);
+  printf(" (%" PRIu32 " bits)\n", b);
 
   if (tst != chk) {
     printf("---> ERROR: Hash-consing failed\n");
@@ -515,11 +516,11 @@ static node_occ_t test_offset(bvc_dag_t *dag, uint32_t *a, node_occ_t r, uint32_
   chk = bvc_dag_offset(dag, a, r, b);
   q = tst >> 1;
 
-  printf("---> created offset node n!%"PRId32" for ", q);
+  printf("---> created offset node n!%" PRId32 " for ", q);
   print_bvconst(stdout, a, b);
   printf(" ");
   print_nocc(stdout, r);
-  printf(" (%"PRIu32" bits)\n", b);
+  printf(" (%" PRIu32 " bits)\n", b);
 
   if (tst != chk) {
     printf("---> ERROR: Hash-consing failed\n");
@@ -601,7 +602,7 @@ static node_occ_t test_sum(bvc_dag_t *dag, node_occ_t *a, uint32_t n, uint32_t b
     printf(" ");
     print_nocc(stdout, aux2[i]);
   }
-  printf(" (%"PRIu32" bits)\n", b);
+  printf(" (%" PRIu32 " bits)\n", b);
 
   if (tst != chk) {
     printf("---> ERROR: Hash-consing failed\n");
@@ -687,9 +688,9 @@ static node_occ_t test_pprod(bvc_dag_t *dag, node_occ_t *a, uint32_t *e, uint32_
   for (i=0; i<n; i++) {
     printf(" ");
     print_nocc(stdout, a[i]);
-    if (e[i] > 1) printf("^%"PRIu32, e[i]);
+    if (e[i] > 1) printf("^%" PRIu32, e[i]);
   }
-  printf(" (%"PRIu32" bits)\n", b);
+  printf(" (%" PRIu32 " bits)\n", b);
 
   if (tst != chk) {
     printf("---> ERROR: Hash-consing failed\n");
@@ -1217,7 +1218,7 @@ static void test_make_offset(bvc_dag_t *dag, test_occ_t *t) {
  * TEST: sum of n elements
  */
 static void test_make_sum(bvc_dag_t *dag, uint32_t n) {
-  node_occ_t aux[n];
+  node_occ_t* aux = (node_occ_t*)alloca(n * sizeof(node_occ_t));
   node_occ_t r;
   uint32_t b, i;
 
@@ -1235,8 +1236,8 @@ static void test_make_sum(bvc_dag_t *dag, uint32_t n) {
  * TEST: products of n elements
  */
 static void test_make_product(bvc_dag_t *dag, uint32_t n) {
-  node_occ_t a[n];
-  uint32_t exp[n];
+  node_occ_t* a = (node_occ_t*)alloca(n * sizeof(node_occ_t));
+  uint32_t* exp = (uint32_t*)alloca(n * sizeof(uint32_t));
   uint32_t b, i;
   node_occ_t r;
   uint32_t seed = PRNG_DEFAULT_SEED;

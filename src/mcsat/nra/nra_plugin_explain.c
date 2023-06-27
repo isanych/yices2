@@ -41,10 +41,9 @@
 #include <poly/variable_order.h>
 #include <poly/polynomial.h>
 #include <poly/interval.h>
+#include "yices_config.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 #include <inttypes.h>
 #include "io/term_printer.h"
 #endif
@@ -453,7 +452,7 @@ void lp_projection_map_describe_cell_part(lp_projection_map_t* map, lp_variable_
           current_literal = mk_arith_term_eq0(tm, current_term);
         }
         // Add to output
-#if TRACE
+#if YICES_TRACE
         fprintf(stderr, "Adding cell part (1): ");
         print_term(stderr, map->tm->terms, current_literal);
         fprintf(stderr, "\n");
@@ -476,7 +475,7 @@ void lp_projection_map_describe_cell_part(lp_projection_map_t* map, lp_variable_
 
   assert(term_kind(tm->terms, root_atom) != CONSTANT_TERM);
 
-#if TRACE
+#if YICES_TRACE
   fprintf(stderr, "Adding cell part (2): ");
   print_term(stderr, map->tm->terms, root_atom);
   fprintf(stderr, "\n");
@@ -554,7 +553,7 @@ void lp_projection_map_construct_cell(lp_projection_map_t* map, lp_variable_t x,
     ctx_trace_printf(ctx, "x_set = "); lp_polynomial_hash_set_print(x_set, ctx_trace_out(ctx)); ctx_trace_printf(ctx, "\n");
   }
 
-#if TRACE
+#if YICES_TRACE
   fprintf(stderr, "x_set = "); lp_polynomial_hash_set_print(x_set, stderr); fprintf(stderr, "\n");
 #endif
 
@@ -913,7 +912,7 @@ void lp_projection_map_project(lp_projection_map_t* map, ivector_t* out, int_hse
     bool top = lp_assignment_get_value(map->m, x)->type == LP_VALUE_NONE;
     bool output_cell = (cell_variables == NULL || int_hset_member(cell_variables, x));
 
-#if TRACE
+#if YICES_TRACE
     fprintf(stderr, "Projecting variable: %s\n", lp_variable_db_get_name(map->ctx->var_db, x));
 #endif
 
@@ -1318,7 +1317,7 @@ int32_t nra_project_arith_literals(ivector_t* literals, model_t* mdl, term_manag
     // We're keeping this var
     int_hset_add(&vars_to_keep_set, x_lp);
 
-#if TRACE
+#if YICES_TRACE
     fprintf(stderr, "Adding variable to keep: %s\n", lp_variable_db_get_name(lp_var_db, x_lp));
 #endif
 
@@ -1357,7 +1356,7 @@ int32_t nra_project_arith_literals(ivector_t* literals, model_t* mdl, term_manag
 
     lp_variable_t x_lp = lp_variable_from_term(x, tm->terms, lp_var_db);
 
-#if TRACE
+#if YICES_TRACE
     fprintf(stderr, "Adding variable to eliminate: %s\n", lp_variable_db_get_name(lp_var_db, x_lp));
 #endif
 
@@ -1393,7 +1392,7 @@ int32_t nra_project_arith_literals(ivector_t* literals, model_t* mdl, term_manag
   // Add all the literals
   for (i = 0; i < literals->size; ++ i) {
     term_t l = literals->data[i];
-#if TRACE
+#if YICES_TRACE
     fprintf(stderr, "C[%i] = ", i);
     print_term(stderr, tm->terms, l);
     fprintf(stderr, "\n");
@@ -1405,7 +1404,7 @@ int32_t nra_project_arith_literals(ivector_t* literals, model_t* mdl, term_manag
   ivector_reset(literals);
   lp_projection_map_project(&projector, literals, &vars_to_keep_set);
 
-#if TRACE
+#if YICES_TRACE
   fprintf(stderr, "Projection:\n");
   for (i = 0; i < literals->size; ++ i) {
     fprintf(stderr, "P[%i] = ", i);

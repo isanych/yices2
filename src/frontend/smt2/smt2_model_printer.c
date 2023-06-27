@@ -48,7 +48,7 @@
  * - return true if t should be printed (i.e., t is uninterpreted and it has a name)
  */
 static bool is_named_unint(void *aux, term_t t) {
-  return is_pos_term(t) && term_kind(aux, t) == UNINTERPRETED_TERM && term_name(aux, t) != NULL;
+  return is_pos_term(t) && term_kind((term_table_t*)aux, t) == UNINTERPRETED_TERM && term_name((term_table_t*)aux, t) != NULL;
 }
 
 /*

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 #include "api/yices_globals.h"
 #include "io/term_printer.h"
@@ -42,7 +43,7 @@
 
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -270,7 +271,7 @@ static bool has_type(type_t tau, term_t t) {
  * GLOBAL STORE + boolean type + a buffer
  */
 static term_store_t all_terms;
-static type_t boolean;
+static type_t boolean_;
 static ivector_t buffer;
 
 
@@ -285,14 +286,14 @@ static void init_store(void) {
   init_term_store(&all_terms);
   init_ivector(&buffer, 10);
 
-  boolean = yices_bool_type();
+  boolean_ = yices_bool_type();
   term_store_add_term(&all_terms, yices_true());
   term_store_add_term(&all_terms, yices_false());
 
   // ten boolean variables
   for (i=0; i<10; i++) {
-    t = yices_new_uninterpreted_term(boolean);
-    sprintf(name, "p%"PRIu32, i);
+    t = yices_new_uninterpreted_term(boolean_);
+    sprintf(name, "p%" PRIu32, i);
     yices_set_term_name(t, name);
     term_store_add_term(&all_terms, t);
     term_store_add_term(&all_terms, yices_not(t));
@@ -369,7 +370,7 @@ static term_t test_binop(uint32_t i, term_t t1, term_t t2) {
  * - i = index of the operation in op_array
  */
 static term_t test_op(uint32_t i, uint32_t n, term_t *a) {
-  term_t aux[n];
+  term_t* aux = (term_t*)alloca(n * sizeof(term_t));
   term_t t;
   uint32_t j;
 
@@ -453,9 +454,9 @@ static void random_binary_tests(uint32_t n) {
   term_t t1, t2;
 
   while (n > 0) {
-    t1 = term_store_sample(&all_terms, boolean, has_type);
-    t2 = term_store_sample(&all_terms, boolean, has_type);
-    printf("--- Test %"PRIu32" ---\n", n);
+    t1 = term_store_sample(&all_terms, boolean_, has_type);
+    t2 = term_store_sample(&all_terms, boolean_, has_type);
+    printf("--- Test %" PRIu32 " ---\n", n);
     all_binary_tests(t1, t2);
     printf("\n\n");
     n --;
@@ -474,10 +475,10 @@ static void random_nary_tests(uint32_t n) {
     m = ((uint32_t) random()) % 10; // size between 0 and 9
     ivector_reset(&buffer);
     for (i=0; i<m; i++) {
-      t = term_store_sample(&all_terms, boolean, has_type);
+      t = term_store_sample(&all_terms, boolean_, has_type);
       ivector_push(&buffer, t);
     }
-    printf("--- Test %"PRIu32" ---\n", n);
+    printf("--- Test %" PRIu32 " ---\n", n);
     all_nary_tests(m, buffer.data);
     printf("\n\n");
 
@@ -494,9 +495,9 @@ static void random_ite(uint32_t n) {
 
   printf("\n---- Test if-then-else ----\n");
   while (n > 0) {
-    c = term_store_sample(&all_terms, boolean, has_type);
-    t1 = term_store_sample(&all_terms, boolean, has_type);
-    t2 = term_store_sample(&all_terms, boolean, has_type);
+    c = term_store_sample(&all_terms, boolean_, has_type);
+    t1 = term_store_sample(&all_terms, boolean_, has_type);
+    t2 = term_store_sample(&all_terms, boolean_, has_type);
 
     test_ite(c, t1, t2);
     printf("\n");

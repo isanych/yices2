@@ -77,7 +77,7 @@ static objstack_block_t *get_block(objstack_t *stack) {
   if (b != NULL) {
     stack->free = b->h.next;
   } else {
-    b = safe_malloc(sizeof(objstack_block_t));
+    b = (objstack_block_t*)safe_malloc(sizeof(objstack_block_t));
   }
   return b;
 }

@@ -28,18 +28,21 @@
 
 #include "yices_exit_codes.h"
 
+#ifdef __cplusplus
+#include <stdexcept>
+#endif
 
 /*
  * Callback function: give a chance to do something when
  * we run out of memory.
  */
-out_of_mem_callback_t __out_of_mem_callback = NULL;
+YICES_DEFINE out_of_mem_callback_t __out_of_mem_callback = NULL;
 
 
 /*
  * Fatal error: out of memory
  */
-void out_of_memory(void) {
+YICES_DEFINE void out_of_memory(void) {
   if (__out_of_mem_callback != NULL) {
     __out_of_mem_callback();
   } else {
@@ -56,12 +59,16 @@ void out_of_memory(void) {
  * return NULL on some systems, but that does not
  * mean we're out of memory.
  */
-void *safe_malloc(size_t size) {
+YICES_DEFINE void *safe_malloc(size_t size) {
   void *tmp;
 
   tmp = malloc(size);
   if (tmp == NULL && size > 0) {
+#ifdef __cplusplus
+    throw std::bad_alloc();
+#else
     out_of_memory();
+#endif
   }
 
   return tmp;
@@ -81,7 +88,7 @@ void *safe_malloc(size_t size) {
  *
  * size must be positive: realloc(p, 0) is the same as free(ptr).
  */
-void *safe_realloc(void *ptr, size_t size) {
+YICES_DEFINE void *safe_realloc(void *ptr, size_t size) {
   void *tmp;
 
   assert(size > 0);
@@ -100,7 +107,7 @@ void *safe_realloc(void *ptr, size_t size) {
 /*
  * Wrapper for strdup
  */
-char *safe_strdup(const char *s) {
+YICES_DEFINE char *safe_strdup(const char *s) {
   char *tmp;
 
   tmp = strdup(s);

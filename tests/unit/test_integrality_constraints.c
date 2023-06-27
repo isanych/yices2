@@ -111,7 +111,7 @@ static void show_var(FILE *f, uint32_t i) {
   type = var[i].is_int ? "int" : "rational";
   fixed = var[i].is_fixed ? "fixed" : "not fixed";
 
-  fprintf(f, "var[%"PRIu32"]: name = %s, type = %s, %s", i, var[i].name, type, fixed);
+  fprintf(f, "var[%" PRIu32 "]: name = %s, type = %s, %s", i, var[i].name, type, fixed);
   if (var[i].is_fixed) {
     fprintf(f, ", value = ");
     q_print(f, &var[i].fixed_value);

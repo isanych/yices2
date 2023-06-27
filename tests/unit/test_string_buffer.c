@@ -39,7 +39,7 @@ static void show_test(const char *desc, string_buffer_t *s) {
 
   content = string_buffer_export(s, &len);
   printf("Exported to %s\n", content);
-  printf("len = %"PRIu32"\n", len);
+  printf("len = %" PRIu32 "\n", len);
   printf("---\n");
 
   safe_free(content);

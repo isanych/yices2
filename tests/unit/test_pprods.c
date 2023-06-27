@@ -31,15 +31,15 @@ static void print_varexp_array(FILE *f, varexp_t *a, uint32_t n) {
     return;
   }
   d = a[0].exp;
-  fprintf(f, "[x_%"PRId32, a[0].var);
+  fprintf(f, "[x_%" PRId32, a[0].var);
   if (d != 1) {
-    fprintf(f, "^%"PRIu32, d);
+    fprintf(f, "^%" PRIu32, d);
   }
   for (i=1; i<n; i++) {
     d = a[i].exp;
-    fprintf(f, " x_%"PRId32, a[i].var);
+    fprintf(f, " x_%" PRId32, a[i].var);
     if (d != 1) {
-      fprintf(f, "^%"PRIu32, d);
+      fprintf(f, "^%" PRIu32, d);
     }
   }
   fprintf(f, "]");
@@ -50,8 +50,8 @@ static void print_varexp_array(FILE *f, varexp_t *a, uint32_t n) {
 // not used
 static void print_pp_buffer(FILE *f, pp_buffer_t *b) {
   fprintf(f, "pp_buffer %p\n", b);
-  fprintf(f, "  size = %"PRIu32"\n", b->size);
-  fprintf(f, "  len = %"PRIu32"\n", b->len);
+  fprintf(f, "  size = %" PRIu32 "\n", b->size);
+  fprintf(f, "  len = %" PRIu32 "\n", b->len);
   fprintf(f, "  product = ");
   print_varexp_array(f, b->prod, b->len);
   fprintf(f, "\n");
@@ -62,12 +62,12 @@ static void print_pp_buffer(FILE *f, pp_buffer_t *b) {
 static void print_pprod(FILE *f, pprod_t *p) {
   fprintf(f, "pprod %p\n", p);
   if (pp_is_var(p)) {
-    fprintf(f, " var pp = [x_%"PRId32"]\n", var_of_pp(p));
+    fprintf(f, " var pp = [x_%" PRId32 "]\n", var_of_pp(p));
   } else if (pp_is_empty(p)) {
     fprintf(f, " empty\n");
   } else {
-    fprintf(f, "  len = %"PRIu32"\n", p->len);
-    fprintf(f, "  degree = %"PRIu32"\n", p->degree);
+    fprintf(f, "  len = %" PRIu32 "\n", p->len);
+    fprintf(f, "  degree = %" PRIu32 "\n", p->degree);
     fprintf(f, "  product = ");
     print_varexp_array(f, p->prod, p->len);
     fprintf(f, "\n");
@@ -81,7 +81,7 @@ static void print_pp_buffer0(FILE *f, pp_buffer_t *b) {
 
 static void print_pprod0(FILE *f, pprod_t *p) {
   if (pp_is_var(p)) {
-    fprintf(f, "[x_%"PRId32"]\n", var_of_pp(p));
+    fprintf(f, "[x_%" PRId32 "]\n", var_of_pp(p));
   } else if (pp_is_empty(p)) {
     fprintf(f, "[]\n");
   } else {
@@ -134,11 +134,11 @@ int main(void) {
   p[9] = pp_buffer_getprod(&buffer);
 
   for (i=0; i<NUM_PRODS; i++) {
-    printf("p[%"PRIu32"] =  ", i);
+    printf("p[%" PRIu32 "] =  ", i);
     print_pprod(stdout, p[i]);
-    printf(" total degree = %"PRIu32"\n", pprod_degree(p[i]));
+    printf(" total degree = %" PRIu32 "\n", pprod_degree(p[i]));
     for (j=0; j<5; j++) {
-      printf(" degree of x_%"PRIu32" = %"PRIu32"\n", j, pprod_var_degree(p[i], j));
+      printf(" degree of x_%" PRIu32 " = %" PRIu32 "\n", j, pprod_var_degree(p[i], j));
     }
     printf("----\n");
   }

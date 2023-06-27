@@ -87,7 +87,7 @@ static void init_testobj2(void) {
  * Print record r
  */
 static void print_ppart_record(ppart_rec_t *r) {
-  printf("[hash = %08"PRIx32", cid = %"PRId32", data = %p]", r->hash, r->cid, r->data);
+  printf("[hash = %08" PRIx32 ", cid = %" PRId32 ", data = %p]", r->hash, r->cid, r->data);
 }
 
 
@@ -99,7 +99,7 @@ static void print_ppart_vector(void **v) {
 
   n = ppv_size(v);
   for (i=0; i<n; i++) {
-    printf(" (%"PRId32" %"PRId32")", ((pair_t*) v[i])->left, ((pair_t *) v[i])->right);
+    printf(" (%" PRId32 " %" PRId32 ")", ((pair_t*) v[i])->left, ((pair_t *) v[i])->right);
   }
 }
 
@@ -112,10 +112,10 @@ static void print_ppart(ppart_t *pp) {
   uint32_t i, n;
 
   printf("pp %p\n", pp);
-  printf("  size = %"PRIu32"\n", pp->size);
-  printf("  nelems = %"PRIu32"\n", pp->nelems);
-  printf("  csize = %"PRIu32"\n", pp->csize);
-  printf("  nclasses = %"PRIu32"\n", pp->nclasses);
+  printf("  size = %" PRIu32 "\n", pp->size);
+  printf("  nelems = %" PRIu32 "\n", pp->nelems);
+  printf("  csize = %" PRIu32 "\n", pp->csize);
+  printf("  nclasses = %" PRIu32 "\n", pp->nclasses);
 
   n = pp->nelems;
   if (n > 0) {
@@ -124,7 +124,7 @@ static void print_ppart(ppart_t *pp) {
     n = pp->size;
     for (i=0; i<n; i++) {
       if (d->data != NULL) {
-	printf("   rec[%"PRIu32"]: ", i);
+	printf("   rec[%" PRIu32 "]: ", i);
 	print_ppart_record(d);
 	printf("\n");
       }
@@ -136,7 +136,7 @@ static void print_ppart(ppart_t *pp) {
   if (n > 0) {
     printf("  Classes\n");
     for (i=0; i<n; i++) {
-      printf("   class[%"PRIu32"]: ", i);
+      printf("   class[%" PRIu32 "]: ", i);
       print_ppart_vector(pp->classes[i]);
       printf("\n");
     }
@@ -165,7 +165,7 @@ int main(void) {
   for (i=0; i<NOBJ; i++) {
     ptr_partition_add(&pp, testobj + i);
     if (i % 10 == 9) {
-      printf("=== Added %"PRIu32" objects ===\n", i+1);
+      printf("=== Added %" PRIu32 " objects ===\n", i+1);
       print_ppart(&pp);
       printf("\n\n");
     }
@@ -186,7 +186,7 @@ int main(void) {
   for (i=0; i<NOBJ; i++) {
     ptr_partition_add(&pp, testobj + i);
     if (i % 10 == 9) {
-      printf("=== Added %"PRIu32" objects ===\n", i+1);
+      printf("=== Added %" PRIu32 " objects ===\n", i+1);
       print_ppart(&pp);
       printf("\n\n");
     }

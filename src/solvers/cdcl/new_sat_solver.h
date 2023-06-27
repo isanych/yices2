@@ -38,6 +38,7 @@
 #include "solvers/cdcl/new_gates.h"
 #include "utils/tag_map.h"
 
+#include <yices_config.h>
 
 /****************
  *  UTILITIES   *
@@ -1045,7 +1046,7 @@ typedef struct sat_solver_s {
  * - the solver is initialized with one variable (the reserved variable 0).
  * - verbosity is 0.
  */
-extern void init_nsat_solver(sat_solver_t *solver, uint32_t sz, bool pp);
+YICES_EXTERN void init_nsat_solver(sat_solver_t *solver, uint32_t sz, bool pp);
 
 /*
  * Set the verbosity level
@@ -1054,29 +1055,29 @@ extern void init_nsat_solver(sat_solver_t *solver, uint32_t sz, bool pp);
  * - level >= 1 --> print statistics about preprocessing
  * - level >= 2 --> print statistics at every restart
  */
-extern void nsat_set_verbosity(sat_solver_t *solver, uint32_t level);
+YICES_EXTERN void nsat_set_verbosity(sat_solver_t *solver, uint32_t level);
 
 /*
  * Deletion: free memory
  */
-extern void delete_nsat_solver(sat_solver_t *solver);
+YICES_EXTERN void delete_nsat_solver(sat_solver_t *solver);
 
 /*
  * Reset: remove all variables and clauses
  */
-extern void reset_nsat_solver(sat_solver_t *solver);
+YICES_EXTERN void reset_nsat_solver(sat_solver_t *solver);
 
 /*
  * Add n fresh variables:
  * - they are indexed from nv, ..., nv + n-1 where nv = number of
  *   variables in solver (on entry to this function).
  */
-extern void nsat_solver_add_vars(sat_solver_t *solver, uint32_t n);
+YICES_EXTERN void nsat_solver_add_vars(sat_solver_t *solver, uint32_t n);
 
 /*
  * Allocate a fresh Boolean variable and return its index.
  */
-extern bvar_t nsat_solver_new_var(sat_solver_t *solver);
+YICES_EXTERN bvar_t nsat_solver_new_var(sat_solver_t *solver);
 
 
 /*
@@ -1088,14 +1089,14 @@ extern bvar_t nsat_solver_new_var(sat_solver_t *solver);
  * - polarity true: means true is preferred
  * - act must be positive
  */
-extern void nsat_solver_activate_var(sat_solver_t *solver, bvar_t x, double act, bool polarity);
+YICES_EXTERN void nsat_solver_activate_var(sat_solver_t *solver, bvar_t x, double act, bool polarity);
 
 /*
  * Mark variable x as a variable to keep. It will not be deleted during
  * preprocessing. By default, all variables are considered candidates for
  * elimination.
  */
-extern void nsat_solver_keep_var(sat_solver_t *solver, bvar_t x);
+YICES_EXTERN void nsat_solver_keep_var(sat_solver_t *solver, bvar_t x);
 
 /*
  * Add a definition for variable x.
@@ -1110,8 +1111,8 @@ extern void nsat_solver_keep_var(sat_solver_t *solver, bvar_t x);
  * The truth table is defined by the  8 low-order bit of parameter b.
  * The conventions are the same as in new_gates.h.
  */
-extern void nsat_solver_add_def2(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2);
-extern void nsat_solver_add_def3(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2, literal_t l3);
+YICES_EXTERN void nsat_solver_add_def2(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2);
+YICES_EXTERN void nsat_solver_add_def3(sat_solver_t *solver, bvar_t x, uint32_t b, literal_t l1, literal_t l2, literal_t l3);
 
 
 
@@ -1123,13 +1124,13 @@ extern void nsat_solver_add_def3(sat_solver_t *solver, bvar_t x, uint32_t b, lit
  * Variable activity decay: must be between 0 and 1.0
  * - smaller number means faster decay
  */
-extern void nsat_set_var_decay_factor(sat_solver_t *solver, double factor);
+YICES_EXTERN void nsat_set_var_decay_factor(sat_solver_t *solver, double factor);
 
 /*
  * Clause activity decay: must be between 0 and 1.0
  * - smaller means faster decay
  */
-extern void nsat_set_clause_decay_factor(sat_solver_t *solver, float factor);
+YICES_EXTERN void nsat_set_clause_decay_factor(sat_solver_t *solver, float factor);
 
 /*
  * Randomness: the parameter is approximately the ratio of random
@@ -1137,45 +1138,45 @@ extern void nsat_set_clause_decay_factor(sat_solver_t *solver, float factor);
  * - randomness = 0: no random decisions
  * - randomness = 1.0: all decisions are random
  */
-extern void nsat_set_randomness(sat_solver_t *solver, float randomness);
+YICES_EXTERN void nsat_set_randomness(sat_solver_t *solver, float randomness);
 
 /*
  * Set the prng seed
  */
-extern void nsat_set_random_seed(sat_solver_t *solver, uint32_t seed);
+YICES_EXTERN void nsat_set_random_seed(sat_solver_t *solver, uint32_t seed);
 
 /*
  * Stack clause threshold: learned clauses of LBD greater than threshold are
  * treated as temporary clauses (not stored in the clause database).
  */
-extern void nsat_set_stack_threshold(sat_solver_t *solver, uint32_t f);
+YICES_EXTERN void nsat_set_stack_threshold(sat_solver_t *solver, uint32_t f);
 
 /*
  * LBD threshold for clause deletion. Clauses of lbd <= keep_lbd are not deleted.
  */
-extern void nsat_set_keep_lbd(sat_solver_t *solver, uint32_t threshold);
+YICES_EXTERN void nsat_set_keep_lbd(sat_solver_t *solver, uint32_t threshold);
 
 /*
  * Reduce fraction for clause deletion. f must be between 0 and 32.
  * Each call to reduce_learned_clause_set removes a fraction (f/32) of the clauses
  */
-extern void nsat_set_reduce_fraction(sat_solver_t *solver, uint32_t f);
+YICES_EXTERN void nsat_set_reduce_fraction(sat_solver_t *solver, uint32_t f);
 
 /*
  * Interval between two calls to reduce (number of conflicts)
  */
-extern void nsat_set_reduce_interval(sat_solver_t *solver, uint32_t n);
+YICES_EXTERN void nsat_set_reduce_interval(sat_solver_t *solver, uint32_t n);
 
 /*
  * Adjustment to the reduce interval (check init_reduce and done_reduce).
  */
-extern void nsat_set_reduce_delta(sat_solver_t *solver, uint32_t d);
+YICES_EXTERN void nsat_set_reduce_delta(sat_solver_t *solver, uint32_t d);
 
 
 /*
  * Minimal number of conflicts between two calls to restart
  */
-extern void nsat_set_restart_interval(sat_solver_t *solver, uint32_t n);
+YICES_EXTERN void nsat_set_restart_interval(sat_solver_t *solver, uint32_t n);
 
 
 
@@ -1187,19 +1188,19 @@ extern void nsat_set_restart_interval(sat_solver_t *solver, uint32_t n);
  * Subsumption limit: skip subsumption checks for a clause cls if that
  * would require visiting more than subsume_skip clauses.
  */
-extern void nsat_set_subsume_skip(sat_solver_t *solver, uint32_t limit);
+YICES_EXTERN void nsat_set_subsume_skip(sat_solver_t *solver, uint32_t limit);
 
 /*
  * Var-elimination limit: if x has too many positive and negative occurrences,
  * we don't try to eliminate x.
  */
-extern void nsat_set_var_elim_skip(sat_solver_t *solver, uint32_t limit);
+YICES_EXTERN void nsat_set_var_elim_skip(sat_solver_t *solver, uint32_t limit);
 
 /*
  * Resolvent limit: if eliminating x would create a clause larger than
  * res_clause_limit, we keep x.
  */
-extern void nsat_set_res_clause_limit(sat_solver_t *solver, uint32_t limit);
+YICES_EXTERN void nsat_set_res_clause_limit(sat_solver_t *solver, uint32_t limit);
 
 /*
  * Limit on number of new clauses after eliminating x.
@@ -1207,7 +1208,7 @@ extern void nsat_set_res_clause_limit(sat_solver_t *solver, uint32_t limit);
  * - so if x occurs in n clauses, it's not eliminated if it has more than n
  *   + res_extra non-trivial resolvants.
  */
-extern void nsat_set_res_extra(sat_solver_t *solver, uint32_t extra);
+YICES_EXTERN void nsat_set_res_extra(sat_solver_t *solver, uint32_t extra);
 
 /*
  * SIMPLIFY PARAMETERS
@@ -1216,17 +1217,17 @@ extern void nsat_set_res_extra(sat_solver_t *solver, uint32_t extra);
 /*
  * Minimal number of conflicts between two calls to simplify
  */
-extern void nsat_set_simplify_interval(sat_solver_t *solver, uint32_t n);
+YICES_EXTERN void nsat_set_simplify_interval(sat_solver_t *solver, uint32_t n);
 
 /*
  * Number of new binary clauses before two SCC computations
  */
-extern void nsat_set_simplify_bin_delta(sat_solver_t *solver, uint32_t d);
+YICES_EXTERN void nsat_set_simplify_bin_delta(sat_solver_t *solver, uint32_t d);
 
 /*
  * Number of new substitutions before cut sweeping round
  */
-extern void nsat_set_simplify_subst_delta(sat_solver_t *solver, uint32_t d);
+YICES_EXTERN void nsat_set_simplify_subst_delta(sat_solver_t *solver, uint32_t d);
 
 
 /*********************
@@ -1245,7 +1246,7 @@ extern void nsat_set_simplify_subst_delta(sat_solver_t *solver, uint32_t d);
  * - l = array of n literals
  * - the array is modified
  */
-extern void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, literal_t *l);
+YICES_EXTERN void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, literal_t *l);
 
 
 /*************
@@ -1256,7 +1257,7 @@ extern void nsat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n
  * Check satisfiability of the set of clauses
  * - result = either STAT_SAT or STAT_UNSAT
  */
-extern solver_status_t nsat_solve(sat_solver_t *solver);
+YICES_EXTERN solver_status_t nsat_solve(sat_solver_t *solver);
 
 
 /*
@@ -1275,7 +1276,7 @@ static inline solver_status_t nsat_status(sat_solver_t *solver) {
  * - result = either STAT_SAT or STAT_UNSAT or STAT_UNKNOWN
  * - the amount of preprocessing pefromed
  */
-extern solver_status_t nsat_apply_preprocessing(sat_solver_t *solver);
+YICES_EXTERN solver_status_t nsat_apply_preprocessing(sat_solver_t *solver);
 
 
 /********************
@@ -1287,7 +1288,7 @@ extern solver_status_t nsat_apply_preprocessing(sat_solver_t *solver);
  * Use the DIMACS format.
  * - f must be open and writable
  */
-extern void nsat_export_to_dimacs(FILE *f, const sat_solver_t *solver);
+YICES_EXTERN void nsat_export_to_dimacs(FILE *f, const sat_solver_t *solver);
 
 
 
@@ -1297,12 +1298,12 @@ extern void nsat_export_to_dimacs(FILE *f, const sat_solver_t *solver);
 
 static inline bval_t lit_value(const sat_solver_t *solver, literal_t l) {
   assert(l < solver->nliterals);
-  return solver->value[l];
+  return (bval_t)solver->value[l];
 }
 
 static inline bval_t var_value(const sat_solver_t *solver, bvar_t x) {
   assert(x < solver->nvars);
-  return solver->value[pos_lit(x)];
+  return (bval_t)solver->value[pos_lit(x)];
 }
 
 static inline bool lit_is_unassigned(const sat_solver_t *solver, literal_t l) {
@@ -1357,14 +1358,14 @@ static inline bool var_is_false(const sat_solver_t *solver, bvar_t x) {
  * - val's size must be at least solver->nvars
  * - val[0] is always true
  */
-extern void nsat_get_allvars_assignment(const sat_solver_t *solver, bval_t *val);
+YICES_EXTERN void nsat_get_allvars_assignment(const sat_solver_t *solver, bval_t *val);
 
 /*
  * Copy all true literals in array a:
  * - a must have size >= solver->nvars.
  * return the number of literals added to a.
  */
-extern uint32_t nsat_get_true_literals(const sat_solver_t *solver, literal_t *a);
+YICES_EXTERN uint32_t nsat_get_true_literals(const sat_solver_t *solver, literal_t *a);
 
 
 
@@ -1372,7 +1373,7 @@ extern uint32_t nsat_get_true_literals(const sat_solver_t *solver, literal_t *a)
  * PRINT INTERNAL STRUCTURES  *
  *****************************/
 
-extern void show_state(FILE *f, const sat_solver_t *solver);
+YICES_EXTERN void show_state(FILE *f, const sat_solver_t *solver);
 
 
 
@@ -1383,7 +1384,7 @@ extern void show_state(FILE *f, const sat_solver_t *solver);
 /*
  * Print statistics
  */
-extern void nsat_show_statistics(FILE *f, const sat_solver_t *solver);
+YICES_EXTERN void nsat_show_statistics(FILE *f, const sat_solver_t *solver);
 
 /*
  * If the solver is compiled with DATA enabled,
@@ -1395,7 +1396,7 @@ extern void nsat_show_statistics(FILE *f, const sat_solver_t *solver);
  *
  * If DATA is disabled, the function does nothing.
  */
-extern void nsat_open_datafile(sat_solver_t *solver, const char *name);
+YICES_EXTERN void nsat_open_datafile(sat_solver_t *solver, const char *name);
 
 
 

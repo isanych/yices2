@@ -23,7 +23,7 @@
 
 #include "utils/int_hash_sets.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -42,8 +42,8 @@ static void print_set(int_hset_t *s) {
 
   printf("set %p\n", s);
   printf("  size = %" PRIu32"\n", s->size);
-  printf("  threshold = %"PRIu32"\n", s->resize_threshold);
-  printf("  nelems = %"PRIu32"\n", s->nelems);
+  printf("  threshold = %" PRIu32 "\n", s->resize_threshold);
+  printf("  nelems = %" PRIu32 "\n", s->nelems);
   printf("  content:\n");
   if (s->z_flag) {
     printf("    z_flag = true\n");
@@ -53,7 +53,7 @@ static void print_set(int_hset_t *s) {
   n = s->size;
   for (i=0; i<n; i++) {
     if (s->data[i] != 0) {
-      printf("    data[%"PRIu32"] = %"PRIu32"\n", i, s->data[i]);
+      printf("    data[%" PRIu32 "] = %" PRIu32 "\n", i, s->data[i]);
     }
   }
 }
@@ -63,8 +63,8 @@ static void print_closed_set(int_hset_t *s) {
 
   printf("set %p\n", s);
   printf("  size = %" PRIu32"\n", s->size);
-  printf("  threshold = %"PRIu32"\n", s->resize_threshold);
-  printf("  nelems = %"PRIu32"\n", s->nelems);
+  printf("  threshold = %" PRIu32 "\n", s->resize_threshold);
+  printf("  nelems = %" PRIu32 "\n", s->nelems);
   printf("  content:\n");
   if (s->z_flag) {
     printf("    z_flag = true\n");
@@ -73,7 +73,7 @@ static void print_closed_set(int_hset_t *s) {
   }
   n = s->nelems;
   for (i=0; i<n; i++) {
-    printf("    data[%"PRIu32"] = %"PRIu32"\n", i, s->data[i]);
+    printf("    data[%" PRIu32 "] = %" PRIu32 "\n", i, s->data[i]);
   }
 }
 
@@ -87,7 +87,7 @@ int main(void) {
   n = 40;
   for (i=0; i<n; i++) {
     x = random() % 20;
-    printf("\nAdding %"PRIu32": ", x);
+    printf("\nAdding %" PRIu32 ": ", x);
     if (int_hset_add(&s, x)) {
       printf("new element\n");
     } else {
@@ -98,7 +98,7 @@ int main(void) {
 
   printf("\nCheck members\n");
   for (i=0; i<=20; i++) {
-    printf(" %"PRIu32": ", i);
+    printf(" %" PRIu32 ": ", i);
     if (int_hset_member(&s, i)) {
       printf("present\n");
     } else {

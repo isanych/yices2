@@ -179,7 +179,7 @@ static polynomial_t *make_simple_poly(object_store_t *s, int32_t x) {
   polynomial_t *p;
 
   assert(const_idx < x && x < max_idx);
-  p = objstore_alloc(s);
+  p = (polynomial_t*)objstore_alloc(s);
 
   p->nterms = 1;
   // monomial = 1 * x

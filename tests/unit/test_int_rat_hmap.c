@@ -24,7 +24,7 @@
 #include "terms/rationals.h"
 #include "terms/int_rational_hash_maps.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 // random does not exist on MINGW
 static inline long int random(void) {
   return rand();
@@ -39,9 +39,9 @@ static void print_hmap(int_rat_hmap_t *map) {
   uint32_t i, n, count;
 
   printf("hmap %p\n", map);
-  printf("  size = %"PRIu32"\n", map->size);
-  printf("  nelems = %"PRIu32"\n", map->nelems);
-  printf("  resize threshold = %"PRIu32"\n", map->resize_threshold);
+  printf("  size = %" PRIu32 "\n", map->size);
+  printf("  nelems = %" PRIu32 "\n", map->nelems);
+  printf("  resize threshold = %" PRIu32 "\n", map->resize_threshold);
   printf("  content:\n");
 
   count = 0;
@@ -49,7 +49,7 @@ static void print_hmap(int_rat_hmap_t *map) {
   n = map->size;
   for (i=0; i<n; i++) {
     if (d->key >= 0) {
-      printf("    [key = %"PRId32", val = ", d->key);
+      printf("    [key = %" PRId32 ", val = ", d->key);
       q_print(stdout, &d->value);
       printf("]\n");
       count ++;
@@ -57,7 +57,7 @@ static void print_hmap(int_rat_hmap_t *map) {
     d ++;
   }
 
-  printf("  %"PRIu32" records\n\n", count);
+  printf("  %" PRIu32 " records\n\n", count);
   assert(count == map->nelems);
 }
 
@@ -67,7 +67,7 @@ static void print_hmap(int_rat_hmap_t *map) {
  */
 static void add_data(int_rat_hmap_t *hmap) {  
   int_rat_hmap_rec_t *r;
-  bool new;
+  bool new_;
   int32_t i;
 
   assert(hmap->nelems == 0);
@@ -75,27 +75,27 @@ static void add_data(int_rat_hmap_t *hmap) {
   for (i=1; i<=100; i++) {
     r = int_rat_hmap_find(hmap, i);
     if (r != NULL) {
-      fprintf(stderr, "Error in find(hmap, %"PRId32"): expected NULL, got %p\n", i, r);
+      fprintf(stderr, "Error in find(hmap, %" PRId32 "): expected NULL, got %p\n", i, r);
       exit(1);
     }
 
-    r = int_rat_hmap_get(hmap, i, &new);
+    r = int_rat_hmap_get(hmap, i, &new_);
     if (r == NULL) {
-      fprintf(stderr, "Error in get(hmap, %"PRId32"): got NULL pointer\n", i);
+      fprintf(stderr, "Error in get(hmap, %" PRId32 "): got NULL pointer\n", i);
       exit(1);
     }
     if (r->key != i) {
-      fprintf(stderr, "Error in get(hmap, %"PRId32"): key = %"PRId32"\n", i, r->key);
+      fprintf(stderr, "Error in get(hmap, %" PRId32 "): key = %" PRId32 "\n", i, r->key);
       exit(1);
     }
     if (q_is_nonzero(&r->value)) {
-      fprintf(stderr, "Error in get(hmap, %"PRId32"): value is", i);
+      fprintf(stderr, "Error in get(hmap, %" PRId32 "): value is", i);
       q_print(stderr, &r->value);
       fprintf(stderr, " (should be 0)\n");
       exit(1);
     }
-    if (!new) {
-      fprintf(stderr, "Error in get(hmap, %"PRId32"): record not marked as new\n", i);
+    if (!new_) {
+      fprintf(stderr, "Error in get(hmap, %" PRId32 "): record not marked as new\n", i);
       exit(1);      
     }
     q_set_int32(&r->value, 1, (uint32_t) i);
@@ -116,19 +116,19 @@ static void check_data(int_rat_hmap_t *hmap) {
   for (i=1; i<=100; i++) {
     r = int_rat_hmap_find(hmap, i);
     if (r == NULL) {
-      fprintf(stderr, "Error in find(hmap, %"PRId32"): got NULL\n", i);
+      fprintf(stderr, "Error in find(hmap, %" PRId32 "): got NULL\n", i);
       exit(1);
     }
     if (r->key != i) {
-      fprintf(stderr, "Error in find(hmap, %"PRId32"): key = %"PRId32"\n", i, r->key);
+      fprintf(stderr, "Error in find(hmap, %" PRId32 "): key = %" PRId32 "\n", i, r->key);
       exit(1);
     }
     if (! q_get_int32(&r->value, &num, &den)) {
-      fprintf(stderr, "Error in find(hmap, %"PRId32"): value doesn't fit in 32bit\n", i);
+      fprintf(stderr, "Error in find(hmap, %" PRId32 "): value doesn't fit in 32bit\n", i);
       exit(1);
     }
     if (num != 1 || den != ((uint32_t) i)) {
-      fprintf(stderr, "Error in find(hmap, %"PRId32"): value = %"PRId32"/%"PRIu32"\n", i, num, den);
+      fprintf(stderr, "Error in find(hmap, %" PRId32 "): value = %" PRId32 "/%" PRIu32 "\n", i, num, den);
       exit(1);
     }
   }

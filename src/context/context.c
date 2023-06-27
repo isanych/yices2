@@ -42,9 +42,7 @@
 
 #include "api/yices_globals.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 
@@ -413,7 +411,7 @@ static occ_t map_conditional_to_eterm(context_t *ctx, conditional_t *c, type_t t
       // one clause for a[i] => (u = v[i])
       v = internalize_to_eterm(ctx, c->pair[i].val);
       l = egraph_make_eq(ctx->egraph, u, v);
-      add_binary_clause(ctx->core, not(a[i]), l);
+      add_binary_clause(ctx->core, not_(a[i]), l);
     }
   }
 
@@ -449,7 +447,7 @@ static void ite_prepare_antecedents(ivector_t *v) {
 
   n = v->size;
   for (i=0; i<n; i++) {
-    v->data[i] = not(v->data[i]);
+    v->data[i] = not_(v->data[i]);
   }
 }
 
@@ -469,7 +467,7 @@ static occ_t flatten_ite_to_eterm(context_t *ctx, composite_term_t *ite, literal
 
   u = pos_occ(make_egraph_variable(ctx, tau));
 
-  flattener = objstack_alloc(&ctx->ostack, sizeof(ite_flattener_t), (cleaner_t) delete_ite_flattener);
+  flattener = (ite_flattener_t*)objstack_alloc(&ctx->ostack, sizeof(ite_flattener_t), (cleaner_t) delete_ite_flattener);
   init_ite_flattener(flattener);
 
   ite_flattener_push(flattener, ite, c);
@@ -1134,7 +1132,7 @@ static thvar_t flatten_ite_to_arith(context_t *ctx, composite_term_t *ite, liter
 
   u = ctx->arith.create_var(ctx->arith_solver, is_int);
 
-  flattener = objstack_alloc(&ctx->ostack, sizeof(ite_flattener_t), (cleaner_t) delete_ite_flattener);
+  flattener = (ite_flattener_t*)objstack_alloc(&ctx->ostack, sizeof(ite_flattener_t), (cleaner_t) delete_ite_flattener);
   init_ite_flattener(flattener);
 
   ite_flattener_push(flattener, ite, c);
@@ -1231,7 +1229,7 @@ static thvar_t map_ite_to_arith(context_t *ctx, composite_term_t *ite, bool is_i
   ctx->arith.assert_cond_vareq_axiom(ctx->arith_solver, c, v, x); // c ==> v = t1
 
   x = internalize_to_arith(ctx, ite->arg[2]);
-  ctx->arith.assert_cond_vareq_axiom(ctx->arith_solver, not(c), v, x); // (not c) ==> v = t2
+  ctx->arith.assert_cond_vareq_axiom(ctx->arith_solver, not_(c), v, x); // (not c) ==> v = t2
 
   return v;
 }
@@ -1465,7 +1463,7 @@ static bool is_non_zero_rational(term_table_t *tbl, term_t t, rational_t *val) {
 /*
  * Error in division: either the divisor is zero or is non-constant
  */
-static void __attribute__((noreturn))  bad_divisor(context_t *ctx, term_t t) {
+ATTRIBUTE_NORETURN static void bad_divisor(context_t *ctx, term_t t) {
   term_table_t *tbl;
   int code;
 
@@ -1911,7 +1909,7 @@ static literal_t map_eq_to_literal(context_t *ctx, composite_term_t *eq) {
 /*
  * (or t1 ... t_n)
  */
-static literal_t map_or_to_literal(context_t *ctx, composite_term_t *or) {
+static literal_t map_or_to_literal(context_t *ctx, composite_term_t *or_) {
   int32_t *a;
   ivector_t *v;
   literal_t l;
@@ -1921,7 +1919,7 @@ static literal_t map_or_to_literal(context_t *ctx, composite_term_t *or) {
     // flatten (or ...): store result in v
     v = &ctx->aux_vector;
     assert(v->size == 0);
-    flatten_or_term(ctx, v, or);
+    flatten_or_term(ctx, v, or_);
 
     // try easy simplification
     n = v->size;
@@ -1946,14 +1944,14 @@ static literal_t map_or_to_literal(context_t *ctx, composite_term_t *or) {
 
   } else {
     // no flattening
-    n = or->arity;
-    if (disjunct_is_true(ctx, or->arg, n)) {
+    n = or_->arity;
+    if (disjunct_is_true(ctx, or_->arg, n)) {
       return true_literal;
     }
 
     a = alloc_istack_array(&ctx->istack, n);
     for (i=0; i<n; i++) {
-      l = internalize_to_literal(ctx, or->arg[i]);
+      l = internalize_to_literal(ctx, or_->arg[i]);
       if (l == true_literal) goto done;
       a[i] = l;
     }
@@ -1971,15 +1969,15 @@ static literal_t map_or_to_literal(context_t *ctx, composite_term_t *or) {
 /*
  * (xor t1 ... t_n)
  */
-static literal_t map_xor_to_literal(context_t *ctx, composite_term_t *xor) {
+static literal_t map_xor_to_literal(context_t *ctx, composite_term_t *xor_) {
   int32_t *a;
   literal_t l;
   uint32_t i, n;
 
-  n = xor->arity;
+  n = xor_->arity;
   a = alloc_istack_array(&ctx->istack, n);
   for (i=0; i<n; i++) {
-    a[i] = internalize_to_literal(ctx, xor->arg[i]);
+    a[i] = internalize_to_literal(ctx, xor_->arg[i]);
   }
 
   l = mk_xor_gate(&ctx->gate_manager, n, a);
@@ -2039,7 +2037,7 @@ static literal_t make_arith_distinct(context_t *ctx, uint32_t n, thvar_t *a) {
   l = mk_or_gate(&ctx->gate_manager, v->size, v->data);
   ivector_reset(v);
 
-  return not(l);
+  return not_(l);
 }
 
 
@@ -2067,7 +2065,7 @@ static literal_t make_bv_distinct(context_t *ctx, uint32_t n, thvar_t *a) {
   l = mk_or_gate(&ctx->gate_manager, v->size, v->data);
   ivector_reset(v);
 
-  return not(l);
+  return not_(l);
 }
 
 
@@ -3325,7 +3323,7 @@ static void assert_internalization_code(context_t *ctx, int32_t x, bool tt) {
     }
   } else {
     l = code2literal(x);
-    if (! tt) l = not(l);
+    if (! tt) l = not_(l);
     add_unit_clause(ctx->core, l);
   }
 }
@@ -3567,7 +3565,7 @@ static bool try_arithvar_elim(context_t *ctx, polynomial_t *p, bool all_int) {
   assert(intern_tbl_root_is_free(&ctx->intern, r) && is_pos_term(r));
   intern_tbl_map_root(&ctx->intern, r, thvar2code(x));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> toplevel equality: ");
   print_polynomial(stdout, p);
   printf(" == 0\n");
@@ -3737,7 +3735,7 @@ static void assert_arith_bineq_aux(context_t *ctx, term_t t1, term_t t2, bool tt
       if (tt) {
         add_unit_clause(ctx->core, l);
       } else {
-        add_unit_clause(ctx->core, not(l));
+        add_unit_clause(ctx->core, not_(l));
       }
     }
   } else {
@@ -3794,7 +3792,7 @@ static void assert_toplevel_apply(context_t *ctx, composite_term_t *app, bool tt
     if (tt) {
       add_unit_clause(ctx->core, l);
     } else {
-      add_unit_clause(ctx->core, not(l));
+      add_unit_clause(ctx->core, not_(l));
     }
   }
 
@@ -3902,7 +3900,7 @@ static void assert_toplevel_eq(context_t *ctx, composite_term_t *eq, bool tt) {
       if (tt) {
         add_unit_clause(ctx->core, l);
       } else {
-        add_unit_clause(ctx->core, not(l));
+        add_unit_clause(ctx->core, not_(l));
       }
     }
   }
@@ -3918,7 +3916,7 @@ static void assert_arith_distinct(context_t *ctx, uint32_t n, thvar_t *a, bool t
 
   l = make_arith_distinct(ctx, n, a);
   if (! tt) {
-    l = not(l);
+    l = not_(l);
   }
   add_unit_clause(ctx->core, l);
 }
@@ -3933,7 +3931,7 @@ static void assert_bv_distinct(context_t *ctx, uint32_t n, thvar_t *a, bool tt) 
 
   l = make_bv_distinct(ctx, n, a);
   if (! tt) {
-    l = not(l);
+    l = not_(l);
   }
   add_unit_clause(ctx->core, l);
 }
@@ -3974,7 +3972,7 @@ static void assert_toplevel_distinct(context_t *ctx, composite_term_t *distinct,
       if (tt) {
         add_unit_clause(ctx->core, l);
       } else {
-        add_unit_clause(ctx->core, not(l));
+        add_unit_clause(ctx->core, not_(l));
       }
     }
 
@@ -4063,9 +4061,9 @@ static void assert_arith_bineq(context_t *ctx, term_t t1, term_t u1, bool tt) {
     } else {
       // assert (or (not a[0]) ... (not a[n-1]) (not (eq t2 u2)))
       for (i=0; i<n; i++) {
-        a[i] = not(internalize_to_literal(ctx, a[i]));
+        a[i] = not_(internalize_to_literal(ctx, a[i]));
       }
-      a[n] = not(map_arith_bineq_aux(ctx, t2, u2));
+      a[n] = not_(map_arith_bineq_aux(ctx, t2, u2));
 
       add_clause(ctx->core, n+1, a);
     }
@@ -4332,7 +4330,7 @@ static void assert_toplevel_conditional(context_t *ctx, conditional_t *c, bool t
     if (a[i] != false_literal) {
       // l = value for pair[i]
       l = signed_literal(internalize_to_literal(ctx, c->pair[i].val), tt);
-      add_binary_clause(ctx->core, not(a[i]), l); // a[i] => v[i]
+      add_binary_clause(ctx->core, not_(a[i]), l); // a[i] => v[i]
       all_false = false;
     }
   }
@@ -4392,7 +4390,7 @@ static void assert_toplevel_ite(context_t *ctx, composite_term_t *ite, bool tt) 
  * - it tt is true: add a clause
  * - it tt is false: assert (not t1) ... (not t_n)
  */
-static void assert_toplevel_or(context_t *ctx, composite_term_t *or, bool tt) {
+static void assert_toplevel_or(context_t *ctx, composite_term_t *or_, bool tt) {
   ivector_t *v;
   int32_t *a;
   uint32_t i, n;
@@ -4402,7 +4400,7 @@ static void assert_toplevel_or(context_t *ctx, composite_term_t *or, bool tt) {
       // Flatten into vector v
       v = &ctx->aux_vector;
       assert(v->size == 0);
-      flatten_or_term(ctx, v, or);
+      flatten_or_term(ctx, v, or_);
 
       // if v contains a true_term, ignore the clause
       n = v->size;
@@ -4427,14 +4425,14 @@ static void assert_toplevel_or(context_t *ctx, composite_term_t *or, bool tt) {
       /*
        * No flattening
        */
-      n = or->arity;
-      if (disjunct_is_true(ctx, or->arg, n)) {
+      n = or_->arity;
+      if (disjunct_is_true(ctx, or_->arg, n)) {
 	return;
       }
 
       a = alloc_istack_array(&ctx->istack, n);
       for (i=0; i<n; i++) {
-        a[i] = internalize_to_literal(ctx, or->arg[i]);
+        a[i] = internalize_to_literal(ctx, or_->arg[i]);
         if (a[i] == true_literal) goto done;
       }
     }
@@ -4451,9 +4449,9 @@ static void assert_toplevel_or(context_t *ctx, composite_term_t *or, bool tt) {
      *  (or t_0 ... t_n-1) is false
      * so all children must be false too
      */
-    n = or->arity;
+    n = or_->arity;
     for (i=0; i<n; i++) {
-      assert_term(ctx, or->arg[i], false);
+      assert_term(ctx, or_->arg[i], false);
     }
   }
 
@@ -4463,14 +4461,14 @@ static void assert_toplevel_or(context_t *ctx, composite_term_t *or, bool tt) {
 /*
  * Top-level (xor t1 ... t_n) == tt
  */
-static void assert_toplevel_xor(context_t *ctx, composite_term_t *xor, bool tt) {
+static void assert_toplevel_xor(context_t *ctx, composite_term_t *xor_, bool tt) {
   int32_t *a;
   uint32_t i, n;
 
-  n = xor->arity;
+  n = xor_->arity;
   a = alloc_istack_array(&ctx->istack, n);
   for (i=0; i<n; i++) {
-    a[i] = internalize_to_literal(ctx, xor->arg[i]);
+    a[i] = internalize_to_literal(ctx, xor_->arg[i]);
   }
 
   assert_xor(&ctx->gate_manager, n, a, tt);
@@ -4626,7 +4624,7 @@ static void assert_toplevel_bveq(context_t *ctx, composite_term_t *eq, bool tt) 
     bvfactoring_t *factoring;
     bool eq = false;
 
-    factoring = objstack_alloc(&ctx->ostack, sizeof(bvfactoring_t), (cleaner_t) delete_bvfactoring);
+    factoring = (bvfactoring_t*)objstack_alloc(&ctx->ostack, sizeof(bvfactoring_t), (cleaner_t) delete_bvfactoring);
     init_bvfactoring(factoring);
 
     try_bitvector_factoring(ctx, factoring, t1, t2);
@@ -5063,14 +5061,14 @@ bool context_has_simplex_solver(context_t *ctx) {
 void enable_splx_eager_lemmas(context_t *ctx) {
   ctx->options |= SPLX_EGRLMAS_OPTION_MASK;
   if (context_has_simplex_solver(ctx)) {
-    simplex_enable_eager_lemmas(ctx->arith_solver);
+    simplex_enable_eager_lemmas((simplex_solver_t*)ctx->arith_solver);
   }
 }
 
 void disable_splx_eager_lemmas(context_t *ctx) {
   ctx->options &= ~SPLX_EGRLMAS_OPTION_MASK;
   if (context_has_simplex_solver(ctx)) {
-    simplex_disable_eager_lemmas(ctx->arith_solver);
+    simplex_disable_eager_lemmas((simplex_solver_t*)ctx->arith_solver);
   }
 }
 
@@ -5078,28 +5076,28 @@ void disable_splx_eager_lemmas(context_t *ctx) {
 void enable_splx_periodic_icheck(context_t *ctx) {
   ctx->options |= SPLX_ICHECK_OPTION_MASK;
   if (context_has_simplex_solver(ctx)) {
-    simplex_enable_periodic_icheck(ctx->arith_solver);
+    simplex_enable_periodic_icheck((simplex_solver_t*)ctx->arith_solver);
   }
 }
 
 void disable_splx_periodic_icheck(context_t *ctx) {
   ctx->options &= ~SPLX_ICHECK_OPTION_MASK;
   if (context_has_simplex_solver(ctx)) {
-    simplex_disable_periodic_icheck(ctx->arith_solver);
+    simplex_disable_periodic_icheck((simplex_solver_t*)ctx->arith_solver);
   }
 }
 
 void enable_splx_eqprop(context_t *ctx) {
   ctx->options |= SPLX_EQPROP_OPTION_MASK;
   if (context_has_simplex_solver(ctx)) {
-    simplex_enable_eqprop(ctx->arith_solver);
+    simplex_enable_eqprop((simplex_solver_t*)ctx->arith_solver);
   }
 }
 
 void disable_splx_eqprop(context_t *ctx) {
   ctx->options &= ~SPLX_EQPROP_OPTION_MASK;
   if (context_has_simplex_solver(ctx)) {
-    simplex_disable_eqprop(ctx->arith_solver);
+    simplex_disable_eqprop((simplex_solver_t*)ctx->arith_solver);
   }
 }
 
@@ -5580,11 +5578,11 @@ static void delete_arith_solver(context_t *ctx) {
 
   solvers = arch_components[ctx->arch];
   if (solvers & IFW) {
-    delete_idl_solver(ctx->arith_solver);
+    delete_idl_solver((idl_solver_t*)ctx->arith_solver);
   } else if (solvers & RFW) {
-    delete_rdl_solver(ctx->arith_solver);
+    delete_rdl_solver((rdl_solver_t*)ctx->arith_solver);
   } else if (solvers & SPLX) {
-    delete_simplex_solver(ctx->arith_solver);
+    delete_simplex_solver((simplex_solver_t*)ctx->arith_solver);
   }
   safe_free(ctx->arith_solver);
   ctx->arith_solver = NULL;
@@ -5755,19 +5753,19 @@ void delete_context(context_t *ctx) {
   }
 
   if (ctx->fun_solver != NULL) {
-    delete_fun_solver(ctx->fun_solver);
+    delete_fun_solver((fun_solver_t*)ctx->fun_solver);
     safe_free(ctx->fun_solver);
     ctx->fun_solver = NULL;
   }
 
   if (ctx->quant_solver != NULL) {
-    delete_quant_solver(ctx->quant_solver);
+    delete_quant_solver((quant_solver_t*)ctx->quant_solver);
     safe_free(ctx->quant_solver);
     ctx->quant_solver = NULL;
   }
 
   if (ctx->bv_solver != NULL) {
-    delete_bv_solver(ctx->bv_solver);
+    delete_bv_solver((bv_solver_t*)ctx->bv_solver);
     safe_free(ctx->bv_solver);
     ctx->bv_solver = NULL;
   }
@@ -6115,7 +6113,7 @@ static int32_t context_process_assertions(context_t *ctx, uint32_t n, const term
     v = &ctx->top_interns;
     n = v->size;
     if (n > 0) {
-      trace_printf(ctx->trace, 6, "(asserting  %"PRIu32" existing terms)\n", n);
+      trace_printf(ctx->trace, 6, "(asserting  %" PRIu32 " existing terms)\n", n);
       i = 0;
       do {
         assert_toplevel_intern(ctx, v->data[i]);
@@ -6133,7 +6131,7 @@ static int32_t context_process_assertions(context_t *ctx, uint32_t n, const term
     v = &ctx->top_eqs;
     n = v->size;
     if (n > 0) {
-      trace_printf(ctx->trace, 6, "(asserting  %"PRIu32" top-level equalities)\n", n);
+      trace_printf(ctx->trace, 6, "(asserting  %" PRIu32 " top-level equalities)\n", n);
       i = 0;
       do {
         assert_toplevel_formula(ctx, v->data[i]);
@@ -6151,7 +6149,7 @@ static int32_t context_process_assertions(context_t *ctx, uint32_t n, const term
     v = &ctx->top_atoms;
     n = v->size;
     if (n > 0) {
-      trace_printf(ctx->trace, 6, "(asserting  %"PRIu32" top-level atoms)\n", n);
+      trace_printf(ctx->trace, 6, "(asserting  %" PRIu32 " top-level atoms)\n", n);
       i = 0;
       do {
         assert_toplevel_formula(ctx, v->data[i]);
@@ -6169,7 +6167,7 @@ static int32_t context_process_assertions(context_t *ctx, uint32_t n, const term
     v =  &ctx->top_formulas;
     n = v->size;
     if (n > 0) {
-      trace_printf(ctx->trace, 6, "(asserting  %"PRIu32" top-level formulas)\n", n);
+      trace_printf(ctx->trace, 6, "(asserting  %" PRIu32 " top-level formulas)\n", n);
       i = 0;
       do {
         assert_toplevel_formula(ctx, v->data[i]);
@@ -6366,7 +6364,7 @@ int32_t context_add_assumption(context_t *ctx, term_t t) {
     if (l < 0) return l; // error code
 
     x = pos_lit(create_boolean_variable(ctx->core));
-    add_binary_clause(ctx->core, not(x), l); // clause (x implies l)
+    add_binary_clause(ctx->core, not_(x), l); // clause (x implies l)
 
     assumption_stack_add(&ctx->assumptions, t, x);
   }
@@ -6531,7 +6529,7 @@ void context_stop_search(context_t *ctx) {
   if (ctx->mcsat == NULL) {
     stop_search(ctx->core);
     if (context_has_simplex_solver(ctx)) {
-      simplex_stop_search(ctx->arith_solver);
+      simplex_stop_search((simplex_solver_t*)ctx->arith_solver);
     }
   } else {
     mcsat_stop_search(ctx->mcsat);
@@ -6622,7 +6620,7 @@ int32_t assert_blocking_clause(context_t *ctx) {
   collect_decision_literals(ctx->core, v);
   n = v->size;
   for (i=0; i<n; i++) {
-    v->data[i] = not(v->data[i]);
+    v->data[i] = not_(v->data[i]);
   }
 
   // prepare for the new assertion + notify solvers of a new assertion
@@ -6659,8 +6657,8 @@ int32_t assert_blocking_clause(context_t *ctx) {
  *   terms in aux and val is a literal in the core
  */
 static void ctx_mark_eq(void *aux, const pmap2_rec_t *p) {
-  term_table_set_gc_mark(aux, index_of(p->k0));
-  term_table_set_gc_mark(aux, index_of(p->k1));
+  term_table_set_gc_mark((term_table_t*)aux, index_of(p->k0));
+  term_table_set_gc_mark((term_table_t*)aux, index_of(p->k1));
 }
 
 
@@ -6673,7 +6671,7 @@ void context_gc_mark(context_t *ctx) {
     egraph_gc_mark(ctx->egraph);
   }
   if (ctx->fun_solver != NULL) {
-    fun_solver_gc_mark(ctx->fun_solver);
+    fun_solver_gc_mark((fun_solver_t*)ctx->fun_solver);
   }
 
   intern_tbl_gc_mark(&ctx->intern);

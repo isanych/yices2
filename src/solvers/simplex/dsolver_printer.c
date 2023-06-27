@@ -49,7 +49,7 @@ void dsolver_print_status(FILE *f, dsolver_t *solver) {
   fprintf(f, "Status: %s\n", status2string[dsolver_status(solver)]);
   k = dsolver_unsat_row(solver);
   if (k >= 0) {
-    fprintf(f, "unsat row = %"PRId32" (id = %"PRId32")\n", k, dsolver_unsat_row_id(solver));
+    fprintf(f, "unsat row = %" PRId32 " (id = %" PRId32 ")\n", k, dsolver_unsat_row_id(solver));
   }
 }
 
@@ -94,13 +94,13 @@ static int32_t find_row(dcolumn_t *c, int32_t i) {
  */
 static void dsolver_print_monomial(FILE *f, rational_t *a, int32_t x, char prefix) {
   if (q_is_one(a)) {
-    fprintf(f, "%c_%"PRId32, prefix, x);
+    fprintf(f, "%c_%" PRId32, prefix, x);
   } else if (q_is_minus_one(a)) {
-    fprintf(f, "(- %c_%"PRId32")", prefix, x);
+    fprintf(f, "(- %c_%" PRId32 ")", prefix, x);
   } else {
     fprintf(f, "(* ");
     q_print(f, a);
-    fprintf(f, " %c_%"PRId32")", prefix, x);
+    fprintf(f, " %c_%" PRId32 ")", prefix, x);
   }
 }
 
@@ -300,13 +300,13 @@ static void dsolver_print_sol_row_core(FILE *f, dsolver_t *solver, int32_t x, in
   }
 
   if (m == 0 && j < 0) {
-    fprintf(f, "(= x_%"PRId32" 0)", x);
+    fprintf(f, "(= x_%" PRId32 " 0)", x);
   } else {
 
     if (m > 1 || j >= 0) {
-      fprintf(f, "(= x_%"PRId32" (+", x);
+      fprintf(f, "(= x_%" PRId32 " (+", x);
     } else {
-      fprintf(f, "(= x_%"PRId32, x);
+      fprintf(f, "(= x_%" PRId32, x);
     }
 
     // print the constant first
@@ -352,7 +352,7 @@ void dsolver_print_active_row(FILE *f, dsolver_t *solver) {
   if (k < 0) {
     fprintf(f, "no active row\n");
   } else {
-    fprintf(f, "active row[%"PRId32"]: ", k);
+    fprintf(f, "active row[%" PRId32 "]: ", k);
     dsolver_print_row_vector(f, solver, k, &solver->aux_vector);
     fprintf(f, "\n");
   }
@@ -378,7 +378,7 @@ void dsolver_print_rows(FILE *f, dsolver_t *solver) {
 
   n = solver->nrows;
   for (i=0; i<n; i++) {
-    fprintf(f, "row[%"PRId32"]: ", i);
+    fprintf(f, "row[%" PRId32 "]: ", i);
     dsolver_print_row(f, solver, i);
   }
 }
@@ -396,7 +396,7 @@ void dsolver_print_main_rows(FILE *f, dsolver_t *solver) {
   n = solver->main_rows;
   for (i=0; i<n; i++) {
     if (solver->row[i] != NULL) {
-      fprintf(f, "row[%"PRId32"]: ", i);
+      fprintf(f, "row[%" PRId32 "]: ", i);
       dsolver_print_row(f, solver, i);
     }
   }
@@ -412,7 +412,7 @@ void dsolver_print_elim_record(FILE *f, dsolver_t *solver, int32_t k) {
 
   assert(0 <= k && k < solver->elim.nelems);
   x = solver->elim.data[k].var;
-  fprintf(f, "(= x_%"PRId32" ", x);
+  fprintf(f, "(= x_%" PRId32 " ", x);
   dsolver_print_poly(f, solver->elim.data[k].poly, 'x');
   fprintf(f, ")\n");
 }
@@ -426,7 +426,7 @@ void dsolver_print_elim_rows(FILE *f, dsolver_t *solver) {
 
   n = solver->elim.nelems;
   for (i=0; i<n; i++) {
-    fprintf(f, "elim[%"PRId32"]: ", i);
+    fprintf(f, "elim[%" PRId32 "]: ", i);
     dsolver_print_elim_record(f, solver, i);
   }
 }
@@ -443,15 +443,15 @@ void dsolver_print_sol_row(FILE *f, dsolver_t *solver, int32_t x) {
   assert(1 <= x && x < solver->nvars);
   r = solver->sol_row[x];
   if (r < 0) {
-    fprintf(f, "no solution found for x_%"PRId32"\n", x);
+    fprintf(f, "no solution found for x_%" PRId32 "\n", x);
   } else {
     assert(0 <= r && r < solver->nrows);
     if (r < solver->main_rows) {
-      fprintf(f, "elim[%"PRId32"]: ", r);
+      fprintf(f, "elim[%" PRId32 "]: ", r);
       dsolver_print_elim_record(f, solver, r);
       fprintf(f, "\n");
     } else {
-      fprintf(f, "def[%"PRId32"]: ", r);
+      fprintf(f, "def[%" PRId32 "]: ", r);
       dsolver_print_sol_row_core(f, solver, x, r, solver->row[r]);
       fprintf(f, "\n");
     }
@@ -488,7 +488,7 @@ void dsolver_print_sol_rows(FILE *f, dsolver_t *solver) {
   n = solver->nrows;
   for (i=solver->main_rows; i<n; i++) {
     x = rows2var[i];
-    fprintf(f, "def[%"PRId32"]: ", i);
+    fprintf(f, "def[%" PRId32 "]: ", i);
     dsolver_print_sol_row_core(f, solver, x, i, solver->row[i]);
     fprintf(f, "\n");
   }
@@ -512,9 +512,9 @@ void dsolver_print_rows_to_process(FILE *f, dsolver_t *solver) {
   if (n == 0) {
     fprintf(f, "Rows to process: []\n");
   } else {
-    fprintf(f, "Rows to process: [%"PRId32, h[1]);
+    fprintf(f, "Rows to process: [%" PRId32, h[1]);
     for (i=2; i<=n; i++) {
-      fprintf(f, " %"PRId32, h[i]);
+      fprintf(f, " %" PRId32, h[i]);
     }
     fprintf(f, "]\n");
   }
@@ -537,7 +537,7 @@ void dsolver_print_solved_columns(FILE *f, dsolver_t *solver) {
   } else {
     fprintf(f, "Solved columns:\n");
     for (r=0; r<solver->nrows; r++) {
-      fprintf(f, "row[%"PRId32"]:", r);
+      fprintf(f, "row[%" PRId32 "]:", r);
       for (j=0; j<n; j++) {
         c = solver->solved_columns[j];
         k = find_row(c, r);
@@ -566,7 +566,7 @@ void dsolver_print_solution(FILE *f, dsolver_t *solver) {
     n = solver->nvars;
     for (i=0; i<n; i++) {
       if (solver->sol_row[i] >= 0) {
-        fprintf(f, "  x_%"PRIu32" = ", i);
+        fprintf(f, "  x_%" PRIu32 " = ", i);
         q_print(f, dsolver_get_value(solver, i));
         fprintf(f, "\n");
       }
@@ -586,12 +586,12 @@ void dsolver_print_gen_solution(FILE *f, dsolver_t *solver) {
   if (solver->gen_sol == NULL) {
     fprintf(f, "No general solution computed\n");
   } else {
-    fprintf(f, "General solution: %"PRIu32" parameters, %"PRIu32" variables\n", solver->num_params, solver->nvars);
+    fprintf(f, "General solution: %" PRIu32 " parameters, %" PRIu32 " variables\n", solver->num_params, solver->nvars);
     n = solver->nvars;
     for (i=0; i<n; i++) {
       p = dsolver_gen_sol(solver, i);
       if (p != NULL && solver->sol_row[i] >= 0) {
-        fprintf(f, "  x_%"PRIu32" = ", i);
+        fprintf(f, "  x_%" PRIu32 " = ", i);
         dsolver_print_poly(f, p, 'i');
         fprintf(f, "\n");
       }
@@ -651,7 +651,7 @@ static void dsolver_print_matrix_row(FILE *f, row_t *row, int32_t m) {
 static void dsolver_print_var(FILE *f, int32_t x, int32_t m) {
   char prefix;
   prefix = x < m ? 'x' : 'i';
-  fprintf(f, "%c_%"PRId32, prefix, x);
+  fprintf(f, "%c_%" PRId32, prefix, x);
 }
 
 
@@ -664,7 +664,7 @@ void dsolver_print_tableau(FILE *f, matrix_t *matrix, int32_t param_idx) {
 
   n = matrix->nrows;
   for (i=0; i<n; i++) {
-    fprintf(f, "  row[%"PRIu32, i);
+    fprintf(f, "  row[%" PRIu32, i);
     x = matrix_basic_var(matrix, i);
     if (x >= 0) {
       fputs(", ", f);

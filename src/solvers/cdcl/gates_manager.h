@@ -122,11 +122,11 @@ extern literal_t mk_xor_gate3(gate_manager_t *m, literal_t l1, literal_t l2, lit
 
 // iff and implies are derived from xor and or
 static inline literal_t mk_iff_gate(gate_manager_t *m, literal_t l1, literal_t l2) {
-  return mk_xor_gate2(m, not(l1), l2);
+  return mk_xor_gate2(m, not_(l1), l2);
 }
 
 static inline literal_t mk_implies_gate(gate_manager_t *m, literal_t l1, literal_t l2) {
-  return mk_or_gate2(m, not(l1), l2);
+  return mk_or_gate2(m, not_(l1), l2);
 }
 
 /*

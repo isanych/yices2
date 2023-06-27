@@ -406,17 +406,17 @@ static inline void* arith_var_def(arith_vartable_t *table, thvar_t x) {
 
 static inline polynomial_t *arith_var_poly_def(arith_vartable_t *table, thvar_t x) {
   assert(arith_var_def_is_poly(table, x));
-  return table->def[x];
+  return (polynomial_t*)table->def[x];
 }
 
 static inline pprod_t *arith_var_product_def(arith_vartable_t *table, thvar_t x) {
   assert(arith_var_def_is_product(table, x));
-  return table->def[x];
+  return (pprod_t *)table->def[x];
 }
 
 static inline rational_t *arith_var_rational_def(arith_vartable_t *table, thvar_t x) {
   assert(arith_var_def_is_rational(table, x));
-  return table->def[x];
+  return (rational_t *)table->def[x];
 }
 
 

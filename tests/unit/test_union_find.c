@@ -23,7 +23,7 @@
 #include "utils/memalloc.h"
 #include "utils/union_find.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -45,13 +45,13 @@ static void print_partition_details(partition_t *p) {
   int32_t x;
 
   printf("partition %p\n", p);
-  printf("  size = %"PRIu32"\n", p->size);
-  printf("  nelems = %"PRIu32"\n", p->nelems);
+  printf("  size = %" PRIu32 "\n", p->size);
+  printf("  nelems = %" PRIu32 "\n", p->nelems);
   if (p->nelems > 0) {
     printf("  content\n");
     for (x=0; x<p->nelems; x++) {
       if (p->parent[x] >= 0) {
-	printf("    item: %"PRId32", parent = %"PRId32", rank = %"PRIu32"\n",
+	printf("    item: %" PRId32 ", parent = %" PRId32 ", rank = %" PRIu32 "\n",
 	       x, p->parent[x], (uint32_t) p->rank[x]);
       }
     }
@@ -74,11 +74,11 @@ static void print_partition(partition_t *p) {
   for (i=0; i<n; i++) {
     x = aux[i];
     if (x >= 0) {
-      printf("class[%2"PRId32"]: %2"PRId32, x, i);
+      printf("class[%2" PRId32 "]: %2" PRId32, x, i);
       aux[i] = -1;
       for (j=i+1; j<n; j++) {
 	if (aux[j] == x) {
-	  printf(" %2"PRId32, j);
+	  printf(" %2" PRId32, j);
 	  aux[j] = -1;
 	}
       }
@@ -105,13 +105,13 @@ int main(void) {
 
   for (i=0; i<40; i++) {
     x = random() % N;
-    printf("--- testing %"PRId32" ---\n", x);
+    printf("--- testing %" PRId32 " ---\n", x);
     y = partition_find(&partition, x);
     if (y < 0) {
-      printf("item %"PRId32" not present; adding it\n", x);
+      printf("item %" PRId32 " not present; adding it\n", x);
       partition_add(&partition, x);
     } else {
-      printf("root[%"PRId32"] = %"PRId32"\n", x, y);
+      printf("root[%" PRId32 "] = %" PRId32 "\n", x, y);
     }
   }
 
@@ -132,7 +132,7 @@ int main(void) {
     x = partition_find(&partition, x);
     y = partition_find(&partition, y);
     if (x != y) {
-      printf("--- Merging %"PRId32" and %"PRId32" ---\n", x, y);
+      printf("--- Merging %" PRId32 " and %" PRId32 " ---\n", x, y);
       partition_merge(&partition, x, y);
     }
   }

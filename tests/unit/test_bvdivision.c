@@ -26,13 +26,14 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <malloc.h>
 
 #include "solvers/bv/bit_blaster.h"
 #include "solvers/cdcl/smt_core.h"
 #include "solvers/cdcl/smt_core_printer.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -160,7 +161,7 @@ static void print_litarray_as_uint32(uint32_t n, literal_t *a) {
     }
   }
 
-  printf("%"PRIu32, x);
+  printf("%" PRIu32, x);
 }
 
 
@@ -194,7 +195,7 @@ static void print_litarray_as_int32(uint32_t n, literal_t *a) {
     return;
   }
 
-  printf("%"PRId32, x);
+  printf("%" PRId32, x);
 }
 
 
@@ -256,7 +257,7 @@ static void pseudo_convert(uint32_t n, literal_t *u, literal_t *a) {
  * - n must be no more than 32
  */
 static void print_pseudo_vector_as_uint32(uint32_t n, literal_t *u) {
-  literal_t a[n];
+  literal_t* a = (literal_t*)alloca(n * sizeof(literal_t));
 
   pseudo_convert(n, u, a);
   print_litarray_as_uint32(n, a);
@@ -268,7 +269,7 @@ static void print_pseudo_vector_as_uint32(uint32_t n, literal_t *u) {
  * - n must be no more than 32
  */
 static void print_pseudo_vector_as_int32(uint32_t n, literal_t *u) {
-  literal_t a[n];
+  literal_t* a = (literal_t*)alloca(n * sizeof(literal_t));
 
   pseudo_convert(n, u, a);
   print_litarray_as_int32(n, a);
@@ -280,7 +281,7 @@ static void print_pseudo_vector_as_int32(uint32_t n, literal_t *u) {
  * - n must be no more than 32
  */
 static void print_pseudo_vector(uint32_t n, literal_t *u) {
-  literal_t a[n];
+  literal_t* a = (literal_t*)alloca(n * sizeof(literal_t));
 
   pseudo_convert(n, u, a);
   print_bitvector(n, a);
@@ -317,7 +318,7 @@ static void init_random(uint32_t n) {
   lit[1] = false_literal;
   for (i=2; i<n; i += 2) {
     lit[i] = fresh_lit();
-    lit[i+1] = not(lit[i]);
+    lit[i+1] = not_(lit[i]);
   }
 
   for (i=0; i<n; i++) {
@@ -349,7 +350,7 @@ static void refresh_random(uint32_t n) {
   for (i=2; i<n; i += 2) {
     if (used[i] || used[i+1]) {
       lit[i] = fresh_lit();
-      lit[i+1] = not(lit[i]);
+      lit[i+1] = not_(lit[i]);
       used[i] = false;
       used[i+1] = false;
     }

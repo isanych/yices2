@@ -28,7 +28,7 @@
 #include "terms/types.h"
 #include "utils/refcount_strings.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -263,20 +263,20 @@ static void test_sup_inf(void) {
       a = all_types[i];
       b = all_types[j];
       printf("----\n");
-      printf("type[%"PRIu32"]: ", i);
+      printf("type[%" PRIu32 "]: ", i);
       print_type(stdout, &types, a);
       printf("\n");
-      printf("type[%"PRIu32"]: ", j);
+      printf("type[%" PRIu32 "]: ", j);
       print_type(stdout, &types, b);
       printf("\n");
       if (compatible_types(&types, a, b)) {
 	printf("  compatible\n");
       }
       if (is_subtype(&types, a, b)) {
-	printf("  type[%"PRIu32"] is a subtype of type[%"PRIu32"]\n", i, j);
+	printf("  type[%" PRIu32 "] is a subtype of type[%" PRIu32 "]\n", i, j);
       }
       if (is_subtype(&types, b, a)) {
-	printf("  type[%"PRIu32"] is a subtype of type[%"PRIu32"]\n", j, i);
+	printf("  type[%" PRIu32 "] is a subtype of type[%" PRIu32 "]\n", j, i);
       }
 
       sup = super_type(&types, all_types[i], all_types[j]);
@@ -322,7 +322,7 @@ static void pp_types(void) {
 
   for (i=0; i<num_types; i++) {
     tau = all_types[i];
-    printf("type[%"PRIu32"]: ", i);
+    printf("type[%" PRIu32 "]: ", i);
     if (i < 10) printf(" ");
     if (i < 100) printf(" ");
     pp_type(&printer, &types, tau);

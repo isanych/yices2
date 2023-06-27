@@ -57,9 +57,9 @@ static smt2_action_t get_action(state_t s, smt2_token_t tk) {
 
   i = base[s] + tk;
   if (check[i] == s) {
-    return value[i];
+    return (smt2_action_t)value[i];
   } else {
-    return default_value[s];
+    return (smt2_action_t)default_value[s];
   }
 }
 
@@ -127,7 +127,7 @@ static int32_t smt2_parse(parser_t *parser, state_t start) {
 
   skip_token:
     // jump here for actions that don't consume the token
-    switch (get_action(state, token)) {
+    switch (get_action((state_t)state, token)) {
     case next_goto_c1:
       state = c1;
       goto loop;

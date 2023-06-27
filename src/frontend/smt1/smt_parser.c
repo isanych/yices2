@@ -20,12 +20,6 @@
  * Parser for benchmarks in the SMT-LIB language.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdio.h>
 #include <setjmp.h>
 #include <string.h>
@@ -71,7 +65,7 @@ static void syntax_error(lexer_t *lex, int32_t expected_token) {
   smt_token_t tk;
   reader_t *rd;
 
-  tk = current_token(lex);
+  tk = (smt_token_t)current_token(lex);
   rd = &lex->reader;
 
   if (rd->name != NULL) {
@@ -80,23 +74,23 @@ static void syntax_error(lexer_t *lex, int32_t expected_token) {
 
   switch (tk) {
   case SMT_TK_OPEN_STRING:
-    fprintf(stderr, "missing string terminator \" (line %"PRId32", column %"PRId32")\n",
+    fprintf(stderr, "missing string terminator \" (line %" PRId32 ", column %" PRId32 ")\n",
             rd->line, rd->column);
     return;
   case SMT_TK_OPEN_USER_VAL:
-    fprintf(stderr, "missing user-value terminator } (line %"PRId32", column %"PRId32")\n",
+    fprintf(stderr, "missing user-value terminator } (line %" PRId32 ", column %" PRId32 ")\n",
             rd->line, rd->column);
     return;
   case SMT_TK_INVALID_NUMBER:
-    fprintf(stderr, "invalid number %s (line %"PRId32", column %"PRId32")\n",
+    fprintf(stderr, "invalid number %s (line %" PRId32 ", column %" PRId32 ")\n",
             tkval(lex), lex->tk_line, lex->tk_column);
     return;
   case SMT_TK_ZERO_DIVISOR:
-    fprintf(stderr, "zero divisor in constant %s (line %"PRId32", column %"PRId32")\n",
+    fprintf(stderr, "zero divisor in constant %s (line %" PRId32 ", column %" PRId32 ")\n",
             tkval(lex), lex->tk_line, lex->tk_column);
     return;
   case SMT_TK_ERROR:
-    fprintf(stderr, "invalid token %s (line %"PRId32", column %"PRId32")\n",
+    fprintf(stderr, "invalid token %s (line %" PRId32 ", column %" PRId32 ")\n",
             tkval(lex), lex->tk_line, lex->tk_column);
     return;
 
@@ -112,22 +106,22 @@ static void syntax_error(lexer_t *lex, int32_t expected_token) {
     case SMT_TK_SYMBOL:
     case SMT_TK_STRING:
     case SMT_TK_ATTRIBUTE:
-      fprintf(stderr, "syntax error (line %"PRId32", column %"PRId32"): %s expected\n",
-              lex->tk_line, lex->tk_column, smt_token_to_string(expected_token));
+      fprintf(stderr, "syntax error (line %" PRId32 ", column %" PRId32 "): %s expected\n",
+              lex->tk_line, lex->tk_column, smt_token_to_string((smt_token_t)expected_token));
       break;
 
     case SMT_TK_STATUS:
-      fprintf(stderr, "syntax error (line %"PRId32", column %"PRId32"): status expected\n",
+      fprintf(stderr, "syntax error (line %" PRId32 ", column %" PRId32 "): status expected\n",
               lex->tk_line, lex->tk_column);
       break;
 
     case SMT_TK_RATIONAL:
-      fprintf(stderr, "syntax error (line %"PRId32", column %"PRId32"): number expected\n",
+      fprintf(stderr, "syntax error (line %" PRId32 ", column %" PRId32 "): number expected\n",
               lex->tk_line, lex->tk_column);
       break;
 
     default:
-      fprintf(stderr, "syntax error (line %"PRId32", column %"PRId32")\n",
+      fprintf(stderr, "syntax error (line %" PRId32 ", column %" PRId32 ")\n",
               lex->tk_line, lex->tk_column);
       break;
     }
@@ -340,9 +334,9 @@ static action_t get_action(state_t s, smt_token_t tk) {
 
   i = ((int32_t) base[s]) + ((int32_t) tk);
   if (check[i] == s) {
-    return value[i];
+    return (action_t)value[i];
   } else {
-    return default_value[s];
+    return (action_t)default_value[s];
   }
 }
 
@@ -394,7 +388,7 @@ static int32_t smt_parse(parser_t *parser, smt_benchmark_t *bench, state_t start
     // jump here for actions that don't consume the token
   skip_token:
 
-    switch (get_action(state, token)) {
+    switch (get_action((state_t)state, token)) {
     case next_goto_an1:
       state = an1;
       goto loop;
@@ -1400,7 +1394,7 @@ static int32_t smt_parse(parser_t *parser, smt_benchmark_t *bench, state_t start
     }
 
   } else {
-    term_stack_smt_error(stderr, reader_name(lex), tstack, exception);
+    term_stack_smt_error(stderr, reader_name(lex), tstack, (tstack_error_t)exception);
     goto cleanup;
   }
 

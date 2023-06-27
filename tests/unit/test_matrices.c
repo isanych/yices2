@@ -30,7 +30,7 @@
 
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -94,7 +94,7 @@ static void print_arith_var(FILE *f, int32_t v) {
   if (0 <= v && v < NUMVARS) {
     fprintf(f, "%s", name[v]);
   } else {
-    fprintf(f, "z!%"PRId32, v);
+    fprintf(f, "z!%" PRId32, v);
   }
 }
 
@@ -193,7 +193,7 @@ static void print_matrix(FILE *f, matrix_t *m) {
 
   n = m->nrows;
   for (i=0; i<n; i++) {
-    fprintf(f, "  row[%"PRIu32"]:  ", i);
+    fprintf(f, "  row[%" PRIu32 "]:  ", i);
     print_row(f, m->row[i]);
     fputc('\n', f);
   }
@@ -369,7 +369,7 @@ static void random_pivot(matrix_t *matrix) {
       if (j == k) {
 	printf("\n==== Pivot ");
 	print_arith_var(stdout, c);
-	printf(" in row %"PRIu32" ====\n", r);
+	printf(" in row %" PRIu32 " ====\n", r);
 	matrix_pivot(matrix, r, i);
 	return;
       }

@@ -105,7 +105,7 @@ static void collect_finite_domain(term_table_t *tbl, int_hset_t *cache, ivector_
     if (term_kind(tbl, t) == ITE_SPECIAL) {
       d = ite_special_desc(tbl, t);
       if (d->extra != NULL) {
-        add_domain(cache, v, d->extra);
+        add_domain(cache, v, (finite_domain_t*)d->extra);
       } else {
         collect_finite_domain(tbl, cache, v, d->body.arg[1]);
         collect_finite_domain(tbl, cache, v, d->body.arg[2]);
@@ -156,7 +156,7 @@ finite_domain_t *special_ite_get_finite_domain(term_table_t *tbl, term_t t) {
   if (d->extra == NULL) {
     d->extra = build_ite_finite_domain(tbl, &d->body);
   }
-  return d->extra;
+  return (finite_domain_t*)d->extra;
 }
 
 
@@ -423,7 +423,7 @@ void term_finite_domain_bounds(term_table_t *tbl, term_t t, term_t *lb, term_t *
   d = special_ite_get_finite_domain(tbl, t);
 
 #if 0
-  printf("finite domain for term %"PRId32"\n", t);
+  printf("finite domain for term %" PRId32 "\n", t);
   print_finite_domain(stdout, tbl, d);
   printf("\n");
 #endif

@@ -205,7 +205,7 @@ int main(void) {
   for (i=0; i<NUM_SMT_LOGICS; i++) {
     printf("Testing '%s'\n", test_names[i]);
     code = smt_logic_code(test_names[i]);
-    printf("code = %"PRId32": %s\n\n", (int32_t) code, code2string[code]);
+    printf("code = %" PRId32 ": %s\n\n", (int32_t) code, code2string[code]);
     if (strcmp(test_names[i], code2string[code]) != 0) {
       printf("BUG: smt_logic_code didn't return the right code\n");
       exit(1);
@@ -215,7 +215,7 @@ int main(void) {
   for (i=NUM_SMT_LOGICS; i<NUM_TESTS; i++) {
     printf("Testing '%s'\n", test_names[i]);
     code = smt_logic_code(test_names[i]);
-    printf("code = %"PRId32": %s\n\n", (int32_t) code, code2string[code]);
+    printf("code = %" PRId32 ": %s\n\n", (int32_t) code, code2string[code]);
     if (code != SMT_UNKNOWN) {
       printf("BUG: smt_logic_code didn't return SMT_UNKNOWN\n");
       exit(1);

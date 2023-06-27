@@ -20,45 +20,14 @@
  * Yices solver: input in the SMT-LIB 2.0 language
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <signal.h>
 #include <errno.h>
-#include <unistd.h>
 #include <inttypes.h>
 
-#if defined(MINGW)
-/*
- * We call isatty(STDIN_FILENO) to check whether stdin is a terminal.
- *
- * On Windows/MINGW, isatty is called _isatty. The macro STDIN_FILENO
- * appears to be defined in mingw/include/stdio.h. Not clear whether
- * it exists in Windows?  There is a function isatty declared in io.h,
- * but it is deprecated.
- *
- * NOTE: the windows function _isatty doesn't have the same behavior
- * as isatty on Unix. It returns a non-zero value if the file
- * descriptor is associated with a character device (which is true of
- * terminals but of other files too).
- */
-#include <io.h>
-#ifndef STDIN_FILENO
-#define STDIN_FILENO (_fileno(stdin))
-#endif
-#define isatty _isatty
-
-#else
-// Should work on all Unix variants
-#include <unistd.h>
-#endif
-
+#include "api/platform.h"
 #include "frontend/common/parameters.h"
 #include "frontend/smt2/smt2_commands.h"
 #include "frontend/smt2/smt2_lexer.h"
@@ -71,11 +40,6 @@
 
 #include "yices.h"
 #include "yices_exit_codes.h"
-
-/*
- * yices_rev is set up at compile time in yices_version.c
- */
-extern const char * const yices_rev;
 
 /*
  * Global objects:
@@ -431,7 +395,7 @@ static void parse_command_line(int argc, char *argv[]) {
       break;
 
     case cmdline_option:
-      k = elem.key;
+      k = (optid_t)elem.key;
       switch (k) {
       case show_version_opt:
         print_version();
@@ -990,7 +954,7 @@ static void default_handler(int signum) {
 static void init_handlers(void) {
   signal(SIGINT, default_handler);
   signal(SIGABRT, default_handler);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, default_handler);
 #endif
 }
@@ -1002,7 +966,7 @@ static void init_handlers(void) {
 static void reset_handlers(void) {
   signal(SIGINT, SIG_DFL);
   signal(SIGABRT, SIG_DFL);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, SIG_DFL);
 #endif
 }
@@ -1096,7 +1060,7 @@ int main(int argc, char *argv[]) {
   }
   if (trace_tags.size > 0) {
     for (i = 0; i < trace_tags.size; ++ i) {
-      smt2_enable_trace_tag(trace_tags.data[i]);
+      smt2_enable_trace_tag((char*)trace_tags.data[i]);
     }
   }
 

@@ -43,7 +43,7 @@ typedef struct empty_theory {
 static void null_start_internalization(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->start_internalization\n", th->name);
   fflush(stdout);
 }
@@ -51,7 +51,7 @@ static void null_start_internalization(void *t) {
 static void null_start_search(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->start_search\n", th->name);
   fflush(stdout);
 }
@@ -59,8 +59,8 @@ static void null_start_search(void *t) {
 static bool null_assert(void *t, void *atom, literal_t l) {
   empty_theory_t *th;
 
-  th = t;
-  printf("%s->assert: literal = %"PRId32"\n", th->name, l);
+  th = (empty_theory_t*)t;
+  printf("%s->assert: literal = %" PRId32 "\n", th->name, l);
   fflush(stdout);
 
   return true;
@@ -69,7 +69,7 @@ static bool null_assert(void *t, void *atom, literal_t l) {
 static bool null_propagate(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->propagate\n", th->name);
   fflush(stdout);
 
@@ -83,17 +83,17 @@ static void null_expand_expl(void *t, literal_t l, void *expl, ivector_t *v) {
 static void null_increase_dlevel(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   th->d_level ++;
-  printf("%s->increase_dlevel: new level = %"PRIu32"\n", th->name, th->d_level);
+  printf("%s->increase_dlevel: new level = %" PRIu32 "\n", th->name, th->d_level);
   fflush(stdout);
 }
 
 static void null_backtrack(void *t, uint32_t back_level) {
   empty_theory_t *th;
 
-  th = t;
-  printf("%s->backtrack: old level = %"PRIu32", new level = %"PRIu32"\n", th->name,
+  th = (empty_theory_t*)t;
+  printf("%s->backtrack: old level = %" PRIu32 ", new level = %" PRIu32 "\n", th->name,
 	 th->d_level, back_level);
   th->d_level = back_level;
   fflush(stdout);
@@ -106,7 +106,7 @@ static void null_delete_atom(void *t, void *atom) {
 static void null_end_deletion(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->end_deletion\n", th->name);
   fflush(stdout);
 }
@@ -114,26 +114,26 @@ static void null_end_deletion(void *t) {
 static void null_push(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   th->b_level ++;
   th->d_level = th->b_level;
-  printf("%s->push: new base level = %"PRIu32"\n", th->name, th->b_level);
+  printf("%s->push: new base level = %" PRIu32 "\n", th->name, th->b_level);
 }
 
 static void null_pop(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   assert(th->b_level > 0);
   th->b_level --;
   th->d_level = th->b_level;
-  printf("%s->pop: new base level = %"PRIu32"\n", th->name, th->b_level);
+  printf("%s->pop: new base level = %" PRIu32 "\n", th->name, th->b_level);
 }
 
 static void null_reset(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->reset\n", th->name);
   th->d_level = 0;
   th->b_level = 0;
@@ -146,7 +146,7 @@ static literal_t null_select_polarity(void *t, void *atom, literal_t l) {
 static fcheck_code_t null_final_check(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->final_check\n", th->name);
   return FCHECK_SAT;
 }
@@ -154,7 +154,7 @@ static fcheck_code_t null_final_check(void *t) {
 static void null_clear(void *t) {
   empty_theory_t *th;
 
-  th = t;
+  th = (empty_theory_t*)t;
   printf("%s->clear\n", th->name);
 }
 

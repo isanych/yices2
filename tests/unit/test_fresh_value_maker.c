@@ -108,14 +108,14 @@ static void test_type(type_t tau, uint32_t n) {
   printf("==== Test fresh values of type ");
   print_type(stdout, &types, tau);
   printf(" ====\n");
-  printf("cardinality: %"PRIu32"\n\n", type_card(&types, tau));
+  printf("cardinality: %" PRIu32 "\n\n", type_card(&types, tau));
 
   i = 0;
   do {
     v = make_fresh_value(&maker, tau);
     if (v == null_value) break;
     i ++;
-    printf("val[%"PRIu32"] = ", i);
+    printf("val[%" PRIu32 "] = ", i);
     vtbl_print_object(stdout, &vtbl, v);
     printf("\n");
     if (vtbl_queue_is_nonempty(&vtbl)) {
@@ -124,7 +124,7 @@ static void test_type(type_t tau, uint32_t n) {
     }
   } while (i <n);
 
-  printf("\n---> got %"PRIu32" fresh values\n\n", i);
+  printf("\n---> got %" PRIu32 " fresh values\n\n", i);
 }
 
 

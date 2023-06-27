@@ -43,12 +43,9 @@
  */
 
 #include <assert.h>
-#ifdef MINGW
-// Use the oldest version of the Windows API.
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500
-#endif
+#include <yices_config.h>
 
+#ifdef _WIN32
 #include <windows.h>
 #elif defined(THREAD_SAFE)
 #include <pthread.h>
@@ -83,7 +80,7 @@ typedef struct timeout_s {
   timeout_state_t state;
   timeout_handler_t handler;
   void *param;
-#ifdef MINGW
+#ifdef _WIN32
   HANDLE timer_queue;
   HANDLE timer;
 #elif defined(THREAD_SAFE)
@@ -95,7 +92,7 @@ typedef struct timeout_s {
 } timeout_t;
 
 
-#if !defined(MINGW) && !defined(THREAD_SAFE)
+#if !defined(_WIN32) && !defined(THREAD_SAFE)
 
 /*
  * Global structure for single-threaded case.
@@ -112,7 +109,7 @@ static inline void init_base_timeout(timeout_t *timeout) {
   timeout->param = NULL;
 }
 
-#ifndef MINGW
+#ifndef _WIN32
 
 
 /*****************************
@@ -368,7 +365,7 @@ timeout_t *init_timeout(void) {
 
   timeout->timer_queue = CreateTimerQueue();
   if (timeout->timer_queue == NULL) {
-    fprintf(stderr, "Yices: CreateTimerQueue failed with error code %"PRIu32"\n", (uint32_t) GetLastError());
+    fprintf(stderr, "Yices: CreateTimerQueue failed with error code %" PRIu32 "\n", (uint32_t) GetLastError());
     fflush(stderr);
     exit(YICES_EXIT_INTERNAL_ERROR);
   }
@@ -403,7 +400,7 @@ void start_timeout(timeout_t *timeout, uint32_t delay, timeout_handler_t handler
     timeout->handler = handler;
     timeout->param = param;
   } else {
-    fprintf(stderr, "Yices: CreateTimerQueueTimer failed with error code %"PRIu32"\n", (uint32_t) GetLastError());
+    fprintf(stderr, "Yices: CreateTimerQueueTimer failed with error code %" PRIu32 "\n", (uint32_t) GetLastError());
     fflush(stderr);
     exit(YICES_EXIT_INTERNAL_ERROR);
   }
@@ -437,7 +434,7 @@ void clear_timeout(timeout_t *timeout) {
       error_code = (uint32_t) GetLastError();
       // The Microsoft doc says we should try again
       // unless error code is ERROR_IO_PENDING??
-      fprintf(stderr, "Yices: DeleteTimerQueueTimer failed with error code %"PRIu32"\n", error_code);
+      fprintf(stderr, "Yices: DeleteTimerQueueTimer failed with error code %" PRIu32 "\n", error_code);
       fflush(stderr);
       exit(YICES_EXIT_INTERNAL_ERROR);
     }
@@ -454,7 +451,7 @@ void clear_timeout(timeout_t *timeout) {
  */
 void delete_timeout(timeout_t *timeout) {
   if (! DeleteTimerQueueEx(timeout->timer_queue, INVALID_HANDLE_VALUE)) {
-    fprintf(stderr, "Yices: DeleteTimerQueueEx failed with error code %"PRIu32"\n", (uint32_t) GetLastError());
+    fprintf(stderr, "Yices: DeleteTimerQueueEx failed with error code %" PRIu32 "\n", (uint32_t) GetLastError());
     fflush(stderr);
     exit(YICES_EXIT_INTERNAL_ERROR);
   }
@@ -462,7 +459,4 @@ void delete_timeout(timeout_t *timeout) {
   safe_free(timeout);
 }
 
-
-
-
-#endif /* MINGW */
+#endif

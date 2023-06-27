@@ -143,7 +143,7 @@ void string_buffer_append_int32(string_buffer_t *s, int32_t x) {
   // max space to print a 32bit number in decimal is
   // 12 character (including sign and trailing zero)
   string_buffer_extend(s, 12);
-  n = sprintf(s->data + s->index, "%"PRId32, x);
+  n = sprintf(s->data + s->index, "%" PRId32, x);
   assert(n <= 12 && n > 0);
   s->index += n;
 }
@@ -153,7 +153,7 @@ void string_buffer_append_uint32(string_buffer_t *s, uint32_t x) {
   // max space to print a 32bit number in decimal is
   // 12 character (including sign and trailing zero)
   string_buffer_extend(s, 12);
-  n = sprintf(s->data + s->index, "%"PRIu32, x);
+  n = sprintf(s->data + s->index, "%" PRIu32, x);
   assert(n <= 12 && n > 0);
   s->index += n;
 }

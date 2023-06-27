@@ -247,7 +247,7 @@ static void free_token(printer_t *p, void *tk) {
     free_atomic_token(p, untag_atomic(tk));
     break;
   case PP_TOKEN_CLOSE_TAG:
-    free_close_token(p, untag_close(tk));
+    free_close_token(p, (pp_close_token_t *)untag_close(tk));
     break;
   case PP_TOKEN_SEPARATOR_TAG:
     free_atomic_token(p, untag_separator(tk));
@@ -483,7 +483,7 @@ static void print_pending(printer_t *p) {
       space = true;
       break;
     case PP_TOKEN_CLOSE_TAG:
-      print_close(p, untag_close(tk));
+      print_close(p, (pp_close_token_t *)untag_close(tk));
       space = true;
       break;
     case PP_TOKEN_SEPARATOR_TAG:
@@ -521,7 +521,7 @@ static void print_pending_truncated(printer_t *p) {
   case PP_TOKEN_CLOSE_TAG:
     pp_space(p);
     pp_ellipsis(p);
-    free_close_token(p, untag_close(tk));
+    free_close_token(p, (pp_close_token_t *)untag_close(tk));
     break;
   case PP_TOKEN_SEPARATOR_TAG:
     print_atomic_truncated(p, untag_separator(tk));
@@ -1023,7 +1023,7 @@ static void print_token(printer_t *p, void *tk) {
     break;
 
   case PP_TOKEN_CLOSE_TAG:
-    print_close_token(p, untag_close(tk));
+    print_close_token(p, (pp_close_token_t *)untag_close(tk));
     // space and break are allowed now
     p->no_space = false;
     p->no_break = false;
@@ -1567,7 +1567,7 @@ static void process_token(formatter_t *f, void *tk) {
   case PP_TOKEN_CLOSE_TAG:
     assert(f->depth > 0);
     f->depth --;
-    process_close_token(f, untag_close(tk));
+    process_close_token(f, (pp_close_token_t *)untag_close(tk));
     break;
 
   case PP_TOKEN_SEPARATOR_TAG:

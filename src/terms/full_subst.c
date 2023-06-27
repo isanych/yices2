@@ -151,7 +151,7 @@ static void full_subst_remove_map(full_subst_t *subst, term_t x) {
  *   GREY  means t has been visited but not all its descendants
  *   BLACK means t and all its descendants have been explored
  *
- * NOTE: we attach the mark to term indices (so t and not(t) have the
+ * NOTE: we attach the mark to term indices (so t and not_(t) have the
  * same mark)
  *
  * - if subst->remove_cycles is false, then the function just detects cycles.
@@ -478,7 +478,7 @@ bool full_subst_check_deps(full_subst_t *subst, term_t x, uint32_t n, term_t *a)
  *   p->val = what's mapped to x (i.e., a term t or NULL_TERM)
  */
 static void collect_map(void *aux, const int_hmap_pair_t *p) {
-  ivector_push(aux, p->key);
+  ivector_push((ivector_t*)aux, p->key);
 }
 
 /*
@@ -753,18 +753,18 @@ static term_t full_subst_lambda(full_subst_t *subst, composite_term_t *lambda) {
   return mk_lambda(subst->mngr, n-1, lambda->arg, s);
 }
 
-static term_t full_subst_or(full_subst_t *subst, composite_term_t *or) {
+static term_t full_subst_or(full_subst_t *subst, composite_term_t *or_) {
   term_t *a;
   term_t s;
   uint32_t i, n;
 
-  n = or->arity;
+  n = or_->arity;
   assert(n >= 2);
 
   a = alloc_istack_array(&subst->stack, n);
   s = true_term;
   for (i=0; i<n; i++) {
-    a[i] = full_subst(subst, or->arg[i]);
+    a[i] = full_subst(subst, or_->arg[i]);
     if (a[i] == true_term) goto done;
   }
 
@@ -776,13 +776,13 @@ static term_t full_subst_or(full_subst_t *subst, composite_term_t *or) {
   return s;
 }
 
-static term_t full_subst_xor(full_subst_t *subst, composite_term_t *xor) {
+static term_t full_subst_xor(full_subst_t *subst, composite_term_t *xor_) {
   term_t *a;
   term_t s;
 
-  assert(xor->arity >= 2);
-  a = full_subst_children(subst, xor);
-  s = mk_xor(subst->mngr, xor->arity, a);
+  assert(xor_->arity >= 2);
+  a = full_subst_children(subst, xor_);
+  s = mk_xor(subst->mngr, xor_->arity, a);
   free_istack_array(&subst->stack, a);
 
   return s;

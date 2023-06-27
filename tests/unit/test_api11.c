@@ -35,7 +35,7 @@ static void test_type_to_string(type_t tau, int32_t error) {
   char *s;
   error_code_t ecode;
 
-  printf("Testing type_to_string: tau = %"PRId32" (print area = 40 x 10)\n", tau);
+  printf("Testing type_to_string: tau = %" PRId32 " (print area = 40 x 10)\n", tau);
   fflush(stdout);
 
   s = yices_type_to_string(tau, 40, 10, 0);
@@ -58,7 +58,7 @@ static void test_type_to_string(type_t tau, int32_t error) {
     ecode = yices_error_code();
     if (ecode != error) {
       printf("TEST FAILED\n");
-      printf("--> Yices error code = %"PRId32" bit %"PRId32" was expected\n", ecode, error);
+      printf("--> Yices error code = %" PRId32 " bit %" PRId32 " was expected\n", ecode, error);
       fflush(stdout);
       exit(1);      
     }
@@ -77,7 +77,7 @@ static void test_term_to_string(term_t t, int32_t error) {
   char *s;
   error_code_t ecode;
 
-  printf("Testing term_to_string: t = %"PRId32" (print area = 100 x 60)\n", t);
+  printf("Testing term_to_string: t = %" PRId32 " (print area = 100 x 60)\n", t);
   fflush(stdout);
 
   s = yices_term_to_string(t, 100, 60, 0);
@@ -100,7 +100,7 @@ static void test_term_to_string(term_t t, int32_t error) {
     ecode = yices_error_code();
     if (ecode != error) {
       printf("TEST FAILED\n");
-      printf("--> Yices error code = %"PRId32" bit %"PRId32" was expected\n", ecode, error);
+      printf("--> Yices error code = %" PRId32 " bit %" PRId32 " was expected\n", ecode, error);
       fflush(stdout);
       exit(1);      
     }

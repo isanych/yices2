@@ -72,7 +72,7 @@ static inline tptr_t tag_uint(uint32_t x, tag_t tg) {
 static void test_int(int32_t x) {
   tptr_t p;
 
-  printf("Test int: x = %"PRId32, x);
+  printf("Test int: x = %" PRId32, x);
   p = tag_int(x, tag00);
   assert_true(get_tag(p) == tag00);
   assert_true(untag_int(p) == x);
@@ -93,7 +93,7 @@ static void test_int(int32_t x) {
 static void test_uint(uint32_t x) {
   tptr_t p;
 
-  printf("Test uint: x = %"PRIu32, x);
+  printf("Test uint: x = %" PRIu32, x);
   p = tag_uint(x, tag00);
   assert_true(get_tag(p) == tag00);
   assert_true(untag_uint(p) == x);

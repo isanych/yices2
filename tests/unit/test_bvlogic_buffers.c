@@ -51,7 +51,7 @@ static void print_bit(bit_t b) {
     printf("f");
   } else {
     if (bit_is_neg(b)) printf("~");
-    printf("b!%"PRId32, node_of_bit(b));
+    printf("b!%" PRId32, node_of_bit(b));
   }
 }
 
@@ -59,12 +59,12 @@ static void print_buffer(void) {
   uint32_t i, n;
 
   printf("bvlogic buffer %p\n", &buffer);
-  printf("  size = %"PRIu32"\n", buffer.size);
-  printf("  bitsize = %"PRIu32"\n", buffer.bitsize);
+  printf("  size = %" PRIu32 "\n", buffer.size);
+  printf("  bitsize = %" PRIu32 "\n", buffer.bitsize);
   printf("  content\n");
   n = buffer.bitsize;
   for (i=0; i<n; i++) {
-    printf("  bit[%"PRIu32"] = ", i);
+    printf("  bit[%" PRIu32 "] = ", i);
     print_bit(buffer.bit[i]);
     printf("\n");
   }

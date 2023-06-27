@@ -207,13 +207,13 @@ static void show_lemma_queue(lemma_queue_t *queue) {
   uint32_t i;
 
   printf("Queue %p\n", queue);
-  printf("  capacity  = %"PRIu32"\n", queue->capacity);
-  printf("  nblocks   = %"PRIu32"\n", queue->nblocks);
-  printf("  free_block = %"PRIu32"\n", queue->free_block);
+  printf("  capacity  = %" PRIu32 "\n", queue->capacity);
+  printf("  nblocks   = %" PRIu32 "\n", queue->nblocks);
+  printf("  free_block = %" PRIu32 "\n", queue->free_block);
   for (i=0; i<queue->nblocks; i++) {
     tmp = queue->block[i];
-    printf("  block[%"PRIu32"]->size = %"PRIu32"\n", i, tmp->size);
-    printf("  block[%"PRIu32"]->ptr  = %"PRIu32"\n", i, tmp->ptr);
+    printf("  block[%" PRIu32 "]->size = %" PRIu32 "\n", i, tmp->size);
+    printf("  block[%" PRIu32 "]->ptr  = %" PRIu32 "\n", i, tmp->ptr);
   }
   printf("\n");
 }
@@ -232,7 +232,7 @@ static void print_lemmas(lemma_queue_t *queue) {
     do {
       printf("{");
       while (tmp->data[j] != null_literal) {
-	printf(" %"PRId32, tmp->data[j]);
+	printf(" %" PRId32, tmp->data[j]);
 	j ++;
       }
       printf(" }\n");

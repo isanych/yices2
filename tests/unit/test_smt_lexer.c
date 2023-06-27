@@ -32,14 +32,14 @@ static void print_token(token_t tk) {
   char *s;
   int32_t code;
 
-  printf("---> Token %s\n", smt_token_to_string(tk));
-  printf("     pos = %"PRIu64", line = %"PRIu32", column = %"PRIu32"\n",
+  printf("---> Token %s\n", smt_token_to_string((smt_token_t)tk));
+  printf("     pos = %" PRIu64 ", line = %" PRIu32 ", column = %" PRIu32 "\n",
 	 lexer.tk_pos, lexer.tk_line, lexer.tk_column);
   n = current_token_length(&lexer);
   s = current_token_value(&lexer);
   if (n > 0) {
     printf("     value: %s\n", s);
-    printf("     length: %"PRIu32"\n", n);
+    printf("     length: %" PRIu32 "\n", n);
   }
 
   switch (tk) {

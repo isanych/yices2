@@ -263,7 +263,7 @@ void model_collect_terms(model_t *model, bool all, void *aux, model_filter_t f, 
  * - aux is the term table where key is defined
  */
 static void mdl_mark_map(void *aux, const int_hmap_pair_t *r) {
-  term_table_set_gc_mark(aux, index_of(r->key));
+  term_table_set_gc_mark((term_table_t*)aux, index_of(r->key));
 }
 
 /*
@@ -273,8 +273,8 @@ static void mdl_mark_map(void *aux, const int_hmap_pair_t *r) {
  */
 static void mdl_mark_alias(void *aux, const int_hmap_pair_t *r) {
   assert(r->val >= 0);
-  term_table_set_gc_mark(aux, index_of(r->key));
-  term_table_set_gc_mark(aux, index_of(r->val));
+  term_table_set_gc_mark((term_table_t*)aux, index_of(r->key));
+  term_table_set_gc_mark((term_table_t*)aux, index_of(r->val));
 }
 
 

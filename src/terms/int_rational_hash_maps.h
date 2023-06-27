@@ -101,7 +101,7 @@ extern int_rat_hmap_rec_t *int_rat_hmap_find(int_rat_hmap_t *hmap, int32_t k);
  * Important: the returned pointer may become invalid if more
  * elements are added to the table.
  */
-extern int_rat_hmap_rec_t *int_rat_hmap_get(int_rat_hmap_t *hmap, int32_t k, bool *new);
+extern int_rat_hmap_rec_t *int_rat_hmap_get(int_rat_hmap_t *hmap, int32_t k, bool *new_);
 
 /*
  * Remove all records

@@ -23,7 +23,7 @@
 #include "terms/power_products.h"
 #include "utils/prng.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -163,7 +163,7 @@ static void show_array(uint32_t n) {
   for (i=0; i<n; i++) {
     if (l == 0) { l = 10; printf("\n"); };
     l --;
-    printf(" (%3"PRId32",%3"PRIu32")", a[i].var, a[i].exp);
+    printf(" (%3" PRId32 ",%3" PRIu32 ")", a[i].var, a[i].exp);
   }
   printf("\n");
 }

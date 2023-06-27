@@ -22,7 +22,7 @@
 
 #include "utils/pair_hash_sets.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -42,14 +42,14 @@ static void print_hset(pair_hset_t *set) {
   int_pair_t *d;
 
   printf("set %p\n", set);
-  printf("  size = %"PRIu32"\n", set->size);
-  printf("  nelems = %"PRIu32"\n", set->nelems);
+  printf("  size = %" PRIu32 "\n", set->size);
+  printf("  nelems = %" PRIu32 "\n", set->nelems);
   printf("  content:\n");
 
   d = set->data;
   for (i=0; i<set->size; i++) {
     if (d->left >= 0) {
-      printf("   [left = %"PRId32", right = %"PRId32"]\n", d->left, d->right);
+      printf("   [left = %" PRId32 ", right = %" PRId32 "]\n", d->left, d->right);
     }
     d ++;
   }
@@ -80,7 +80,7 @@ int main(void) {
   for (i=0; i<n; i++) {
     a = test_values[2*i];
     b = test_values[2*i+1];
-    printf("Adding [%"PRId32", %"PRId32"]: ", a, b);
+    printf("Adding [%" PRId32 ", %" PRId32 "]: ", a, b);
     if (pair_hset_add(&hset, a, b)) {
       printf("new pair\n");
     } else {
@@ -96,7 +96,7 @@ int main(void) {
   for (i=0; i<n; i++) {
     a = test_values[i];
     b = test_values[i + 1];
-    printf("Checking [%"PRId32", %"PRId32"]: ", a, b);
+    printf("Checking [%" PRId32 ", %" PRId32 "]: ", a, b);
     if (pair_hset_member(&hset, a, b)) {
       printf("present\n");
     } else {

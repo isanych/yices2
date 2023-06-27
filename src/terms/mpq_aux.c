@@ -31,7 +31,7 @@
 /*
  * Debug code: double check results
  */
-#ifdef DEBUG
+#ifdef YICES_DEBUG
 
 static mpq_t check, aux;
 
@@ -69,7 +69,7 @@ void init_mpq_aux(void) {
     abort();
   }
 
-#ifdef DEBUG
+#ifdef YICES_DEBUG
   mpq_init(check);
   mpq_init(aux);
 #endif
@@ -80,7 +80,7 @@ void init_mpq_aux(void) {
  * Cleanup
  */
 void cleanup_mpq_aux(void) {
-#ifdef DEBUG
+#ifdef YICES_DEBUG
   mpq_clear(check);
   mpq_clear(aux);
 #endif
@@ -120,7 +120,7 @@ void mpq_add_si(mpq_t q, long num, unsigned long den) {
   mpz_init(z0);
 
 
-#ifdef DEBUG
+#ifdef YICES_DEBUG
   mpq_set_si(aux, num, den);
   mpq_add(check, q, aux);
 #endif
@@ -184,7 +184,7 @@ void mpq_mul_si(mpq_t q, long num, unsigned long den) {
   mpz_ptr num_q, den_q;
   unsigned long gcd, abs_num;
 
-#ifdef DEBUG
+#ifdef YICES_DEBUG
   mpq_set_si(aux, num, den);
   mpq_mul(check, q, aux);
 #endif
@@ -232,7 +232,7 @@ void mpq_div_si(mpq_t q, long num, unsigned long den) {
   mpz_ptr num_q, den_q;
   unsigned long gcd, abs_num;
 
-#ifdef DEBUG
+#ifdef YICES_DEBUG
   mpq_set_si(aux, num, den);
   mpq_div(check, q, aux);
 #endif

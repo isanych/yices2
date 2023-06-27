@@ -28,7 +28,7 @@
 
 #include "utils/cputime.h"
 
-#ifndef MINGW
+#ifndef _WIN32
 
 #include <sys/types.h>
 #include <sys/time.h>

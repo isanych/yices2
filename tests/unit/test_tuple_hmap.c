@@ -37,9 +37,9 @@ static void print_tuple(uint32_t n, int32_t *a) {
   if (n == 0) {
     printf("[]");
   } else {
-    printf("[%"PRId32, a[0]);
+    printf("[%" PRId32, a[0]);
     for (i=1; i<n; i++) {
-      printf(" %"PRId32, a[i]);
+      printf(" %" PRId32, a[i]);
     }
     printf("]");
   }
@@ -50,13 +50,13 @@ static void print_tuple_record(tuple_hmap_rec_t *r) {
 
   n = r->arity;
   if (n == 0) {
-    printf("[]: %"PRId32, r->value);
+    printf("[]: %" PRId32, r->value);
   } else {
-    printf("[%"PRId32, r->key[0]);
+    printf("[%" PRId32, r->key[0]);
     for (i=1; i<n; i++) {
-      printf(" %"PRId32, r->key[i]);
+      printf(" %" PRId32, r->key[i]);
     }
-    printf("]: %"PRId32, r->value);
+    printf("]: %" PRId32, r->value);
   }
 }
 
@@ -66,9 +66,9 @@ static void print_tuple_hmap(tuple_hmap_t *table) {
   tuple_hmap_rec_t *d;
 
   printf("table %p\n", table);
-  printf("  size = %"PRIu32"\n", table->size);
-  printf("  nelems = %"PRIu32"\n", table->nelems);
-  printf("  ndeleted = %"PRIu32"\n", table->ndeleted);
+  printf("  size = %" PRIu32 "\n", table->size);
+  printf("  nelems = %" PRIu32 "\n", table->nelems);
+  printf("  ndeleted = %" PRIu32 "\n", table->ndeleted);
   printf("  content:\n");
 
   for (i=0; i<table->size; i++) {
@@ -88,7 +88,7 @@ static void print_tuple_hmap(tuple_hmap_t *table) {
  */
 static void test_get(tuple_hmap_t *table, uint32_t n, int32_t *a) {
   tuple_hmap_rec_t *r, *d;
-  bool new;
+  bool new_;
 
   printf("Test get ");
   print_tuple(n, a);
@@ -97,15 +97,15 @@ static void test_get(tuple_hmap_t *table, uint32_t n, int32_t *a) {
   // find before
   d = tuple_hmap_find(table, n, a);
 
-  r = tuple_hmap_get(table, n, a, &new);
-  if (new) {
+  r = tuple_hmap_get(table, n, a, &new_);
+  if (new_) {
     // assign a value (otherwise valgrind will complain)
     r->value = 93;
   }
 
   printf("result: %p = ", r);
   print_tuple_record(r);
-  if (new) {
+  if (new_) {
     printf(" (new)\n");
     assert(d == NULL);
   } else {
@@ -148,7 +148,7 @@ static void test_add(tuple_hmap_t *table, uint32_t n, int32_t *a, int32_t val) {
 
   printf("Test add ");
   print_tuple(n, a);
-  printf(": %"PRId32"\n", val);
+  printf(": %" PRId32 "\n", val);
 
   // find before
   d = tuple_hmap_find(table, n, a);

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();

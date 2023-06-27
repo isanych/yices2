@@ -58,7 +58,7 @@ static void init(void) {
 /*
  * Delete all
  */
-static void delete(void) {
+static void delete_(void) {
   delete_renaming_ctx(&ctx);
   delete_term_table(&terms);
   delete_pprod_table(&pprods);
@@ -93,7 +93,7 @@ static void show_renaming(void) {
     x = var[i];
     y = renaming_ctx_lookup(&ctx, x);
     if (y >= 0) {
-      printf("x_%"PRId32" --> x_%"PRId32"\n", x, y);
+      printf("x_%" PRId32 " --> x_%" PRId32 "\n", x, y);
     }
   }
 
@@ -102,7 +102,7 @@ static void show_renaming(void) {
   for (i=0; i<h->nelems; i += 2) {
     x = h->data[i];
     y = h->data[i+1];
-    printf("x_%"PRId32" --> x_%"PRId32"\n", x, y);
+    printf("x_%" PRId32 " --> x_%" PRId32 "\n", x, y);
   }
 
   printf("---\n");
@@ -121,7 +121,7 @@ static void test_add(uint32_t i, uint32_t n) {
   printf("Test renaming:");
   for (j=i; j<i+n; j++) {
     x = var[j];
-    printf(" x_%"PRId32, x);
+    printf(" x_%" PRId32, x);
   }
   printf("\n");
 
@@ -135,7 +135,7 @@ static void test_add(uint32_t i, uint32_t n) {
  * Test: remove last n renamings
  */
 static void test_remove(uint32_t n) {
-  printf("Test pop last %"PRIu32" renamings\n", n);
+  printf("Test pop last %" PRIu32 " renamings\n", n);
   renaming_ctx_pop_vars(&ctx, n);
   show_renaming();
   printf("\n");
@@ -166,7 +166,7 @@ int main(void) {
   }
 
 
-  delete();
+  delete_();
 
   return 0;
 }

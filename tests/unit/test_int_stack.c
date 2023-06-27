@@ -35,14 +35,14 @@ static void print_stack(int_stack_t *stack) {
   printf("  active blocks:\n");
   b = stack->current;
   while (b != NULL) {
-    printf("   block %p: size = %"PRIu32" ptr = %"PRIu32" data = %p\n", b, b->size, b->ptr, b->data);
+    printf("   block %p: size = %" PRIu32 " ptr = %" PRIu32 " data = %p\n", b, b->size, b->ptr, b->data);
     b = b->next;
   }
 
   printf("  free blocks:\n");
   b = stack->free;
   while (b != NULL) {
-    printf("   block %p: size = %"PRIu32" ptr = %"PRIu32" data = %p\n", b, b->size, b->ptr, b->data);
+    printf("   block %p: size = %" PRIu32 " ptr = %" PRIu32 " data = %p\n", b, b->size, b->ptr, b->data);
     b = b->next;
   }
   printf("\n");

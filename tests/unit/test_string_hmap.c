@@ -34,14 +34,14 @@ static void print_map(strmap_t *hmap) {
   uint32_t i;
 
   printf("map %p\n", hmap);
-  printf("  size = %"PRIu32"\n", hmap->size);
-  printf("  nelems = %"PRIu32"\n", hmap->nelems);
-  printf("  ndeleted = %"PRIu32"\n", hmap->ndeleted);
+  printf("  size = %" PRIu32 "\n", hmap->size);
+  printf("  nelems = %" PRIu32 "\n", hmap->nelems);
+  printf("  ndeleted = %" PRIu32 "\n", hmap->ndeleted);
 
   d = hmap->data;
   for (i=0; i<hmap->size; i++) {
     if (d->key != NULL && d->key != DELETED_KEY) {
-      printf("    [key = %s, hash = %"PRIu32", val = %"PRId32"]\n", d->key, d->hash, d->val);
+      printf("    [key = %s, hash = %" PRIu32 ", val = %" PRId32 "]\n", d->key, d->hash, d->val);
     }
     d ++;
   }
@@ -60,7 +60,7 @@ static const char * const test_key[NKEYS] = {
 int main(void) {
   strmap_rec_t *d, *r;
   uint32_t i;
-  bool new;
+  bool new_;
 
   init_strmap(&map, 4);
   printf("\n*** Initial map ***\n");
@@ -77,11 +77,11 @@ int main(void) {
     }
   }
 
-  printf("\n*** Adding %"PRIu32" records ***\n", NKEYS);
+  printf("\n*** Adding %" PRIu32 " records ***\n", NKEYS);
   for (i=0; i<NKEYS; i++) {
     printf("add key %s\n", test_key[i]);
-    d = strmap_get(&map, test_key[i], &new);
-    if (! new) {
+    d = strmap_get(&map, test_key[i], &new_);
+    if (!new_) {
       printf("BUG: record not returned as new\n");
       fflush(stdout);
       exit(1);
@@ -91,8 +91,8 @@ int main(void) {
       fflush(stdout);
       exit(1);
     }
-    r = strmap_get(&map, test_key[i], &new);
-    if (new || r != d) {
+    r = strmap_get(&map, test_key[i], &new_);
+    if (new_ || r != d) {
       printf("BUG: in second call to get\n");
       fflush(stdout);
       exit(1);

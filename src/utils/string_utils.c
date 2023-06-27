@@ -39,27 +39,21 @@
  * Return the index i such that a[i] = s if s is in the array.
  * Return -1 otherwise.
  */
-int32_t binary_search_string(const char *s, const char * const *a, int32_t n) {
-  int32_t l, h, k;
-  int cmp;
-
-  l = 0;
-  h = n - 1;
+int32_t binary_search_string(const char *s, const char * const *a, const int32_t n) {
+  int32_t l = 0;
+  int32_t h = n - 1;
   while (l <= h) {
-    k = (l + h)/2;
-    assert(l <= k && k <= h);
-    cmp = strcmp(s, a[k]);
+    const int32_t k = (l + h)/2;
+    const int cmp = strcmp(s, a[k]);
     if (cmp == 0) return k;
     if (cmp < 0) {
       h = k - 1;
     } else {
-      assert(cmp > 0);
       l = k + 1;
     }
   }
   return -1;
 }
-
 
 /*
  * Parse s as a keyword:
@@ -72,10 +66,8 @@ int32_t binary_search_string(const char *s, const char * const *a, int32_t n) {
  *
  * Otherwise, return -1.
  */
-int32_t parse_as_keyword(const char *s, const char * const *a, const int32_t *b, int32_t n) {
-  int32_t i;
-
-  i = binary_search_string(s, a, n);
+int32_t parse_as_keyword(const char *s, const char * const *a, const int32_t *b, const int32_t n) {
+  int32_t i = binary_search_string(s, a, n);
   if (i >= 0) {
     i = b[i];
   }
@@ -92,9 +84,7 @@ int32_t parse_as_keyword(const char *s, const char * const *a, const int32_t *b,
  * - invalid_boolean means wrong format
  */
 boolean_parse_code_t parse_as_boolean(const char *s, bool *val) {
-  boolean_parse_code_t r;
-
-  r = invalid_boolean;
+  boolean_parse_code_t r = invalid_boolean;
   if ((strcmp(s, "true") == 0) || (strcmp(s, "TRUE") == 0)) {
     *val = true;
     r = valid_boolean;
@@ -119,16 +109,16 @@ boolean_parse_code_t parse_as_boolean(const char *s, bool *val) {
  * - invalid_integer means wrong format
  */
 integer_parse_code_t parse_as_integer(const char *s, int32_t *val) {
-  long aux;
   char *b;
 
   while (isspace((int) *s)) s ++;
   errno = 0;
-  aux = strtol(s, &b, 10);
-  if (errno == ERANGE) {
+  long aux = strtol(s, &b, 10);
+  int e = errno;
+  if (e == ERANGE) {
     return integer_overflow;  //overflow or underflow
   }
-  if (errno == EINVAL) {
+  if (e == EINVAL) {
     return invalid_integer;
   }
 
@@ -151,20 +141,20 @@ integer_parse_code_t parse_as_integer(const char *s, int32_t *val) {
  * Variant: parse s as an unsigned integer
  */
 integer_parse_code_t parse_as_uint(const char *s, uint32_t *val) {
-  unsigned long aux;
   char *b;
 
   while (isspace((int) *s)) s ++;
   errno = 0;
-  aux = strtoul(s, &b, 0);
-  if (errno == ERANGE) {
+  long long aux = strtoll(s, &b, 0);
+  int e = errno;
+  if (e == ERANGE) {
     return integer_overflow;
   }
-  if (errno == EINVAL) {
+  if (e == EINVAL) {
     return invalid_integer;
   }
 
-  if (aux > (unsigned long) UINT32_MAX) {
+  if (aux < 0 || aux > (long long) UINT32_MAX) {
     return integer_overflow;
   }
 
@@ -189,12 +179,11 @@ integer_parse_code_t parse_as_uint(const char *s, uint32_t *val) {
  * - invalid_double means wrong format
  */
 double_parse_code_t parse_as_double(const char *s, double *val) {
-  double aux;
   char *b;
 
   while (isspace((int) *s)) s ++;
   errno = 0;
-  aux = strtod(s, &b);
+  double aux = strtod(s, &b);
   if (errno == ERANGE) {
     return double_overflow;  //overflow or underflow
   }

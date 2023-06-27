@@ -24,6 +24,6 @@
 
 #include <stdio.h>
 
-extern void __attribute__((noreturn)) freport_bug(FILE *fp, const char *format, ...);
+YICES_EXTERN ATTRIBUTE_NORETURN void freport_bug(FILE *fp, const char *format, ...);
 
 #endif /* __FRONTEND_COMMON_BUG_REPORT_H */

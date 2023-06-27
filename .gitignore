@@ -18,3 +18,4 @@
 .directory
 .settings/*
 tests/api/*.log
+src/include/yices_build.h

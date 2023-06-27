@@ -24,6 +24,7 @@
 
 #include "terms/term_substitution.h"
 #include "utils/memalloc.h"
+#include "yices_config.h"
 
 /*
  * Check whether t is either a variable or an uninterpreted term
@@ -174,7 +175,7 @@ term_t term_subst_var_mapping(term_subst_t *subst, term_t v) {
  * - d = vector
  */
 static void add_var_to_domain(void *d, const int_hmap_pair_t *p) {
-  ivector_push(d, p->key);
+  ivector_push((ivector_t*)d, p->key);
 }
 
 
@@ -425,9 +426,7 @@ static bool term_is_zero(term_table_t *tbl, term_t t) {
  * BETA-REDUCTION/RECURSIVE SUBSTITUTION
  */
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include "io/term_printer.h"
 
@@ -494,7 +493,7 @@ term_t beta_reduce(term_manager_t *mngr, term_t t) {
     if (term_kind(tbl, f) == LAMBDA_TERM) {
       u = apply_beta_rule(mngr, lambda_term_desc(tbl, f), app->arg + 1);
 
-#if TRACE
+#if YICES_TRACE
       trace_beta_reduction(tbl, t, u);
 #endif
     }

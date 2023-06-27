@@ -258,7 +258,7 @@ static inline bool remap_table_is_root(remap_table_t *table, literal_t l) {
 /*
  * Check whether l1 and l2 can be merged
  * - l1 and l2 must be roots
- * - return true if l1 is different from l2 and not(l2) and if
+ * - return true if l1 is different from l2 and not_(l2) and if
  *   l1 or l2 has no assignment.
  */
 extern bool remap_table_mergeable(remap_table_t *table, literal_t l1, literal_t l2);
@@ -266,7 +266,7 @@ extern bool remap_table_mergeable(remap_table_t *table, literal_t l1, literal_t 
 
 /*
  * Merge l1 and l2:
- * - both must be roots and l1 must be different from l2 and not(l2)
+ * - both must be roots and l1 must be different from l2 and not_(l2)
  * - if remap[l1] != null_literal, we use l2 := l1
  * - otherwise, we map l1 to l2
  */

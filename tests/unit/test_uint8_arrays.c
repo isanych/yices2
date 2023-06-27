@@ -28,7 +28,7 @@
 #include "utils/memalloc.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -184,7 +184,7 @@ static void print_test_array(test_elem_t *a, uint32_t n) {
   uint32_t i;
 
   for (i=0; i<n; i++) {
-    printf(" a[%"PRId32"] := %"PRIu8"\n", a[i].index, a[i].value);
+    printf(" a[%" PRId32 "] := %" PRIu8 "\n", a[i].index, a[i].value);
   }
 }
 
@@ -198,7 +198,7 @@ static void print_backtrackable_array(uint8_array_t *b) {
   top = b->top;
   for (i=0; i<top; i++) {
     if (b->map[i] > 0) {
-      printf(" b[%"PRId32"] = %"PRIu8"\n", i, b->map[i]);
+      printf(" b[%" PRId32 "] = %" PRIu8 "\n", i, b->map[i]);
     }
   }
 }
@@ -212,7 +212,7 @@ static void print_expanded_array(uint8_t *a, uint32_t m) {
 
   for (i=0; i<m; i++) {
     if (a[i] > 0) {
-      printf(" c[%"PRId32"] = %"PRIu8"\n", i, a[i]);
+      printf(" c[%" PRId32 "] = %" PRIu8 "\n", i, a[i]);
     }
   }
 }
@@ -241,7 +241,7 @@ static void test_arrays(uint8_array_t *b, uint32_t n, uint32_t m) {
 
   // phase 1: add arrays
   for (i=0; i<n; i++) {
-    printf("Level %"PRIu32"\n", i);
+    printf("Level %" PRIu32 "\n", i);
     print_test_array(array[i], size[i]);
     printf("\n");
     write_array(array[i], size[i], b);
@@ -271,7 +271,7 @@ static void test_arrays(uint8_array_t *b, uint32_t n, uint32_t m) {
   while (i > n/2) {
     i--;
     uint8_array_pop(b);
-    printf("Backtracking to level %"PRIu32"\n", i);
+    printf("Backtracking to level %" PRIu32 "\n", i);
     print_backtrackable_array(b);
     printf("\n");
 
@@ -293,7 +293,7 @@ static void test_arrays(uint8_array_t *b, uint32_t n, uint32_t m) {
 
   // phase 3: rebuild all arrays until level n
   while (i < n) {
-    printf("Level %"PRIu32"\n", i);
+    printf("Level %" PRIu32 "\n", i);
     print_test_array(array[i], size[i]);
     printf("\n");
     write_array(array[i], size[i], b);
@@ -325,7 +325,7 @@ static void test_arrays(uint8_array_t *b, uint32_t n, uint32_t m) {
   while (i > 0) {
     i--;
     uint8_array_pop(b);
-    printf("Backtracking to level %"PRIu32"\n", i);
+    printf("Backtracking to level %" PRIu32 "\n", i);
     print_backtrackable_array(b);
     printf("\n");
 

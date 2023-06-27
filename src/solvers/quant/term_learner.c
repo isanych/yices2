@@ -24,11 +24,7 @@
 #include "solvers/quant/term_learner.h"
 #include "utils/index_vectors.h"
 #include "utils/prng.h"
-
-
-#define TRACE 0
-
-
+#include "yices_config.h"
 
 /*
  * Setup learner: iterate over each term and add to heap
@@ -135,7 +131,7 @@ void term_learner_reset_round(term_learner_t *learner, bool reset) {
 
   uint_learner_reset_reward(&learner->learner);
 
-#if TRACE
+#if YICES_TRACE
   printf("  New term reward (reset) = %.2f\n", uint_learner_get_reward(&learner->learner));
 #endif
 }
@@ -162,7 +158,7 @@ void term_learner_update_last_round(term_learner_t *learner, bool update_heap) {
       if (uint_learner_get_reward(uint_learner) != 0) {
         uint_learner_updateQ_latest(uint_learner, cIdx);
 
-#if TRACE
+#if YICES_TRACE
         printf("  New term reward (cumulative) for term @%d = %.2f\n", cIdx, uint_learner_get_reward(uint_learner));
 #endif
       }
@@ -188,7 +184,7 @@ void term_learner_update_match_reward(term_learner_t *learner, uint32_t i) {
   reward = (TERM_RL_MATCH_REWARD_FACTOR);
   uint_learner_updateQ(&learner->learner, i, reward);
 
-#if TRACE
+#if YICES_TRACE
   printf("  New reward (match) for term @%d = %.2f\n", i, reward);
 #endif
 }
@@ -204,7 +200,7 @@ void term_learner_update_unmatch_reward(term_learner_t *learner, uint32_t i) {
   reward = (- TERM_RL_UNMATCH_COST_FACTOR);
   uint_learner_updateQ(&learner->learner, i, reward);
 
-#if TRACE
+#if YICES_TRACE
   printf("  New reward (unmatch) for term @%d = %.2f\n", i, reward);
 #endif
 }
@@ -223,7 +219,7 @@ void term_learner_update_decision_reward(term_learner_t *learner) {
     reward = (- TERM_RL_DECISION_COST_FACTOR);
     uint_learner_add_reward(uint_learner, reward);
 
-#if TRACE
+#if YICES_TRACE
     printf("  New term reward (decision) = %.2f\n", reward);
 #endif
   }
@@ -242,7 +238,7 @@ void term_learner_update_backtrack_reward(term_learner_t *learner, uint32_t jump
     reward = (TERM_RL_BACKTRACK_REWARD_FACTOR * ((double) jump));
     uint_learner_add_reward(uint_learner, reward);
 
-#if TRACE
+#if YICES_TRACE
     printf("  New term reward (backtrack) = %.2f\n", reward);
 #endif
 

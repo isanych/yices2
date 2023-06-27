@@ -28,15 +28,15 @@ static void print_map(pmap_t *map) {
   pmap_rec_t *d;
 
   printf("map %p\n", map);
-  printf("  size = %"PRIu32"\n", map->size);
-  printf("  nelems = %"PRIu32"\n", map->nelems);
-  printf("  ndeleted = %"PRIu32"\n", map->ndeleted);
+  printf("  size = %" PRIu32 "\n", map->size);
+  printf("  nelems = %" PRIu32 "\n", map->nelems);
+  printf("  ndeleted = %" PRIu32 "\n", map->ndeleted);
   printf("  content:\n");
 
   d = map->data;
   for (i=0; i<map->size; i++) {
     if (d->val != NULL && d->val != DELETED_PTR) {
-      printf("    [k0 = %"PRId32", k1 = %"PRId32", val = %p]\n", d->k0, d->k1, d->val);
+      printf("    [k0 = %" PRId32 ", k1 = %" PRId32 ", val = %p]\n", d->k0, d->k1, d->val);
     }
     d ++;
   }
@@ -62,9 +62,9 @@ int main(void) {
     d = pmap_get(&map, k0, k1);
     if (d->val == DEFAULT_PTR) {
       d->val = fake;
-      printf("added new record %p: [k0 = %"PRId32", k1 = %"PRId32", val = %p]\n", d, k0, k1, d->val);
+      printf("added new record %p: [k0 = %" PRId32 ", k1 = %" PRId32 ", val = %p]\n", d, k0, k1, d->val);
     } else {
-      printf("found record %p: [k0 = %"PRId32", k1 = %"PRId32", val = %p]\n", d, k0, k1, d->val);
+      printf("found record %p: [k0 = %" PRId32 ", k1 = %" PRId32 ", val = %p]\n", d, k0, k1, d->val);
     }
     fake += 0x20;
   }
@@ -76,7 +76,7 @@ int main(void) {
   for (i=0; i<20; i++) {
     k0 = i + 1;
     k1 = 10 - i;
-    printf("searching: [k0 = %"PRId32", k1 = %"PRId32"]: ", k0, k1);
+    printf("searching: [k0 = %" PRId32 ", k1 = %" PRId32 "]: ", k0, k1);
     fflush(stdout);
     d = pmap_find(&map, k0, k1);
     if (d == NULL) {
@@ -92,7 +92,7 @@ int main(void) {
     k1 = 10-i;
     d = pmap_find(&map, k0, k1);
     if (d != NULL) {
-      printf("erasing record %p: [k0 = %"PRId32", k1 = %"PRId32"]\n", d, k0, k1);
+      printf("erasing record %p: [k0 = %" PRId32 ", k1 = %" PRId32 "]\n", d, k0, k1);
       pmap_erase(&map, d);
     } else {
       printf("*** BUG ***\n");
@@ -106,7 +106,7 @@ int main(void) {
   for (i=0; i<9; i++) {
     k0 = i + 1;
     k1 = 10 - i;
-    printf("searching: [k0 = %"PRId32", k1 = %"PRId32"]: ", k0, k1);
+    printf("searching: [k0 = %" PRId32 ", k1 = %" PRId32 "]: ", k0, k1);
     fflush(stdout);
     d = pmap_find(&map, k0, k1);
     if (d == NULL) {

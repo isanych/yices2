@@ -298,7 +298,7 @@ static void show_range(void) {
   uint32_t i;
 
   for (i=0; i<50; i++) {
-    printf("range[%02"PRIu32"]: ", i);
+    printf("range[%02" PRIu32 "]: ", i);
     yices_pp_term(stdout, range[i].term, 100, 20, 11);
     printf("     type: ");
     yices_pp_type(stdout, range[i].type, 100, 20, 11);
@@ -310,7 +310,7 @@ static void show_test(void) {
   uint32_t i;
 
   for (i=0; i<NTESTS; i++) {
-    printf("test[%02"PRIu32"]: ", i);
+    printf("test[%02" PRIu32 "]: ", i);
     yices_pp_term(stdout, test[i], 100, 20, 10);
   }
   printf("\n");

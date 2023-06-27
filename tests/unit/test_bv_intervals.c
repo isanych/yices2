@@ -29,7 +29,7 @@
 #include "solvers/bv/bv_intervals.h"
 #include "terms/bv_constants.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -45,13 +45,13 @@ static void show_interval_unsigned(FILE *f, bv_interval_t *intv) {
 
   n = intv->nbits;
   if (bv_interval_is_triv_u(intv)) {
-    fprintf(f, "[0, UMAX %"PRIu32" bits]", n);
+    fprintf(f, "[0, UMAX %" PRIu32 " bits]", n);
   } else {
     fputc('[', f);
     bvconst_print(f, intv->low, n);
     fputs(", ", f);
     bvconst_print(f, intv->high, n);
-    fprintf(f, " %"PRIu32" bits]", n);
+    fprintf(f, " %" PRIu32 " bits]", n);
   }
 }
 
@@ -61,13 +61,13 @@ static void show_interval_signed(FILE *f, bv_interval_t *intv) {
 
   n = intv->nbits;
   if (bv_interval_is_triv_s(intv)) {
-    fprintf(f, "[MIN, MAX %"PRIu32" bits]", n);
+    fprintf(f, "[MIN, MAX %" PRIu32 " bits]", n);
   } else {
     fputc('[', f);
     bvconst_print(f, intv->low, n);
     fputs(", ", f);
     bvconst_print(f, intv->high, n);
-    fprintf(f, " %"PRIu32" bits]", n);
+    fprintf(f, " %" PRIu32 " bits]", n);
   }
 }
 
@@ -805,7 +805,7 @@ static void full_test_sum_unsigned(uint32_t **data, uint32_t m, uint32_t n) {
   uint32_t *u, *v, *w;
   uint32_t i, j;
 
-  printf("\n*** FULL TEST SUM UNSIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** FULL TEST SUM UNSIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   for (i=0; i<m; i++) {
     for (j=i; j<m; j++) {
@@ -825,7 +825,7 @@ static void full_test_sum_signed(uint32_t **data, uint32_t m, uint32_t n) {
   uint32_t *u, *v, *w;
   uint32_t i, j;
 
-  printf("\n*** FULL TEST SUM SIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** FULL TEST SUM SIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   for (i=0; i<m; i++) {
     for (j=i; j<m; j++) {
@@ -849,7 +849,7 @@ static void full_test_diff_unsigned(uint32_t **data, uint32_t m, uint32_t n) {
   uint32_t *u, *v, *w;
   uint32_t i, j;
 
-  printf("\n*** FULL TEST DIFF UNSIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** FULL TEST DIFF UNSIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   for (i=0; i<m; i++) {
     for (j=i; j<m; j++) {
@@ -869,7 +869,7 @@ static void full_test_diff_signed(uint32_t **data, uint32_t m, uint32_t n) {
   uint32_t *u, *v, *w;
   uint32_t i, j;
 
-  printf("\n*** FULL TEST DIFF SIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** FULL TEST DIFF SIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   for (i=0; i<m; i++) {
     for (j=i; j<m; j++) {
@@ -900,7 +900,7 @@ static void random_test_sum_unsigned(uint32_t **data, uint32_t m, uint32_t n, ui
 
   assert(m > 0);
 
-  printf("\n*** RANDOM TESTS SUM UNSIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** RANDOM TESTS SUM UNSIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   while (nt > 0) {
     i = random() % m;
@@ -922,7 +922,7 @@ static void random_test_sum_signed(uint32_t **data, uint32_t m, uint32_t n, uint
 
   assert(m > 0);
 
-  printf("\n*** RANDOM TESTS SUM SIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** RANDOM TESTS SUM SIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   while (nt > 0) {
     i = random() % m;
@@ -944,7 +944,7 @@ static void random_test_diff_unsigned(uint32_t **data, uint32_t m, uint32_t n, u
 
   assert(m > 0);
 
-  printf("\n*** RANDOM TESTS DIFF UNSIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** RANDOM TESTS DIFF UNSIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   while (nt > 0) {
     i = random() % m;
@@ -966,7 +966,7 @@ static void random_test_diff_signed(uint32_t **data, uint32_t m, uint32_t n, uin
 
   assert(m > 0);
 
-  printf("\n*** RANDOM TESTS DIFF SIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** RANDOM TESTS DIFF SIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   while (nt > 0) {
     i = random() % m;
@@ -988,7 +988,7 @@ static void random_test_addmul_unsigned(uint32_t **data, uint32_t m, uint32_t n,
 
   assert(m > 0);
 
-  printf("\n*** RANDOM TESTS ADDMULL UNSIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** RANDOM TESTS ADDMULL UNSIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   while (nt > 0) {
     i = random() % m;
@@ -1012,7 +1012,7 @@ static void random_test_addmul_signed(uint32_t **data, uint32_t m, uint32_t n, u
 
   assert(m > 0);
 
-  printf("\n*** RANDOM TESTS ADDMULL SIGNED (bitsize = %"PRIu32") ***\n\n", n);
+  printf("\n*** RANDOM TESTS ADDMULL SIGNED (bitsize = %" PRIu32 ") ***\n\n", n);
 
   while (nt > 0) {
     i = random() % m;

@@ -31,13 +31,9 @@
 #include "utils/int_powers.h"
 #include "utils/memalloc.h"
 #include "utils/refcount_int_arrays.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-
-#define DUMP 0
-
-#if TRACE || DUMP
+#if YICES_TRACE || YICES_DUMP
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -59,7 +55,7 @@ static void print_solver_state(FILE *f, bv_solver_t *solver) {
   print_bv_solver_vars(f, solver);
   fprintf(f, "\n--- Bitvector Atoms ---\n");
   print_bv_solver_atoms(f, solver);
-  fprintf(f, "\ntotal: %"PRIu32" atoms\n", solver->atbl.natoms);
+  fprintf(f, "\ntotal: %" PRIu32 " atoms\n", solver->atbl.natoms);
   fprintf(f, "\n--- Bitvector Bounds ---\n");
   print_bv_solver_bounds(f, solver);
   fprintf(f, "\n--- DAG ---\n");
@@ -77,7 +73,7 @@ static void print_solver_state(FILE *f, bv_solver_t *solver) {
 #endif
 
 
-#if DUMP
+#if YICES_DUMP
 
 static void bv_solver_dump_state(bv_solver_t *solver, const char *filename);
 
@@ -1154,7 +1150,7 @@ static bool merge_pseudo_literals(bv_solver_t *solver, literal_t s1, literal_t s
   s2 = remap_table_find_root(rmap, s2);
   if (remap_table_mergeable(rmap, s1, s2)) {
     remap_table_merge(rmap, s1, s2);
-  } else if (s1 == not(s2)) {
+  } else if (s1 == not_(s2)) {
     // contradiction detected
     return false;
   } else if (s1 != s2) {
@@ -1730,7 +1726,7 @@ static void bv_solver_bitblast_variable(bv_solver_t *solver, thvar_t x) {
         l = ite->cond;
         y = ite->left;
         z = ite->right;
-#if TRACE
+#if YICES_TRACE
         if (l == true_literal || l == false_literal) {
           if (l == true_literal) {
             printf("---> condition in ite is true\n");
@@ -1844,9 +1840,9 @@ static void bv_solver_bitblast_atoms(bv_solver_t *solver) {
      * (using bounds_imply_diseq) does not help
      */
 
-#if TRACE
+#if YICES_TRACE
     if (i < solver->bbptr + 20) {
-      printf("BVSOLVER: bitblasting atom[%"PRIu32"]: ", i + solver->bbptr);
+      printf("BVSOLVER: bitblasting atom[%" PRIu32 "]: ", i + solver->bbptr);
       print_bv_solver_atom(stdout, solver, i);
       printf("\n");
     } else if (i == solver->bbptr + 20) {
@@ -1941,7 +1937,7 @@ static void bv_solver_bitblast_variables(bv_solver_t *solver) {
  * Top-level bit-blasting: exported for testing
  */
 bool bv_solver_bitblast(bv_solver_t *solver) {
-#if DUMP
+#if YICES_DUMP
   bv_solver_dump_state(solver, "before-bitblasting.dmp");
 #endif
   bv_solver_prepare_blasting(solver);
@@ -1956,14 +1952,14 @@ bool bv_solver_bitblast(bv_solver_t *solver) {
     return false;
   }
 
-#if DUMP
+#if YICES_DUMP
   bv_solver_dump_state(solver, "after-shared-pmaps.dmp");
 #endif
 
   bv_solver_bitblast_atoms(solver);
   bv_solver_bitblast_variables(solver);
 
-#if DUMP
+#if YICES_DUMP
   bv_solver_dump_state(solver, "before-lemmas.dmp");
 #endif
 
@@ -1971,11 +1967,11 @@ bool bv_solver_bitblast(bv_solver_t *solver) {
 
 #if 0
   printf("Statistics\n");
-  printf("num. bool vars:                 %"PRIu32"\n", num_vars(solver->core));
-  printf("num. unit clauses:              %"PRIu32"\n", num_unit_clauses(solver->core));
-  printf("num. binary clauses:            %"PRIu32"\n", num_binary_clauses(solver->core));
-  printf("num. main clauses:              %"PRIu32"\n", num_prob_clauses(solver->core));
-  printf("num. clause literals:           %"PRIu64"\n\n", num_prob_literals(solver->core));
+  printf("num. bool vars:                 %" PRIu32 "\n", num_vars(solver->core));
+  printf("num. unit clauses:              %" PRIu32 "\n", num_unit_clauses(solver->core));
+  printf("num. binary clauses:            %" PRIu32 "\n", num_binary_clauses(solver->core));
+  printf("num. main clauses:              %" PRIu32 "\n", num_prob_clauses(solver->core));
+  printf("num. clause literals:           %" PRIu64 "\n\n", num_prob_literals(solver->core));
 #endif
 
   //  printf("\nBVSOLVER BITBLAST\n");
@@ -1990,7 +1986,7 @@ bool bv_solver_bitblast(bv_solver_t *solver) {
  * Variant for testing: stop before the actual bitblasting
  */
 bool bv_solver_compile(bv_solver_t *solver) {
-#if DUMP
+#if YICES_DUMP
   bv_solver_dump_state(solver, "before-bitblasting.dmp");
 #endif
   bv_solver_prepare_blasting(solver);
@@ -2004,7 +2000,7 @@ bool bv_solver_compile(bv_solver_t *solver) {
     return false;
   }
 
-#if DUMP
+#if YICES_DUMP
   bv_solver_dump_state(solver, "after-shared-pmaps.dmp");
 #endif
 
@@ -2157,7 +2153,7 @@ static void propagate_strong_equalities(bv_solver_t *solver) {
   n = int_partition_nclasses(&partition);
   for (i=0; i<n; i++) {
 #if 0
-    printf("Strong Eq Class %"PRIu32"\n", i);
+    printf("Strong Eq Class %" PRIu32 "\n", i);
     show_partition(solver, partition.classes[i]);
     printf("----\n");
 #endif
@@ -3340,12 +3336,12 @@ static bool simplify_eq(bv_solver_t *solver, thvar_t *vx, thvar_t *vy) {
 
   if (x != *vx || y != *vy) {
 #if 0
-    printf("---> bv simplify (bveq u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> bv simplify (bveq u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, y);
-    printf("     simplified to (bveq u!%"PRId32" u!%"PRId32")\n", *vx, *vy);
+    printf("     simplified to (bveq u!%" PRId32 " u!%" PRId32 ")\n", *vx, *vy);
     if (is_constant(&solver->vtbl, *vx)) {
       printf("     ");
       print_bv_solver_vardef(stdout, solver, *vx);
@@ -5115,7 +5111,7 @@ static void assert_urem_bounds(bv_solver_t *solver, thvar_t x, thvar_t y) {
   zero = get_zero(solver, n);
   l0 = bv_solver_create_eq_atom(solver, y, zero); // (y == 0)
   l1 = bv_solver_create_ge_atom(solver, x, y);    // (bvurem z y) >= y
-  add_binary_clause(solver->core, l0, not(l1));
+  add_binary_clause(solver->core, l0, not_(l1));
 }
 
 
@@ -5143,11 +5139,11 @@ static void assert_srem_bounds(bv_solver_t *solver, thvar_t x, thvar_t y) {
 
   l0 = bv_solver_create_sge_atom(solver, zero, y); // (y <= 0)
   l1 = bv_solver_create_sge_atom(solver, x, y);    // (bvsrem z y) >= y
-  add_binary_clause(solver->core, l0, not(l1));    // (y > 0) ==> (bvsrem z y) < y
+  add_binary_clause(solver->core, l0, not_(l1));    // (y > 0) ==> (bvsrem z y) < y
 
   l0 = bv_solver_create_sge_atom(solver, y, zero); // (y >= 0)
   l1 = bv_solver_create_sge_atom(solver, y, x);    // y >= (bvsrem z y)
-  add_binary_clause(solver->core, l0, not(l1));    // (y < 0) ==> y < (bvsrem z y)
+  add_binary_clause(solver->core, l0, not_(l1));    // (y < 0) ==> y < (bvsrem z y)
 }
 
 
@@ -5165,7 +5161,7 @@ static literal_t bool_const_ite(literal_t c, bool x, bool y) {
   } else if (x) {
     return c;             // (ite c true false) --> c
   } else {
-    return not(c);        // (ite c false true) --> not(c)
+    return not_(c);        // (ite c false true) --> not_(c)
   }
 }
 
@@ -5239,7 +5235,7 @@ static literal_t try_bool_ite(literal_t c, literal_t x, literal_t y) {
   // (ite c false true) --> (not c)
   if (x == y) return x;
   if (x == true_literal && y == false_literal) return c;
-  if (x == false_literal && y == true_literal) return not(c);
+  if (x == false_literal && y == true_literal) return not_(c);
 
   return null_literal;
 }
@@ -5585,9 +5581,9 @@ thvar_t bv_solver_create_ite(bv_solver_t *solver, literal_t c, thvar_t x, thvar_
 
   case BVTAG_BIT_ARRAY:
     if (tagy == BVTAG_CONST64) {
-      aux = try_ite_const64(solver, n, not(c), bvvar_val64(vtbl, y), bvvar_bvarray_def(vtbl, x));
+      aux = try_ite_const64(solver, n, not_(c), bvvar_val64(vtbl, y), bvvar_bvarray_def(vtbl, x));
     } else if (tagy == BVTAG_CONST) {
-      aux = try_ite_const(solver, n, not(c), bvvar_val(vtbl, y), bvvar_bvarray_def(vtbl, x));
+      aux = try_ite_const(solver, n, not_(c), bvvar_val(vtbl, y), bvvar_bvarray_def(vtbl, x));
     } else if (tagy == BVTAG_BIT_ARRAY) {
       aux = try_ite_bitarrays(solver, n, c, bvvar_bvarray_def(vtbl, x), bvvar_bvarray_def(vtbl, y));
     }
@@ -5604,7 +5600,7 @@ thvar_t bv_solver_create_ite(bv_solver_t *solver, literal_t c, thvar_t x, thvar_
    */
   if (is_neg(c)) {
     aux = x; x = y; y = aux;
-    c = not(c);
+    c = not_(c);
   }
 
   return get_bvite(&solver->vtbl, n, c, x, y);
@@ -6089,9 +6085,9 @@ static literal_t bv_solver_make_eq_atom(bv_solver_t *solver, thvar_t x, thvar_t 
  * Atom (eq x y): try to simplify
  */
 literal_t bv_solver_create_eq_atom(bv_solver_t *solver, thvar_t x, thvar_t y) {
-#if TRACE
+#if YICES_TRACE
   if (bvvar_bitsize(&solver->vtbl, x) == 1) {
-    printf("---> create (bveq u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> create (bveq u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
@@ -6148,9 +6144,9 @@ static literal_t bv_solver_make_ge_atom(bv_solver_t *solver, thvar_t x, thvar_t 
 literal_t bv_solver_create_ge_atom(bv_solver_t *solver, thvar_t x, thvar_t y) {
   literal_t l;
 
-#if TRACE
+#if YICES_TRACE
   if (bvvar_bitsize(&solver->vtbl, x) == 1) {
-    printf("---> create (bvge u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> create (bvge u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
@@ -6222,9 +6218,9 @@ static literal_t bv_solver_make_sge_atom(bv_solver_t *solver, thvar_t x, thvar_t
 literal_t bv_solver_create_sge_atom(bv_solver_t *solver, thvar_t x, thvar_t y) {
   literal_t l;
 
-#if TRACE
+#if YICES_TRACE
   if (bvvar_bitsize(&solver->vtbl, x) == 1) {
-    printf("---> create (bvsge u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> create (bvsge u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
@@ -6300,7 +6296,7 @@ static void bv_solver_assert_neq0(bv_solver_t *solver, thvar_t x, thvar_t y) {
     push_bvdiseq_bound(solver, x, y);
   }
 
-  add_unit_clause(solver->core, not(l));
+  add_unit_clause(solver->core, not_(l));
 }
 
 
@@ -6311,9 +6307,9 @@ static void bv_solver_assert_neq0(bv_solver_t *solver, thvar_t x, thvar_t y) {
 void bv_solver_assert_eq_axiom(bv_solver_t *solver, thvar_t x, thvar_t y, bool tt) {
   literal_t l;
 
-#if TRACE
+#if YICES_TRACE
   if (bvvar_bitsize(&solver->vtbl, x) == 1) {
-    printf("---> assert (bveq u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> assert (bveq u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
@@ -6366,7 +6362,7 @@ void bv_solver_assert_eq_axiom(bv_solver_t *solver, thvar_t x, thvar_t y, bool t
   } else {
     // Add the constraint (x != y)
     l = bv_solver_make_eq_atom(solver, x, y);
-    add_unit_clause(solver->core, not(l));
+    add_unit_clause(solver->core, not_(l));
   }
 }
 
@@ -6378,9 +6374,9 @@ void bv_solver_assert_eq_axiom(bv_solver_t *solver, thvar_t x, thvar_t y, bool t
 void bv_solver_assert_ge_axiom(bv_solver_t *solver, thvar_t x, thvar_t y, bool tt) {
   literal_t l;
 
-#if TRACE
+#if YICES_TRACE
   if (bvvar_bitsize(&solver->vtbl, x) == 1) {
-    printf("---> assert (bvge u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> assert (bvge u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
@@ -6434,9 +6430,9 @@ void bv_solver_assert_ge_axiom(bv_solver_t *solver, thvar_t x, thvar_t y, bool t
 void bv_solver_assert_sge_axiom(bv_solver_t *solver, thvar_t x, thvar_t y, bool tt) {
   literal_t l;
 
-#if TRACE
+#if YICES_TRACE
   if (bvvar_bitsize(&solver->vtbl, x) == 1) {
-    printf("---> assert (bvsge u!%"PRId32" u!%"PRId32")\n", x, y);
+    printf("---> assert (bvsge u!%" PRId32 " u!%" PRId32 ")\n", x, y);
     printf("     ");
     print_bv_solver_vardef(stdout, solver, x);
     printf("     ");
@@ -6556,8 +6552,8 @@ static literal_t on_the_fly_eq_atom(bv_solver_t *solver, thvar_t x, thvar_t y) {
   literal_t l, l0;
   bvar_t v;
 
-#if TRACE
-  printf("---> on the fly (bveq u!%"PRId32" u!%"PRId32")\n", x, y);
+#if YICES_TRACE
+  printf("---> on the fly (bveq u!%" PRId32 " u!%" PRId32 ")\n", x, y);
   printf("     ");
   print_bv_solver_vardef(stdout, solver, x);
   printf("     ");
@@ -6666,25 +6662,25 @@ static void diagnose_bvequiv(bv_solver_t *solver, thvar_t x1, thvar_t y1) {
   y = mtbl_get_root(&solver->mtbl, y1);
 
   if (equal_bvvar(solver, x, y)) {
-    printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is true (by mtbl_get_root)\n", x1, y1);
+    printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is true (by mtbl_get_root)\n", x1, y1);
     fflush(stdout);
     return;
   }
 
   if (diseq_bvvar(solver, x, y)) {
-    printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is false (by diseq_bvvar)\n", x1, y1);
+    printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is false (by diseq_bvvar)\n", x1, y1);
     fflush(stdout);
     return;
   }
 
   if (simplify_eq(solver, &x, &y)) {
     if (x == y) {
-      printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is true (by simplify_eq)\n", x1, y1);
+      printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is true (by simplify_eq)\n", x1, y1);
       fflush(stdout);
       return;
     }
     if (diseq_bvvar(solver, x, y)) {
-      printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is false (by diseq_bvvar)\n", x1, y1);
+      printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is false (by diseq_bvvar)\n", x1, y1);
       fflush(stdout);
       return;
     }
@@ -6697,12 +6693,12 @@ static void diagnose_bvequiv(bv_solver_t *solver, thvar_t x1, thvar_t y1) {
     l = atbl->data[i].lit;
     switch (literal_value(solver->core, l)) {
     case VAL_FALSE:
-      printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is false (atom set to false)\n", x1, y1);
+      printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is false (atom set to false)\n", x1, y1);
       fflush(stdout);
       return;
 
     case VAL_TRUE:
-      printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is true (atom set to true)\n", x1, y1);
+      printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is true (atom set to true)\n", x1, y1);
       fflush(stdout);
       return;
 
@@ -6728,7 +6724,7 @@ static void diagnose_bvequiv(bv_solver_t *solver, thvar_t x1, thvar_t y1) {
       l2 = b->data[j];
       if ((literal_value(solver->core, l1) == VAL_FALSE && literal_value(solver->core, l2) == VAL_TRUE)
           || (literal_value(solver->core, l1) == VAL_TRUE && literal_value(solver->core, l2) == VAL_FALSE)) {
-        printf("---> BVSOLVER: bvequiv: (bveq u!%"PRId32" u!%"PRId32") is false (bits %"PRIu32" differ)\n", x1, y1, j);
+        printf("---> BVSOLVER: bvequiv: (bveq u!%" PRId32 " u!%" PRId32 ") is false (bits %" PRIu32 " differ)\n", x1, y1, j);
         fflush(stdout);
         return;
       }
@@ -6792,7 +6788,7 @@ static void bv_solver_half_equiv_lemma(bv_solver_t *solver, thvar_t x1, thvar_t 
 
   n = v->size;
   for (i=0; i<n; i++) {
-    v->data[i] = not(v->data[i]);
+    v->data[i] = not_(v->data[i]);
   }
   ivector_push(v, l);
   add_clause(solver->core, v->size, v->data);
@@ -6829,7 +6825,7 @@ static void bv_solver_bvequiv_lemma(bv_solver_t *solver, thvar_t x1, thvar_t x2)
   }
 
 
-#if TRACE
+#if YICES_TRACE
   t1 = bvvar_get_eterm(vtbl, x1);
   t2 = bvvar_get_eterm(vtbl, x2);
   printf("---> checking bvequiv lemma:\n");
@@ -6858,8 +6854,8 @@ static void bv_solver_bvequiv_lemma(bv_solver_t *solver, thvar_t x1, thvar_t x2)
     l = on_the_fly_eq_atom(solver, x1, x2);
 
     // add two clauses: (l => eq) and (eq => l)
-    add_binary_clause(solver->core, not(l), eq);
-    add_binary_clause(solver->core, l, not(eq));
+    add_binary_clause(solver->core, not_(l), eq);
+    add_binary_clause(solver->core, l, not_(eq));
 
     // update statistics
     solver->stats.equiv_lemmas ++;
@@ -6872,7 +6868,7 @@ static void bv_solver_bvequiv_lemma(bv_solver_t *solver, thvar_t x1, thvar_t x2)
     printf("\n");
 #endif
 
-#if TRACE
+#if YICES_TRACE
     printf("---> bvequiv lemma:\n");
     printf("     x1 = ");
     print_bv_solver_var(stdout, solver, x1);
@@ -6937,7 +6933,7 @@ static void bv_solver_add_conflict(bv_solver_t *solver, ivector_t *v) {
   n = v->size;
   a = v->data;
   for (i=0; i<n; i++) {
-    a[i] = not(a[i]);
+    a[i] = not_(a[i]);
   }
 
   ivector_push(v, null_literal); // end marker
@@ -6996,7 +6992,7 @@ static bool bv_solver_bvequiv_conflict(bv_solver_t *solver, thvar_t x1, thvar_t 
     l = atbl->data[i].lit;
     if (literal_value(solver->core, l) == VAL_FALSE) {
       bv_solver_explain_egraph_eq(solver, x1, x2, id, v);
-      ivector_push(v, not(l));
+      ivector_push(v, not_(l));
       goto conflict;
     }
   }
@@ -7017,7 +7013,7 @@ static bool bv_solver_bvequiv_conflict(bv_solver_t *solver, thvar_t x1, thvar_t 
       l2 = b->data[j];
       if (literal_value(solver->core, l1) == VAL_FALSE && literal_value(solver->core, l2) == VAL_TRUE) {
         bv_solver_explain_egraph_eq(solver, x1, x2, id, v);
-        ivector_push(v, not(l1));
+        ivector_push(v, not_(l1));
         ivector_push(v, l2);
         goto conflict;
       }
@@ -7025,7 +7021,7 @@ static bool bv_solver_bvequiv_conflict(bv_solver_t *solver, thvar_t x1, thvar_t 
       if (literal_value(solver->core, l1) == VAL_TRUE && literal_value(solver->core, l2) == VAL_FALSE) {
         bv_solver_explain_egraph_eq(solver, x1, x2, id, v);
         ivector_push(v, l1);
-        ivector_push(v, not(l2));
+        ivector_push(v, not_(l2));
         goto conflict;
       }
     }
@@ -7091,8 +7087,8 @@ thvar_t bv_solver_create_on_the_fly_var(bv_solver_t *solver, uint32_t n) {
   bv_vartable_t *vtbl;
   thvar_t x;
 
-#if TRACE
-  printf("---> bv: create_var (%"PRIu32" bits)\n", n);
+#if YICES_TRACE
+  printf("---> bv: create_var (%" PRIu32 " bits)\n", n);
 #endif
 
   assert(n > 0);
@@ -7173,7 +7169,7 @@ void bv_solver_clear(bv_solver_t *solver) {
 void bv_solver_increase_decision_level(bv_solver_t *solver) {
   solver->decision_level ++;
 
-#if DUMP
+#if YICES_DUMP
   if (solver->core->stats.decisions == 1) {
     bv_solver_dump_state(solver, "after-bitblasting.dmp");
   }
@@ -7630,7 +7626,7 @@ void bv_solver_reset(bv_solver_t *solver) {
 void bv_solver_assert_var_eq(bv_solver_t *solver, thvar_t x, thvar_t y, int32_t id) {
   assert(bvvar_has_eterm(&solver->vtbl, x) && bvvar_has_eterm(&solver->vtbl, y));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> bvsolver: received egraph equality: ");
   print_bv_solver_var(stdout, solver, x);
   printf(" = ");
@@ -7652,7 +7648,7 @@ void bv_solver_assert_var_eq(bv_solver_t *solver, thvar_t x, thvar_t y, int32_t 
 void bv_solver_assert_var_diseq(bv_solver_t *solver, thvar_t x, thvar_t y, composite_t *hint) {
   assert(bvvar_has_eterm(&solver->vtbl, x) && bvvar_has_eterm(&solver->vtbl, y));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> bvsolver: received egraph disequality: ");
   print_bv_solver_var(stdout, solver, x);
   printf(" != ");
@@ -7963,8 +7959,8 @@ static bool interface_eq_in_class(bv_solver_t *solver, int32_t *v) {
   l = on_the_fly_eq_atom(solver, x1, x2);
 
   // add two clauses: (l => eq) and (eq => l)
-  add_binary_clause(solver->core, not(l), eq);
-  add_binary_clause(solver->core, l, not(eq));
+  add_binary_clause(solver->core, not_(l), eq);
+  add_binary_clause(solver->core, l, not_(eq));
 
 #if 0
   printf("---> BVSOLVER: interface_eq lemma for ");
@@ -7998,7 +7994,7 @@ uint32_t bv_solver_reconcile_model(bv_solver_t *solver, uint32_t max_eq) {
 
   assert(max_eq > 0);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> bv: reconcile model\n");
   fflush(stdout);
 #endif
@@ -8025,7 +8021,7 @@ uint32_t bv_solver_reconcile_model(bv_solver_t *solver, uint32_t max_eq) {
 
 #if 0
   for (i=0; i<n; i++) {
-    printf("Class %"PRIu32"\n", i);
+    printf("Class %" PRIu32 "\n", i);
     show_parents_of_class(solver, partition.classes[i]);
     printf("\n");
   }
@@ -8075,7 +8071,7 @@ static void bv_solver_prepare_model(bv_solver_t *solver) {
     frees += fv.free[i];
   }
 
-  printf("Free/total boolean vars: %"PRIu32"/%"PRIu32"\n", frees, n);
+  printf("Free/total boolean vars: %" PRIu32 "/%" PRIu32 "\n", frees, n);
 
   delete_free_bool_vars(&fv);
 #endif
@@ -8098,35 +8094,35 @@ static void bv_solver_gen_interface_lemma(bv_solver_t *solver, literal_t l, thva
          bvvar_is_bitblasted(&solver->vtbl, x2));
 
 #if 0
-  printf("---> BVSOLVER: interface lemma for u!%"PRId32" and u!%"PRId32"\n", x1, x2);
+  printf("---> BVSOLVER: interface lemma for u!%" PRId32 " and u!%" PRId32 "\n", x1, x2);
   print_bv_solver_var_litarray(stdout, solver, x1);
   print_bv_solver_var_litarray(stdout, solver, x2);
   printf("\n");
 #endif
 
   eq = on_the_fly_eq_atom(solver, x1, x2);
-  add_binary_clause(solver->core, not(l), not(eq));  // l => not eq
+  add_binary_clause(solver->core, not_(l), not_(eq));  // l => not eq
   if (equiv) {
     add_binary_clause(solver->core, l, eq);   // not l => eq
   }
 
   solver->stats.interface_lemmas ++;
 
-#if TRACE
-  printf("---> Bv solver: reconciliation lemma for u!%"PRId32" /= u!%"PRId32" ----\n", x1, x2);
+#if YICES_TRACE
+  printf("---> Bv solver: reconciliation lemma for u!%" PRId32 " /= u!%" PRId32 " ----\n", x1, x2);
   printf("     Antecedent:\n");
   printf("     ");
   print_literal(stdout, l);
   printf(" := ");
   print_egraph_atom_of_literal(stdout, solver->egraph, l);
   printf("\n");
-  printf("     (bveq u!%"PRId32" u!%"PRId32") = ", x1, x2);
+  printf("     (bveq u!%" PRId32 " u!%" PRId32 ") = ", x1, x2);
   print_literal(stdout, eq);
   printf("\n");
   printf("     Clause: (OR ");
-  print_literal(stdout, not(l));
+  print_literal(stdout, not_(l));
   printf(" ");
-  print_literal(stdout, not(eq));
+  print_literal(stdout, not_(eq));
   printf(")\n\n");
 #endif
 }
@@ -8879,7 +8875,7 @@ bv_egraph_interface_t *bv_solver_bv_egraph_interface(bv_solver_t *solver) {
 
 
 
-#if DUMP
+#if YICES_DUMP
 
 /*******************
  *  FOR DEBUGGING  *
@@ -8898,7 +8894,7 @@ static void bv_solver_dump_state(bv_solver_t *solver, const char *filename) {
     print_bv_solver_vars(f, solver);
     fprintf(f, "\n--- Bitvector Atoms ---\n");
     print_bv_solver_atoms(f, solver);
-    fprintf(f, "\ntotal: %"PRIu32" atoms\n", solver->atbl.natoms);
+    fprintf(f, "\ntotal: %" PRIu32 " atoms\n", solver->atbl.natoms);
     fprintf(f, "\n--- Bitvector Bounds ---\n");
     print_bv_solver_bounds(f, solver);
     fprintf(f, "\n--- DAG ---\n");

@@ -29,11 +29,9 @@
 #include "terms/term_utils.h"
 #include "utils/memalloc.h"
 #include "utils/ptr_array_sort2.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -226,7 +224,7 @@ static harray_t *bool_vars_of_composite(bool_var_collector_t *collect, composite
   v = &collect->buffer;
   assert(v->size == 0);
   for (i=0; i<n; i++) {
-    add_vars_to_vector(v, a[i]);
+    add_vars_to_vector(v, (harray_t *)a[i]);
   }
   set = vector_to_set(collect->store, v);
   ivector_reset(v);
@@ -276,7 +274,7 @@ static harray_t *bool_vars_of_term(bool_var_collector_t *collect, term_t t) {
 	e = simple_cache_find(&collect->cache, i);
 	if (e != NULL) {
 	  assert(e->key == i && e->tag == 0);
-	  set =  e->val.ptr;
+	  set = (harray_t *)e->val.ptr;
 	} else {
 	  set = bool_vars_of_composite(collect, composite_for_idx(terms, i));
 	  cache_bool_var_set(collect, i, set);
@@ -290,7 +288,7 @@ static harray_t *bool_vars_of_term(bool_var_collector_t *collect, term_t t) {
 	  e = simple_cache_find(&collect->cache, i);
 	  if (e != NULL) {
 	    assert(e->key == i && e->tag == 0);
-	    set =  e->val.ptr;
+	    set = (harray_t *)e->val.ptr;
 	  } else {
 	    set = bool_vars_of_composite(collect, eq);
 	    cache_bool_var_set(collect, i, set);
@@ -417,7 +415,7 @@ static inline void add_cond_def(cond_def_collector_t *c, cond_def_t *def) {
 }
 
 
-#if TRACE
+#if YICES_TRACE
 
 /*
  * For testing: print def
@@ -649,11 +647,11 @@ static void cond_def_explore(cond_def_collector_t *c, term_t f);
  * - if polarity is true, this is processed as (or t1 ... tn)
  * - if polarity is false, this is processed (and (not t1) ... (not t_n))
  */
-static void cond_def_explore_or(cond_def_collector_t *c, composite_term_t *or, bool polarity) {
+static void cond_def_explore_or(cond_def_collector_t *c, composite_term_t *or_, bool polarity) {
   uint32_t i, n, num_assumptions;
   term_t t, u;
 
-  n = or->arity;
+  n = or_->arity;
   if (polarity) {
     num_assumptions = c->assumptions.size;
 
@@ -662,7 +660,7 @@ static void cond_def_explore_or(cond_def_collector_t *c, composite_term_t *or, b
      */
     u = NULL_TERM;
     for (i=0; i<n; i++) {
-      t = or->arg[i];
+      t = or_->arg[i];
       if (bool_term_is_pure(&c->collect, t)) {
 	// add (not t) as an assumption
 	push_assumption(c, opposite_term(t));
@@ -694,7 +692,7 @@ static void cond_def_explore_or(cond_def_collector_t *c, composite_term_t *or, b
      * Assumptions => (and (not t1) ... (not t_n))
      */
     for (i=0; i<n; i++) {
-      cond_def_explore(c, opposite_term(or->arg[i]));
+      cond_def_explore(c, opposite_term(or_->arg[i]));
     }
   }
 }
@@ -702,8 +700,8 @@ static void cond_def_explore_or(cond_def_collector_t *c, composite_term_t *or, b
 
 /*
  * Explore (ite c t1 2)
- * - if polarity is true, this is processed as (c => t1) AND (not(c) => t2)
- * - otherwise, it's processed as (c => not(t1)) AND (not c => not(t2))
+ * - if polarity is true, this is processed as (c => t1) AND (not_(c) => t2)
+ * - otherwise, it's processed as (c => not_(t1)) AND (not c => not_(t2))
  */
 static void cond_def_explore_ite(cond_def_collector_t *c, composite_term_t *ite, bool polarity) {
   term_t cond;
@@ -884,7 +882,7 @@ static uint64_t truth_tbl_of_ite(cond_def_collector_t *c, int32_t idx, term_t *x
 
 static uint64_t truth_tbl_of_or(cond_def_collector_t *c, int32_t idx, term_t *x, uint32_t n) {
   simple_cache_entry_t *e;
-  composite_term_t *or;
+  composite_term_t *or_;
   uint64_t r;
   uint32_t i, m;
 
@@ -897,10 +895,10 @@ static uint64_t truth_tbl_of_or(cond_def_collector_t *c, int32_t idx, term_t *x,
   }
 
   r = 0;
-  or = composite_for_idx(c->terms, idx);
-  m = or->arity;
+  or_ = composite_for_idx(c->terms, idx);
+  m = or_->arity;
   for (i=0; i<m; i++) {
-    r |= truth_tbl_of_term(c, or->arg[i], x, n);
+    r |= truth_tbl_of_term(c, or_->arg[i], x, n);
   }
 
   cache_truth_tbl(c, idx, r);
@@ -910,7 +908,7 @@ static uint64_t truth_tbl_of_or(cond_def_collector_t *c, int32_t idx, term_t *x,
 
 static uint64_t truth_tbl_of_xor(cond_def_collector_t *c, int32_t idx, term_t *x, uint32_t n) {
   simple_cache_entry_t *e;
-  composite_term_t *xor;
+  composite_term_t *xor_;
   uint64_t r;
   uint32_t i, m;
 
@@ -923,10 +921,10 @@ static uint64_t truth_tbl_of_xor(cond_def_collector_t *c, int32_t idx, term_t *x
   }
 
   r = 0;
-  xor = composite_for_idx(c->terms, idx);
-  m = xor->arity;
+  xor_ = composite_for_idx(c->terms, idx);
+  m = xor_->arity;
   for (i=0; i<m; i++) {
-    r ^= truth_tbl_of_term(c, xor->arg[i], x, n);
+    r ^= truth_tbl_of_term(c, xor_->arg[i], x, n);
   }
 
   cache_truth_tbl(c, idx, r);
@@ -1015,7 +1013,7 @@ static uint64_t truth_tbl_of_term(cond_def_collector_t *c, term_t t, term_t *x, 
 
   /*
    * ttbl is the truth table for i.
-   * if  r is not(i), we flip all bits
+   * if  r is not_(i), we flip all bits
    */
   if (is_neg_term(r)) {
     ttbl = ~ttbl;
@@ -1101,7 +1099,7 @@ static void add_le_atom(context_t *ctx, term_t t, term_t u) {
 
   add_aux_atom(ctx, a);
 
-#if TRACE
+#if YICES_TRACE
   printf("Adding atom: ");
   pretty_print_term_full(stdout, NULL, ctx->terms, a);
 #endif
@@ -1300,13 +1298,13 @@ static void try_linear_table(cond_def_collector_t *c, term_t x, harray_t *s, uin
 
   build_candidate(c, n, table);
   if (candidate_is_good(c, n, k_max, table)) {
-#if TRACE
+#if YICES_TRACE
     printf("Candidate linear expression: ");
     print_candidate(c, s);
 #endif
     eq = make_linear_equality(c, x, s);
     add_arith_aux_eq(c->ctx, eq);
-#if TRACE
+#if YICES_TRACE
     printf("As term: ");
     print_term_full(stdout, c->terms, eq);
     printf("\n");
@@ -1421,7 +1419,7 @@ static void analyze_term_cond_def(cond_def_collector_t *c, term_t x, cond_def_t 
   uint64_t ttbl;
   uint32_t i, k, max_k;
 
-#if TRACE
+#if YICES_TRACE
   printf("\nDefinitions for term ");
   print_term_name(stdout, c->terms, x);
   printf("\n");
@@ -1469,7 +1467,7 @@ static void analyze_term_cond_def(cond_def_collector_t *c, term_t x, cond_def_t 
       }
     }
 
-#if TRACE
+#if YICES_TRACE
     printf("Var set: ");
     print_vset(c, s);
     printf("\n");

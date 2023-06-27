@@ -121,82 +121,82 @@ int main(void) {
   printf("=== Base test ===\n");
   for (i=0; i<32; i++) {
     n = 1<<i;
-    printf("naive_ctz(%"PRIu32") = %"PRIu32"\n", n, naive_ctz(n));
+    printf("naive_ctz(%" PRIu32 ") = %" PRIu32 "\n", n, naive_ctz(n));
   }
   printf("\n");
 
   for (i=0; i<32; i++) {
     n = 1<<i;
-    printf("__builtin_ctz(%"PRIu32") = %"PRIu32"\n", n, ctz(n));
+    printf("__builtin_ctz(%" PRIu32 ") = %" PRIu32 "\n", n, ctz(n));
   }
   printf("\n");
 
   for (i=0; i<64; i++) {
     x = ((uint64_t) 1) << i;
-    printf("native_ctz64(%"PRIu64") = %"PRIu32"\n", x, naive_ctz64(x));
+    printf("native_ctz64(%" PRIu64 ") = %" PRIu32 "\n", x, naive_ctz64(x));
   }
   printf("\n");
 
   for (i=0; i<64; i++) {
     x = ((uint64_t) 1) << i;
-    printf("__builtin_ctz64(%"PRIu64") = %"PRIu32"\n", x, ctz64(x));
+    printf("__builtin_ctz64(%" PRIu64 ") = %" PRIu32 "\n", x, ctz64(x));
   }
   printf("\n");
 
   for (i=0; i<32; i++) {
     n = 1<<i;
-    printf("naive_clz(%"PRIu32") = %"PRIu32"\n", n, naive_clz(n));
+    printf("naive_clz(%" PRIu32 ") = %" PRIu32 "\n", n, naive_clz(n));
   }
   printf("\n");
 
   for (i=0; i<32; i++) {
     n = 1<<i;
-    printf("__builtin_clz(%"PRIu32") = %"PRIu32"\n", n, clz(n));
+    printf("__builtin_clz(%" PRIu32 ") = %" PRIu32 "\n", n, clz(n));
   }
   printf("\n");
 
-  printf("binlog(0) = %"PRIu32"\n", binlog(0));
-  printf("binlog(1) = %"PRIu32"\n", binlog(1));
+  printf("binlog(0) = %" PRIu32 "\n", binlog(0));
+  printf("binlog(1) = %" PRIu32 "\n", binlog(1));
   for (i=1; i<32; i++) {
     n = 1<<i;
-    printf("binlog(%"PRIu32") = %"PRIu32"\n", n, binlog(n));
-    printf("binlog(%"PRIu32") = %"PRIu32"\n", n+1, binlog(n+1));
+    printf("binlog(%" PRIu32 ") = %" PRIu32 "\n", n, binlog(n));
+    printf("binlog(%" PRIu32 ") = %" PRIu32 "\n", n+1, binlog(n+1));
   }
   printf("\n");
 
   n = 5;
   for (i=0; i<60; i++) {
-    printf("naive_popcount(%"PRIu32") = %"PRIu32"\n", n, naive_popcount32(n));
-    printf("builtin_popcount(%"PRIu32") = %"PRIu32"\n", n, popcount32(n));
+    printf("naive_popcount(%" PRIu32 ") = %" PRIu32 "\n", n, naive_popcount32(n));
+    printf("builtin_popcount(%" PRIu32 ") = %" PRIu32 "\n", n, popcount32(n));
     n *= 3;
   }
   printf("\n");
 
   x = 5;
   for (i=0; i<100; i++) {
-    printf("naive_popcount(%"PRIu64") = %"PRIu32"\n", x, naive_popcount64(x));
-    printf("builtin_popcount(%"PRIu64") = %"PRIu32"\n", x, popcount64(x));
+    printf("naive_popcount(%" PRIu64 ") = %" PRIu32 "\n", x, naive_popcount64(x));
+    printf("builtin_popcount(%" PRIu64 ") = %" PRIu32 "\n", x, popcount64(x));
     x *= 7;
   }
   printf("\n");
 
   for (i=0; i<32; i++) {
     n = 1<<i;
-    printf("naive_popcount(%"PRIu32") = %"PRIu32"\n", n, naive_popcount32(n));
-    printf("builtin_popcount(%"PRIu32") = %"PRIu32"\n", n, popcount32(n));
+    printf("naive_popcount(%" PRIu32 ") = %" PRIu32 "\n", n, naive_popcount32(n));
+    printf("builtin_popcount(%" PRIu32 ") = %" PRIu32 "\n", n, popcount32(n));
     n --;
-    printf("naive_popcount(%"PRIu32") = %"PRIu32"\n", n, naive_popcount32(n));
-    printf("builtin_popcount(%"PRIu32") = %"PRIu32"\n", n, popcount32(n));
+    printf("naive_popcount(%" PRIu32 ") = %" PRIu32 "\n", n, naive_popcount32(n));
+    printf("builtin_popcount(%" PRIu32 ") = %" PRIu32 "\n", n, popcount32(n));
   }
   printf("\n");
 
   for (i=0; i<64; i++) {
     x = ((uint64_t) 1)<<i;
-    printf("naive_popcount(%"PRIu64") = %"PRIu32"\n", x, naive_popcount64(x));
-    printf("builtin_popcount(%"PRIu64") = %"PRIu32"\n", x, popcount64(x));
+    printf("naive_popcount(%" PRIu64 ") = %" PRIu32 "\n", x, naive_popcount64(x));
+    printf("builtin_popcount(%" PRIu64 ") = %" PRIu32 "\n", x, popcount64(x));
     x --;
-    printf("naive_popcount(%"PRIu64") = %"PRIu32"\n", x, naive_popcount64(x));
-    printf("builtin_popcount(%"PRIu64") = %"PRIu32"\n", x, popcount64(x));
+    printf("naive_popcount(%" PRIu64 ") = %" PRIu32 "\n", x, naive_popcount64(x));
+    printf("builtin_popcount(%" PRIu64 ") = %" PRIu32 "\n", x, popcount64(x));
   }
   printf("\n");
   fflush(stdout);
@@ -210,7 +210,7 @@ int main(void) {
     i += naive_ctz((n<<24)| X);
   }
   d = get_cpu_time();
-  printf("Naive ctz:    %.2f s (i = %"PRIu32")\n", (d - c), i);
+  printf("Naive ctz:    %.2f s (i = %" PRIu32 ")\n", (d - c), i);
 
 
   i = 0;
@@ -222,7 +222,7 @@ int main(void) {
     i += ctz((n<<24)|X);
   }
   d = get_cpu_time();
-  printf("Built-in ctz: %.2f s (i = %"PRIu32")\n\n", (d - c), i);
+  printf("Built-in ctz: %.2f s (i = %" PRIu32 ")\n\n", (d - c), i);
 
 
   return 0;

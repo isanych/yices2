@@ -285,12 +285,12 @@ static bool useful_lower_bound(simplex_solver_t *solver, thvar_t x, xrational_t 
   k = arith_var_lower_index(&solver->vtbl, x);
   if (k < 0 || xq_lt(bstack->bound + k, b)) {
     // the derived bound is not redundant
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     new bound\n");
 #endif
     return true;
   } else {
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     redundant\n");
 #endif
     return false;
@@ -312,12 +312,12 @@ static bool useful_upper_bound(simplex_solver_t *solver, thvar_t x, xrational_t 
   k = arith_var_upper_index(&solver->vtbl, x);
   if (k < 0 || xq_gt(bstack->bound + k, b)) {
     // the derived bound is not redundant
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     new bound\n");
 #endif
     return true;
   } else {
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     redundant\n");
 #endif
     return false;
@@ -495,7 +495,7 @@ static void simplex_theory_prop(simplex_solver_t *solver, literal_t l, ivector_t
     expl[i] = null_literal;
     propagate_literal(solver->core, l, expl);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   } else {
     printf("--> skipping twice implied literal: ");
     print_literal(stdout, l);
@@ -533,7 +533,7 @@ static void theory_prop_from_upper_bounds(simplex_solver_t *solver, int32_t a, t
   mark_arith_atom(&solver->atbl, atom_of_assertion(a));
 #endif
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("     implied literal: ");
   print_literal(stdout, l);
   printf("\n     ");
@@ -570,7 +570,7 @@ static void theory_prop_from_lower_bounds(simplex_solver_t *solver, int32_t a, t
   mark_arith_atom(&solver->atbl, atom_of_assertion(a));
 #endif
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("     implied literal: ");
   print_literal(stdout, l);
   printf("\n     ");
@@ -828,7 +828,7 @@ static void try_upper_bound_propagation(simplex_solver_t *solver, thvar_t y, row
   thvar_t x;
   int32_t k;
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n---> try_upper_bound_propagation for ");
   print_simplex_var(stdout, solver, y);
   printf("\n     ");
@@ -858,7 +858,7 @@ static void try_upper_bound_propagation(simplex_solver_t *solver, thvar_t y, row
         k = arith_var_lower_index(vtbl, x);
       }
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
       printf("     ");
       print_simplex_bound(stdout, solver, k);
       printf("\n");
@@ -875,7 +875,7 @@ static void try_upper_bound_propagation(simplex_solver_t *solver, thvar_t y, row
   xq_div(sum, c);
   if (q_is_pos(c)) {
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     implied bound: ");
     print_simplex_var(stdout, solver, y);
     printf(" >= ");
@@ -900,7 +900,7 @@ static void try_upper_bound_propagation(simplex_solver_t *solver, thvar_t y, row
 
   } else {
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     implied bound: ");
     print_simplex_var(stdout, solver, y);
     printf(" <= ");
@@ -941,7 +941,7 @@ static void try_lower_bound_propagation(simplex_solver_t *solver, thvar_t y, row
   thvar_t x;
   int32_t k;
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n---> try_lower_bound_propagation for ");
   print_simplex_var(stdout, solver, y);
   printf("\n     ");
@@ -970,7 +970,7 @@ static void try_lower_bound_propagation(simplex_solver_t *solver, thvar_t y, row
       } else {
         k = arith_var_upper_index(vtbl, x);
       }
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
       printf("     ");
       print_simplex_bound(stdout, solver, k);
       printf("\n");
@@ -987,7 +987,7 @@ static void try_lower_bound_propagation(simplex_solver_t *solver, thvar_t y, row
   xq_div(sum, c);
   if (q_is_pos(c)) {
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     implied bound: ");
     print_simplex_var(stdout, solver, y);
     printf(" <= ");
@@ -1013,7 +1013,7 @@ static void try_lower_bound_propagation(simplex_solver_t *solver, thvar_t y, row
 
   } else {
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
     printf("     implied bound: ");
     print_simplex_var(stdout, solver, y);
     printf(" >= ");
@@ -1072,7 +1072,7 @@ static void add_upper_bounds(simplex_solver_t *solver, row_t *p, xrational_t *b)
       }
       assert(k >= 0);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
       printf("     ");
       print_simplex_bound(stdout, solver, k);
       printf("\n");
@@ -1114,7 +1114,7 @@ static void add_lower_bounds(simplex_solver_t *solver, row_t *p, xrational_t *b)
       }
       assert(k >= 0);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
       printf("     ");
       print_simplex_bound(stdout, solver, k);
       printf("\n");
@@ -1140,7 +1140,7 @@ static void full_upper_bound_propagation(simplex_solver_t *solver, row_t *p) {
   thvar_t x;
   int32_t k;
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n---> full_upper_bound_propagation");
   printf("\n     ");
   print_simplex_row(stdout, solver, p);
@@ -1177,7 +1177,7 @@ static void full_upper_bound_propagation(simplex_solver_t *solver, row_t *p) {
         assert(k >= 0);
         xq_add(aux, bstack->bound + k);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
         printf("     implied bound: ");
         print_simplex_var(stdout, solver, x);
         printf(" >= ");
@@ -1206,7 +1206,7 @@ static void full_upper_bound_propagation(simplex_solver_t *solver, row_t *p) {
         assert(k >= 0);
         xq_add(aux, bstack->bound + k);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
         printf("     implied bound: ");
         print_simplex_var(stdout, solver, x);
         printf(" <= ");
@@ -1236,7 +1236,7 @@ static void full_upper_bound_propagation(simplex_solver_t *solver, row_t *p) {
     n --;
   } while (n > 0);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n");
 #endif
 
@@ -1256,7 +1256,7 @@ static void full_lower_bound_propagation(simplex_solver_t *solver, row_t *p) {
   thvar_t x;
   int32_t k;
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n---> full_lower_bound_propagation");
   printf("\n     ");
   print_simplex_row(stdout, solver, p);
@@ -1293,7 +1293,7 @@ static void full_lower_bound_propagation(simplex_solver_t *solver, row_t *p) {
         assert(k >= 0);
         xq_add(aux, bstack->bound + k);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
         printf("     implied bound: ");
         print_simplex_var(stdout, solver, x);
         printf(" <= ");
@@ -1322,7 +1322,7 @@ static void full_lower_bound_propagation(simplex_solver_t *solver, row_t *p) {
         assert(k >= 0);
         xq_add(aux, bstack->bound + k);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
         printf("     implied bound: ");
         print_simplex_var(stdout, solver, x);
         printf(" >= ");
@@ -1352,7 +1352,7 @@ static void full_lower_bound_propagation(simplex_solver_t *solver, row_t *p) {
     n --;
   } while (n > 0);
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n");
 #endif
 
@@ -1441,7 +1441,7 @@ static void check_all_propagation_rows(simplex_solver_t *solver) {
   v = &solver->rows_to_process;
   n = v->size;
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("\n---> SIMPLEX PROP: CHECKING %"PRIu32" rows\n", n);
 #endif
 
@@ -1455,7 +1455,7 @@ static void check_all_propagation_rows(simplex_solver_t *solver) {
     }
   }
 
-#if TRACE_PROPAGATION
+#if YICES_TRACE_PROPAGATION
   printf("---> END OF SIMPLEX PROPAGATION\n");
 #endif
 

@@ -33,7 +33,7 @@
  * Print a map element
  */
 static void print_map_record(FILE *f, pmap2_rec_t *e) {
-  fprintf(f, "<%"PRId32", %"PRId32"> --> %"PRId32"\n", e->k0, e->k1, e->val);
+  fprintf(f, "<%" PRId32 ", %" PRId32 "> --> %" PRId32 "\n", e->k0, e->k1, e->val);
 }
 
 /*
@@ -45,14 +45,14 @@ static void print_map(FILE *f, pmap2_t *map) {
   uint32_t i, n;
 
   htbl = &map->htbl;
-  fprintf(f, "map: %"PRIu32" records, %"PRIu32" deletions, size = %"PRIu32"\n",
+  fprintf(f, "map: %" PRIu32 " records, %" PRIu32 " deletions, size = %" PRIu32 "\n",
 	  htbl->nelems, htbl->ndeleted, htbl->size);
 
   n = htbl->size;
   for (i=0; i<n; i++) {
     e = htbl->data[i];
     if (e != NULL && e != PMAP2_DELETED) {
-      fprintf(f, "    %4"PRIu32": ", i);
+      fprintf(f, "    %4" PRIu32 ": ", i);
       print_map_record(f, e);
     }
   }
@@ -70,16 +70,16 @@ static void print_stack(FILE *f, pmap2_t *map) {
   stack = &map->stack;
 
   fprintf(f, "stack:\n");
-  fprintf(f, "  size = %"PRIu32"\n", stack->size);
-  fprintf(f, "  current_level = %"PRIu32"\n", stack->current_level);
-  fprintf(f, "  top_level = %"PRIu32"\n", stack->top_level);
+  fprintf(f, "  size = %" PRIu32 "\n", stack->size);
+  fprintf(f, "  current_level = %" PRIu32 "\n", stack->current_level);
+  fprintf(f, "  top_level = %" PRIu32 "\n", stack->top_level);
 
   n = stack->nmarks;
   if (n == 0) {
     fprintf(f, "  no alloc marks\n");
   } else {
     for (i=0; i<n; i++) {
-      fprintf(f, "  mark[%"PRIu32"]: level = %"PRIu32", block = %"PRIu32", index = %"PRIu32"\n",
+      fprintf(f, "  mark[%" PRIu32 "]: level = %" PRIu32 ", block = %" PRIu32 ", index = %" PRIu32 "\n",
 	      i, stack->data[i].level, stack->data[i].block_id, stack->data[i].alloc_idx);
     }
   }
@@ -96,14 +96,14 @@ static void print_bank(FILE *f, pmap2_t *map) {
 
   bank = &map->bank;
   fprintf(f, "bank:\n");
-  fprintf(f, "  capacity = %"PRIu32"\n", bank->capacity);
-  fprintf(f, "  nblocks = %"PRIu32"\n", bank->nblocks);
-  fprintf(f, "  free_block = %"PRIu32"\n", bank->free_block);
-  fprintf(f, "  alloc_ptr = %"PRIu32"\n", bank->alloc_ptr);
+  fprintf(f, "  capacity = %" PRIu32 "\n", bank->capacity);
+  fprintf(f, "  nblocks = %" PRIu32 "\n", bank->nblocks);
+  fprintf(f, "  free_block = %" PRIu32 "\n", bank->free_block);
+  fprintf(f, "  alloc_ptr = %" PRIu32 "\n", bank->alloc_ptr);
 
   n = bank->nblocks;
   for (i=0; i<n; i++) {
-    fprintf(f, "  block[%"PRIu32"] = %p\n", i, bank->block[i]);
+    fprintf(f, "  block[%" PRIu32 "] = %p\n", i, bank->block[i]);
   }
 }
 
@@ -121,7 +121,7 @@ static pmap2_t map;
 static void test_elem(int32_t k0, int32_t k1) {
   pmap2_rec_t *e, *e0;
 
-  printf("\n--- Testing key = <%"PRId32", %"PRId32"> ---\n", k0, k1);
+  printf("\n--- Testing key = <%" PRId32 ", %" PRId32 "> ---\n", k0, k1);
 
   e0 = pmap2_find(&map, k0, k1);
   if (e0 == NULL) {
@@ -140,7 +140,7 @@ static void test_elem(int32_t k0, int32_t k1) {
     if (e->val != -1) {
       printf("*** BUG: inconsitency between find and get ***\n");
     } else {
-      printf("new record: setting value to %"PRId32"\n", k0 + k1);
+      printf("new record: setting value to %" PRId32 "\n", k0 + k1);
       e->val = k0 + k1;
     }
   } else if (e != e0) {
@@ -180,7 +180,7 @@ static void test1(void) {
     pmap2_push(&map);
     print_stack(stdout, &map);
 
-    printf("\n--- Row %"PRId32" ---\n", i);
+    printf("\n--- Row %" PRId32 " ---\n", i);
     for (j=0; j<10; j++) {
       test_elem(i, j);
     }
@@ -207,7 +207,7 @@ static void test1(void) {
     pmap2_push(&map);
     print_stack(stdout, &map);
 
-    printf("\n--- Row %"PRId32" ---\n", i);
+    printf("\n--- Row %" PRId32 " ---\n", i);
     for (j=0; j<50; j++) {
       test_elem(i, j);
     }
@@ -235,7 +235,7 @@ static void test1(void) {
   }
 
   for (i=0; i<50; i++) {
-    printf("\n--- Row %"PRId32" ---\n", i);
+    printf("\n--- Row %" PRId32 " ---\n", i);
     for (j=0; j<50; j++) {
       test_elem(i, j);
     }

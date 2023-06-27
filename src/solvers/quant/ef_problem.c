@@ -23,19 +23,13 @@
 #include <assert.h>
 #include <solvers/quant/ef_problem.h>
 
+#include "yices_config.h"
 #include "utils/index_vectors.h"
 #include "utils/memalloc.h"
 
 #include "api/search_parameters.h"
 
-#define TRACE 0
-
-#if TRACE
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
+#if YICES_TRACE
 #include "yices.h"
 #endif
 
@@ -47,7 +41,7 @@ void delete_pattern_map(ptr_hmap_t *m) {
   for (p = ptr_hmap_first_record(m);
        p != NULL;
        p = ptr_hmap_next_record(m, p)) {
-    ivector_t* list_vector = p->val;
+    ivector_t* list_vector = (ivector_t*)p->val;
     if (list_vector != NULL) {
       delete_ivector(list_vector);
       safe_free(list_vector);
@@ -88,15 +82,15 @@ void init_ef_prob(ef_prob_t *prob, term_manager_t *mngr, ptr_hmap_t *patterns, e
     for (r1 = ptr_hmap_first_record(patterns);
          r1 != NULL;
          r1 = ptr_hmap_next_record(patterns, r1)) {
-      pv1 = r1->val;
+      pv1 = (ivector_t*)r1->val;
       n = pv1->size;
 
       r2 = ptr_hmap_get(patterns2, r1->key);
       if (r2->val == NULL) {
         r2->val = safe_malloc(sizeof(ivector_t));
-        init_ivector(r2->val, n);
+        init_ivector((ivector_t*)r2->val, n);
       }
-      ivector_add(r2->val, pv1->data, n);
+      ivector_add((ivector_t*)r2->val, pv1->data, n);
     }
   }
 
@@ -347,7 +341,7 @@ void ef_prob_add_constraint(ef_prob_t *prob, term_t *ev, uint32_t nev, term_t *u
 }
 
 
-#if TRACE
+#if YICES_TRACE
 /*
  * Print a forall constraint
  */

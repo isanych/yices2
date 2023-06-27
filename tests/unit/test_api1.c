@@ -189,7 +189,7 @@ static bool check_invalid_type(type_t tau, type_t bad) {
 /*
  * Global types
  */
-static type_t boolean, integer, real;
+static type_t boolean_, integer, real;
 static type_t bv1, bv2, bv32, bv54, bv65;
 static type_t T1, T2;
 static type_t S3, S10;
@@ -204,8 +204,8 @@ static type_t pair_unit_fun, fun_T1_T2_fun_real_U1;
 static void test_base_types(void) {
   int32_t code;
 
-  boolean = yices_bool_type();
-  assert(check_bool_type(boolean));
+  boolean_ = yices_bool_type();
+  assert(check_bool_type(boolean_));
 
   integer = yices_int_type();
   assert(check_int_type(integer));
@@ -298,8 +298,8 @@ static void test_composite_types(void) {
   triple_U1_U1_U2 = yices_tuple_type(3, aux);
   assert(check_tuple_type(triple_U1_U1_U2, 3, aux));
 
-  aux[0] = boolean;
-  aux[1] = boolean;
+  aux[0] = boolean_;
+  aux[1] = boolean_;
   pair_bool = yices_tuple_type(2, aux);
   assert(check_tuple_type(pair_bool, 2, aux));
 
@@ -308,9 +308,9 @@ static void test_composite_types(void) {
   pair_pair_bool = yices_tuple_type(2, aux);
   assert(check_tuple_type(pair_pair_bool, 2, aux));
 
-  aux[0] = boolean;
-  fun_bool_bool = yices_function_type(1, aux, boolean);
-  assert(check_function_type(fun_bool_bool, 1, aux, boolean));
+  aux[0] = boolean_;
+  fun_bool_bool = yices_function_type(1, aux, boolean_);
+  assert(check_function_type(fun_bool_bool, 1, aux, boolean_));
 
   aux[0] = integer;
   fun_int_bv54 = yices_function_type(1, aux, bv54);
@@ -318,8 +318,8 @@ static void test_composite_types(void) {
 
   aux[0] = S3;
   aux[1] = S10;
-  fun_S3_S10_bool = yices_function_type(2, aux, boolean);
-  assert(check_function_type(fun_S3_S10_bool, 2, aux, boolean));
+  fun_S3_S10_bool = yices_function_type(2, aux, boolean_);
+  assert(check_function_type(fun_S3_S10_bool, 2, aux, boolean_));
 
   aux[0] = real;
   fun_real_U1 = yices_function_type(1, aux, U1);
@@ -500,7 +500,7 @@ static void test_uninterpreted(type_t tau) {
 
 
 static void test_uninterpreted_all(void) {
-  test_uninterpreted(boolean);
+  test_uninterpreted(boolean_);
   test_uninterpreted(integer);
   test_uninterpreted(real);
   test_uninterpreted(bv1);

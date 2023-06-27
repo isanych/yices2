@@ -270,7 +270,7 @@ extern literal_t bit_blaster_eval_xor3(bit_blaster_t *blaster, literal_t a, lite
  * (eq a b)
  */
 static inline literal_t bit_blaster_eval_eq(bit_blaster_t *blaster, literal_t a, literal_t b) {
-  return bit_blaster_eval_xor2(blaster, not(a), b);
+  return bit_blaster_eval_xor2(blaster, not_(a), b);
 }
 
 
@@ -383,7 +383,7 @@ extern literal_t bit_blaster_make_xor3(bit_blaster_t *blaster, literal_t a, lite
  * (eq a b)
  */
 static inline literal_t bit_blaster_make_eq(bit_blaster_t *blaster, literal_t a, literal_t b) {
-  return bit_blaster_make_xor2(blaster, not(a), b);
+  return bit_blaster_make_xor2(blaster, not_(a), b);
 }
 
 
@@ -408,7 +408,7 @@ extern literal_t bit_blaster_make_or3(bit_blaster_t *blaster, literal_t a, liter
  * (and a b)
  */
 static inline literal_t bit_blaster_make_and2(bit_blaster_t *blaster, literal_t a, literal_t b) {
-  return not(bit_blaster_make_or2(blaster, not(a), not(b)));
+  return not_(bit_blaster_make_or2(blaster, not_(a), not_(b)));
 }
 
 

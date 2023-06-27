@@ -24,12 +24,13 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <malloc.h>
 
 #include "io/type_printer.h"
 #include "terms/types.h"
 #include "utils/refcount_strings.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -53,7 +54,7 @@ static void show_macro(FILE *f, type_table_t *table, type_macro_t *d) {
     print_type(f, table, d->body);
     fputc('\n', f);
   } else {
-    fprintf(f, "constructor %s: arity %"PRIu32"\n", d->name, d->arity);
+    fprintf(f, "constructor %s: arity %" PRIu32 "\n", d->name, d->arity);
   }
 }
 
@@ -72,7 +73,7 @@ static void print_macro_instance(FILE *f, type_table_t *types, tuple_hmap_rec_t 
   if (name != NULL) {
     fprintf(f, "%s[", name);
   } else {
-    fprintf(f, "M_%"PRId32"[", d->key[0]);
+    fprintf(f, "M_%" PRId32 "[", d->key[0]);
   }
 
   n = d->arity;
@@ -100,9 +101,9 @@ static void show_macro_instances(FILE *f, type_table_t *types, int32_t id) {
 
   name = type_macro_name(mtbl, id);
   if (name != NULL) {
-    fprintf(f, "Instances of macro %s (id = %"PRId32")\n", name, id);
+    fprintf(f, "Instances of macro %s (id = %" PRId32 ")\n", name, id);
   } else {
-    fprintf(f, "Instances of macro M_%"PRId32"\n", id);
+    fprintf(f, "Instances of macro M_%" PRId32 "\n", id);
   }
 
   cache = &mtbl->cache;
@@ -209,7 +210,7 @@ static void init_types(void) {
  * - n = arity
  */
 static void test_instance(int32_t id, uint32_t n) {
-  type_t actual[n];
+  type_t* actual = (type_t*)alloca(n * sizeof(type_t));
   uint32_t i, j;
   type_t result, check;
 
@@ -218,9 +219,9 @@ static void test_instance(int32_t id, uint32_t n) {
     actual[i] = base[j];
   }
 
-  printf("Test: instance of macro %"PRId32"\n", id);
+  printf("Test: instance of macro %" PRId32 "\n", id);
   for (i=0; i<n; i++) {
-    printf("  arg[%"PRIu32"] = ", i);
+    printf("  arg[%" PRIu32 "] = ", i);
     print_type(stdout, &types, actual[i]);
     printf("\n");
   }
@@ -276,7 +277,7 @@ static void test_constructor(const char *name, uint32_t n) {
   int32_t id;
   uint32_t i;
 
-  printf("Test: create constructor %s, arity %"PRIu32"\n", name, n);
+  printf("Test: create constructor %s, arity %" PRIu32 "\n", name, n);
   add_type_constructor(&types, clone_string(name), n);
   id = get_type_macro_by_name(&types, name);
   printf("Result: ");

@@ -156,11 +156,11 @@ static void test_bvconst_uint32(uint32_t x) {
   uint32_t n;
   term_t t;
 
-  printf("Testing yices_bvconst_uint32: x = %"PRIu32"\n", x);
+  printf("Testing yices_bvconst_uint32: x = %" PRIu32 "\n", x);
   zero_extend_uint32(x, MAXBITS, a); 
   for (n=1; n<MAXBITS; n++) {
     t = yices_bvconst_uint32(n, x);
-    printf("--> %3"PRIu32" bits: ", n);
+    printf("--> %3" PRIu32 " bits: ", n);
     yices_pp_term(stdout, t, 200, 1, 0);
     check_bvconst(t, n, a);
   }
@@ -172,11 +172,11 @@ static void test_bvconst_int32(int32_t x) {
   uint32_t n;
   term_t t;
 
-  printf("Testing yices_bvconst_int32: x = %"PRId32"\n", x);
+  printf("Testing yices_bvconst_int32: x = %" PRId32 "\n", x);
   sign_extend_int32(x, MAXBITS, a); 
   for (n=1; n<MAXBITS; n++) {
     t = yices_bvconst_int32(n, x);
-    printf("--> %3"PRIu32" bits: ", n);
+    printf("--> %3" PRIu32 " bits: ", n);
     yices_pp_term(stdout, t, 200, 1, 0);
     check_bvconst(t, n, a);
   }
@@ -188,11 +188,11 @@ static void test_bvconst_uint64(uint64_t x) {
   uint32_t n;
   term_t t;
 
-  printf("Testing yices_bvconst_uint64: x = %"PRIu64"\n", x);
+  printf("Testing yices_bvconst_uint64: x = %" PRIu64 "\n", x);
   zero_extend_uint64(x, MAXBITS, a); 
   for (n=1; n<MAXBITS; n++) {
     t = yices_bvconst_uint64(n, x);
-    printf("--> %3"PRIu32" bits: ", n);
+    printf("--> %3" PRIu32 " bits: ", n);
     yices_pp_term(stdout, t, 200, 1, 0);
     check_bvconst(t, n, a);
   }
@@ -204,11 +204,11 @@ static void test_bvconst_int64(int64_t x) {
   uint32_t n;
   term_t t;
 
-  printf("Testing yices_bvconst_int64: x = %"PRId64"\n", x);
+  printf("Testing yices_bvconst_int64: x = %" PRId64 "\n", x);
   sign_extend_int64(x, MAXBITS, a); 
   for (n=1; n<MAXBITS; n++) {
     t = yices_bvconst_int64(n, x);
-    printf("--> %3"PRIu32" bits: ", n);
+    printf("--> %3" PRIu32 " bits: ", n);
     yices_pp_term(stdout, t, 200, 1, 0);
     check_bvconst(t, n, a);
   }
@@ -233,7 +233,7 @@ static void test_bvconst_mpz(const char *s) {
   sign_extend_mpz(z, MAXBITS, a);
   for (n=1; n<MAXBITS; n++) {
     t = yices_bvconst_mpz(n, z);
-    printf("--> %3"PRIu32" bits: ", n);
+    printf("--> %3" PRIu32 " bits: ", n);
     yices_pp_term(stdout, t, 200, 1, 0);
     check_bvconst(t, n, a);
   }

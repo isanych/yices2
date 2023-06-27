@@ -21,48 +21,19 @@
  * - read-eval loop
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdarg.h>
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
 #include <inttypes.h>
 
+#include "yices_config.h"
 
-#if defined(MINGW)
-/*
- * We call isatty(STDIN_FILENO) to check whether stdin is a terminal.
- *
- * On Windows/MINGW, isatty is called _isatty. The macro STDIN_FILENO
- * appears to be defined in mingw/include/stdio.h. Not clear whether
- * it exists in Windows?  There is a function isatty declared in io.h,
- * but it is deprecated.
- *
- * NOTE: the windows function _isatty doesn't have the same behavior
- * as isatty on Unix. It returns a non-zero value if the file
- * descriptor is associated with a character device (which is true of
- * terminals but of other files too).
- */
-#include <io.h>
-#ifndef STDIN_FILENO
-#define STDIN_FILENO (_fileno(stdin))
-#endif
-#define isatty _isatty
-
-#else
-// Should work on all Unix variants
-#include <unistd.h>
-#endif
-
-
+#include "api/platform.h"
 #include "api/context_config.h"
 #include "api/smt_logic_codes.h"
 #include "api/yices_extensions.h"
@@ -302,7 +273,7 @@ static void print_version(FILE *f) {
           "Yices %s\n"
           "Copyright SRI International.\n"
           "Linked with GMP %s\n"
-	  "Copyright Free Software Foundation, Inc.\n"
+          "Copyright Free Software Foundation, Inc.\n"
           "Build date: %s\n"
           "Platform: %s (%s)\n",
           yices_version,
@@ -318,8 +289,8 @@ static void print_help(char *progname) {
   printf("Options:\n"
          "  --version, -V             Display version and exit\n"
          "  --help, -h                Display this information\n"
-	 "  --verbosity=<level>       Set verbosity level (default = 0)\n"
-	 "           -v <level>\n"
+         "  --verbosity=<level>       Set verbosity level (default = 0)\n"
+         "           -v <level>\n"
          "  --print-success           Print 'ok' after commands that would otherwise execute silently\n"
          "  --logic=<name>            Configure for the given logic\n"
          "                             <name> must be an SMT-LIB logic code (e.g., QF_UFLIA)\n"
@@ -328,27 +299,27 @@ static void print_help(char *progname) {
          "                             <solver> may be either 'simplex' or 'floyd-warshall' or 'auto'\n"
          "  --mode=<mode>             Select the usage mode\n"
          "                             <mode> maybe 'one-shot' or 'multi-checks' or 'interactive'\n"
-	 "                                    or 'push-pop' or 'ef'\n"
-	 "  --mcsat                   Force use of the MC-SAT solver for logics where MC-SAT is not the default\n"
-	 "\n"
-	 "The mode are as follows:\n"
-	 "\n"
-	 "  one-shot: only one call to (check) is allowed\n"
-	 "    no assertions are allowed after (check)\n"
-	 "    (push) and (pop) are not supported\n"
-	 "\n"
-	 "  multi-checks: several calls (check) are allowed\n"
-	 "    adding assertions after check is allowed\n"
-	 "    (push) and (pop) are not supported\n"
-	 "\n"
-	 "  push-pop: like multi-check but with support for (push) and (pop)\n"
-	 "\n"
-	 "  interactive: like push-pop. In addition, Yices restores the context\n"
-	 "    to a clean state if (check) is interrupted\n"
-	 "\n"
-	 "  ef: enable the exist-forall solver\n"
-	 "    In this mode, (ef-solve) can be used\n"
-	 "    This is like one-shot in that only one call to (ef-solve) is allowed\n"
+         "                                    or 'push-pop' or 'ef'\n"
+         "  --mcsat                   Force use of the MC-SAT solver for logics where MC-SAT is not the default\n"
+         "\n"
+         "The mode are as follows:\n"
+         "\n"
+         "  one-shot: only one call to (check) is allowed\n"
+         "    no assertions are allowed after (check)\n"
+         "    (push) and (pop) are not supported\n"
+         "\n"
+         "  multi-checks: several calls (check) are allowed\n"
+         "    adding assertions after check is allowed\n"
+         "    (push) and (pop) are not supported\n"
+         "\n"
+         "  push-pop: like multi-check but with support for (push) and (pop)\n"
+         "\n"
+         "  interactive: like push-pop. In addition, Yices restores the context\n"
+         "    to a clean state if (check) is interrupted\n"
+         "\n"
+         "  ef: enable the exist-forall solver\n"
+         "    In this mode, (ef-solve) can be used\n"
+         "    This is like one-shot in that only one call to (ef-solve) is allowed\n"
          "\n"
          "For reporting bugs and other information, please see http://yices.csl.sri.com/\n");
   fflush(stdout);
@@ -488,8 +459,8 @@ static void process_command_line(int argc, char *argv[]) {
         break;
 
       case mcsat_flag:
-	mcsat_requested = true;
-	break;
+        mcsat_requested = true;
+        break;
 
       case version_flag:
         print_version(stdout);
@@ -500,19 +471,19 @@ static void process_command_line(int argc, char *argv[]) {
         goto quick_exit;
 
       case print_success_flag:
-	print_success = true;
-	break;
+        print_success = true;
+        break;
 
       case abort_on_int_flag:
         abort_on_int = true;
         break;
 
       case verbosity_option:
-	v = elem.i_value;
-	if (v < 0) {
-	  fprintf(stderr, "%s: the verbosity level must be non-negative\n", parser.command_name);
-	  goto bad_usage;
-	}
+        v = elem.i_value;
+        if (v < 0) {
+          fprintf(stderr, "%s: the verbosity level must be non-negative\n", parser.command_name);
+          goto bad_usage;
+        }
         verbosity = v;
         break;
 
@@ -534,7 +505,7 @@ static void process_command_line(int argc, char *argv[]) {
    */
   if (mcsat_requested && !yices_has_mcsat()) {
     fprintf(stderr, "%s: options --mcsat is not supported; %s was not compiled with mcsat support\n",
-	    parser.command_name, parser.command_name);
+            parser.command_name, parser.command_name);
     exit(YICES_EXIT_ERROR);
   }
 
@@ -557,8 +528,8 @@ static void process_command_line(int argc, char *argv[]) {
     }
     if (logic_code == SMT_UNKNOWN) {
       if (arith_code == ARITH_FLOYD_WARSHALL) {
-	fprintf(stderr, "%s: please specify the logic (either QF_IDL or QF_RDL)\n", parser.command_name);
-	goto bad_usage;
+        fprintf(stderr, "%s: please specify the logic (either QF_IDL or QF_RDL)\n", parser.command_name);
+        goto bad_usage;
       }
       // use default settings
       arch = CTX_ARCH_EGFUNSPLXBV;
@@ -567,8 +538,8 @@ static void process_command_line(int argc, char *argv[]) {
     } else {
       arch_code = ef_arch_for_logic(logic_code);
       if (arch_code < 0) {
-	fprintf(stderr, "%s: logic %s is not supported in ef-mode\n", parser.command_name, logic_name);
-	exit(YICES_EXIT_ERROR);
+        fprintf(stderr, "%s: logic %s is not supported in ef-mode\n", parser.command_name, logic_name);
+        exit(YICES_EXIT_ERROR);
       }
       assert(logic_is_supported_by_ef(logic_code));
       logic_code = qf_fragment(logic_code);
@@ -587,8 +558,8 @@ static void process_command_line(int argc, char *argv[]) {
 
     default:
       if (! logic_is_supported_by_mcsat(logic_code)) {
-	fprintf(stderr, "%s: logic %s is not supported by the mc-sat solver\n", parser.command_name, logic_name);
-	exit(YICES_EXIT_ERROR);
+        fprintf(stderr, "%s: logic %s is not supported by the mc-sat solver\n", parser.command_name, logic_name);
+        exit(YICES_EXIT_ERROR);
       }
     }
 
@@ -603,8 +574,8 @@ static void process_command_line(int argc, char *argv[]) {
     switch (logic_code) {
     case SMT_UNKNOWN:
       if (arith_code == ARITH_FLOYD_WARSHALL) {
-	fprintf(stderr, "%s: please specify the logic (either QF_IDL or QF_RDL)\n", parser.command_name);
-	goto bad_usage;
+        fprintf(stderr, "%s: please specify the logic (either QF_IDL or QF_RDL)\n", parser.command_name);
+        goto bad_usage;
       }
       // use default settings
       arch = CTX_ARCH_EGFUNSPLXBV;
@@ -614,11 +585,11 @@ static void process_command_line(int argc, char *argv[]) {
 
     case QF_IDL:
       if (arith_code == ARITH_SIMPLEX) {
-	arch = CTX_ARCH_SPLX;
+        arch = CTX_ARCH_SPLX;
       } else if (arith_code == ARITH_FLOYD_WARSHALL) {
-	arch = CTX_ARCH_IFW;
+        arch = CTX_ARCH_IFW;
       } else {
-	arch = CTX_ARCH_AUTO_IDL;
+        arch = CTX_ARCH_AUTO_IDL;
       }
       iflag = false; // not relevant in IDL
       qflag = false;
@@ -626,11 +597,11 @@ static void process_command_line(int argc, char *argv[]) {
 
     case QF_RDL:
       if (arith_code == ARITH_SIMPLEX) {
-	arch = CTX_ARCH_SPLX;
+        arch = CTX_ARCH_SPLX;
       } else if (arith_code == ARITH_FLOYD_WARSHALL) {
-	arch = CTX_ARCH_RFW;
+        arch = CTX_ARCH_RFW;
       } else {
-	arch = CTX_ARCH_AUTO_RDL;
+        arch = CTX_ARCH_AUTO_RDL;
       }
       iflag = false;
       qflag = false;
@@ -640,12 +611,12 @@ static void process_command_line(int argc, char *argv[]) {
       assert(logic_name != NULL && 0 <= logic_code && logic_code < NUM_SMT_LOGICS);
       arch_code = arch_for_logic(logic_code);
       if (arch_code < 0) {
-	if (logic_is_supported_by_ef(logic_code)) {
-	  fprintf(stderr, "%s: logic %s is supported only in ef-mode\n", parser.command_name, logic_name);
-	} else {
-	  fprintf(stderr, "%s: logic %s is not supported\n", parser.command_name, logic_name);
-	}
-	exit(YICES_EXIT_ERROR);
+        if (logic_is_supported_by_ef(logic_code)) {
+          fprintf(stderr, "%s: logic %s is supported only in ef-mode\n", parser.command_name, logic_name);
+        } else {
+          fprintf(stderr, "%s: logic %s is not supported\n", parser.command_name, logic_name);
+        }
+        exit(YICES_EXIT_ERROR);
       }
       arch = (context_arch_t) arch_code;
       iflag = iflag_for_logic(logic_code);
@@ -653,9 +624,9 @@ static void process_command_line(int argc, char *argv[]) {
 
       // fail here: if we need MCSAT, but it's not available
       if (arch == CTX_ARCH_MCSAT && !yices_has_mcsat()) {
-	fprintf(stderr, "%s: logic %s is not supported; %s was not compiled with mcsat support\n",
-		parser.command_name, logic_name, parser.command_name);
-	exit(YICES_EXIT_ERROR);
+        fprintf(stderr, "%s: logic %s is not supported; %s was not compiled with mcsat support\n",
+                parser.command_name, logic_name, parser.command_name);
+        exit(YICES_EXIT_ERROR);
       }
       break;
     }
@@ -675,10 +646,10 @@ static void process_command_line(int argc, char *argv[]) {
       // no filename as input: we use interactive mode
       // unless the logic requires MCSAT
       if (arch == CTX_ARCH_MCSAT) {
-	// MCSAT does not support interactive mode
-	mode = CTX_MODE_PUSHPOP;
+        // MCSAT does not support interactive mode
+        mode = CTX_MODE_PUSHPOP;
       } else {
-	mode = CTX_MODE_INTERACTIVE; // no input given: interactive mode
+        mode = CTX_MODE_INTERACTIVE; // no input given: interactive mode
       }
     }
   } else if (mode_code == EFSOLVER_MODE) {
@@ -767,7 +738,7 @@ static void write_signum(int signum) {
  * So we must call signal inside this handler.
  */
 static void sigint_handler(int signum) {
-#if defined(SOLARIS) || defined(MINGW)
+#if defined(SOLARIS) || defined(_WIN32)
   void (*saved_handler)(int);
 #endif
 
@@ -779,7 +750,7 @@ static void sigint_handler(int signum) {
     context_stop_search(context);
   }
 
-#if defined(SOLARIS) || defined(MINGW)
+#if defined(SOLARIS) || defined(_WIN32)
   saved_handler = signal(SIGINT, sigint_handler);
   if (saved_handler == SIG_ERR) {
     perror("Yices: failed to install SIG_INT handler: ");
@@ -806,7 +777,7 @@ static void default_handler(int signum) {
 static void init_handlers(void) {
   signal(SIGINT, abort_on_int ? default_handler : sigint_handler);
   signal(SIGABRT, default_handler);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, default_handler);
 #endif
 }
@@ -818,7 +789,7 @@ static void init_handlers(void) {
 static void reset_handlers(void) {
   signal(SIGINT, SIG_DFL);
   signal(SIGABRT, SIG_DFL);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, SIG_DFL);
 #endif
 }
@@ -841,7 +812,7 @@ static void report_error(const char *s) {
   if (rd->name != NULL) {
     fprintf(stderr, "%s: ", rd->name);
   }
-  fprintf(stderr, "%s (line %"PRId32", column %"PRId32")\n", s, reader_line(rd), reader_column(rd));
+  fprintf(stderr, "%s (line %" PRId32 ", column %" PRId32 ")\n", s, reader_line(rd), reader_column(rd));
   done = !interactive;
 }
 
@@ -857,7 +828,7 @@ static void report_system_error(const char *s) {
   if (rd->name != NULL) {
     fprintf(stderr, "%s: ", rd->name);
   }
-  fprintf(stderr, "error at line %"PRId32": ", reader_line(rd));
+  fprintf(stderr, "error at line %" PRId32 ": ", reader_line(rd));
   perror(s);
 
   done = !interactive;
@@ -876,7 +847,7 @@ static void report_invalid_param(const char *name) {
   if (rd->name != NULL) {
     fprintf(stderr, "%s: ", rd->name);
   }
-  fprintf(stderr, "invalid parameter %s (line %"PRId32", column %"PRId32")\n",
+  fprintf(stderr, "invalid parameter %s (line %" PRId32 ", column %" PRId32 ")\n",
           name, reader_line(rd), reader_column(rd));
   done = !interactive;
 }
@@ -888,7 +859,7 @@ static void report_invalid_param_value(const char *name, const char *reason) {
   if (rd->name != NULL) {
     fprintf(stderr, "%s: ", rd->name);
   }
-  fprintf(stderr, "invalid value for parameter %s: %s (line %"PRId32", column %"PRId32")\n",
+  fprintf(stderr, "invalid value for parameter %s: %s (line %" PRId32 ", column %" PRId32 ")\n",
           name, reason, reader_line(rd), reader_column(rd));
   done = !interactive;
 }
@@ -900,7 +871,7 @@ static void report_negative_timeout(int32_t val) {
   if (rd->name != NULL) {
     fprintf(stderr, "%s: ", rd->name);
   }
-  fprintf(stderr, "invalid timeout value %d (line %"PRId32", column %"PRId32")\n", val, reader_line(rd), reader_column(rd));
+  fprintf(stderr, "invalid timeout value %d (line %" PRId32 ", column %" PRId32 ")\n", val, reader_line(rd), reader_column(rd));
   done = !interactive;
 }
 
@@ -986,7 +957,7 @@ static void report_eval_error(int32_t code) {
 
   case MDL_EVAL_FREEVAR_IN_TERM:
   default:
-    freport_bug(stderr,"Unexpected error code %"PRId32" in 'eval'", code);
+    freport_bug(stderr,"Unexpected error code %" PRId32 " in 'eval'", code);
     break;
   }
 }
@@ -1015,7 +986,7 @@ static void report_show_implicant_error(error_code_t code) {
   case EVAL_CONVERSION_FAILED:
   case EVAL_NO_IMPLICANT:
   default:
-    freport_bug(stderr,"Unexpected error code %"PRId32" in 'show-implicant'", code);
+    freport_bug(stderr,"Unexpected error code %" PRId32 " in 'show-implicant'", code);
     break;
   }
 }
@@ -1160,7 +1131,7 @@ static void cleanup_context(void) {
     // remove assumptions if any
     context_clear_unsat(context);
     assert(context_status(context) == STATUS_IDLE ||
-	   context_status(context) == STATUS_UNSAT);
+           context_status(context) == STATUS_UNSAT);
     break;
 
   case STATUS_IDLE:
@@ -1211,7 +1182,7 @@ static void show_bool_param(const char *name, bool value, uint32_t n) {
 
 static void show_pos32_param(const char *name, uint32_t value, uint32_t n) {
   show_param_name(name, n);
-  printf(" %"PRIu32"\n", value);
+  printf(" %" PRIu32 "\n", value);
 }
 
 static void show_float_param(const char *name, double value, uint32_t n) {
@@ -1555,11 +1526,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.var_elim = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_variable_elimination(context);
-	} else {
-	  disable_variable_elimination(context);
-	}
+        if (tt) {
+          enable_variable_elimination(context);
+        } else {
+          disable_variable_elimination(context);
+        }
       }
       print_ok();
     }
@@ -1569,11 +1540,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.arith_elim = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_arith_elimination(context);
-	} else {
-	  disable_arith_elimination(context);
-	}
+        if (tt) {
+          enable_arith_elimination(context);
+        } else {
+          disable_arith_elimination(context);
+        }
       }
       print_ok();
     }
@@ -1583,11 +1554,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.bvarith_elim = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_bvarith_elimination(context);
-	} else {
-	  disable_bvarith_elimination(context);
-	}
+        if (tt) {
+          enable_bvarith_elimination(context);
+        } else {
+          disable_bvarith_elimination(context);
+        }
       }
       print_ok();
     }
@@ -1597,11 +1568,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.flatten_or = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_diseq_and_or_flattening(context);
-	} else {
-	  disable_diseq_and_or_flattening(context);
-	}
+        if (tt) {
+          enable_diseq_and_or_flattening(context);
+        } else {
+          disable_diseq_and_or_flattening(context);
+        }
       }
       print_ok();
     }
@@ -1611,11 +1582,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.eq_abstraction = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_eq_abstraction(context);
-	} else {
-	  disable_eq_abstraction(context);
-	}
+        if (tt) {
+          enable_eq_abstraction(context);
+        } else {
+          disable_eq_abstraction(context);
+        }
       }
       print_ok();
     }
@@ -1625,11 +1596,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.keep_ite = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_keep_ite(context);
-	} else {
-	  disable_keep_ite(context);
-	}
+        if (tt) {
+          enable_keep_ite(context);
+        } else {
+          disable_keep_ite(context);
+        }
       }
       print_ok();
     }
@@ -1814,11 +1785,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.splx_eager_lemmas = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_splx_eager_lemmas(context);
-	} else {
-	  disable_splx_eager_lemmas(context);
-	}
+        if (tt) {
+          enable_splx_eager_lemmas(context);
+        } else {
+          disable_splx_eager_lemmas(context);
+        }
       }
       print_ok();
     }
@@ -1856,11 +1827,11 @@ static void yices_setparam_cmd(const char *param, const param_val_t *val) {
     if (param_val_to_bool(param, val, &tt, &reason)) {
       ctx_parameters.splx_periodic_icheck = tt;
       if (context != NULL) {
-	if (tt) {
-	  enable_splx_periodic_icheck(context);
-	} else {
-	  disable_splx_periodic_icheck(context);
-	}
+        if (tt) {
+          enable_splx_periodic_icheck(context);
+        } else {
+          disable_splx_periodic_icheck(context);
+        }
       }
       print_ok();
     }
@@ -2077,7 +2048,7 @@ static void yices_showparams_cmd(void) {
   uint32_t i;
 
   for (i=0; i<NUM_PARAMETERS; i++) {
-    show_param(i, 20);
+    show_param((yices_param_t)i, 20);
   }
   fputc('\n', stdout);
   fflush(stdout);
@@ -2089,111 +2060,111 @@ static void yices_showparams_cmd(void) {
  */
 static void show_stats(dpll_stats_t *stat) {
   printf("Core\n");
-  printf(" restarts                : %"PRIu32"\n", stat->restarts);
-  printf(" simplify db             : %"PRIu32"\n", stat->simplify_calls);
-  printf(" reduce db               : %"PRIu32"\n", stat->reduce_calls);
-  printf(" decisions               : %"PRIu64"\n", stat->decisions);
-  printf(" random decisions        : %"PRIu64"\n", stat->random_decisions);
-  printf(" propagations            : %"PRIu64"\n", stat->propagations);
-  printf(" conflicts               : %"PRIu64"\n", stat->conflicts);
-  printf(" theory propagations     : %"PRIu32"\n", stat->th_props);
-  printf(" propagation-lemmas      : %"PRIu32"\n", stat->th_prop_lemmas);
-  printf(" theory conflicts        : %"PRIu32"\n", stat->th_conflicts);
-  printf(" conflict-lemmas         : %"PRIu32"\n", stat->th_conflict_lemmas);
+  printf(" restarts                : %" PRIu32 "\n", stat->restarts);
+  printf(" simplify db             : %" PRIu32 "\n", stat->simplify_calls);
+  printf(" reduce db               : %" PRIu32 "\n", stat->reduce_calls);
+  printf(" decisions               : %" PRIu64 "\n", stat->decisions);
+  printf(" random decisions        : %" PRIu64 "\n", stat->random_decisions);
+  printf(" propagations            : %" PRIu64 "\n", stat->propagations);
+  printf(" conflicts               : %" PRIu64 "\n", stat->conflicts);
+  printf(" theory propagations     : %" PRIu32 "\n", stat->th_props);
+  printf(" propagation-lemmas      : %" PRIu32 "\n", stat->th_prop_lemmas);
+  printf(" theory conflicts        : %" PRIu32 "\n", stat->th_conflicts);
+  printf(" conflict-lemmas         : %" PRIu32 "\n", stat->th_conflict_lemmas);
 
-  printf(" lits in pb. clauses     : %"PRIu64"\n", stat->prob_literals);
-  printf(" lits in learned clauses : %"PRIu64"\n", stat->learned_literals);
-  printf(" total lits. in learned  : %"PRIu64"\n", stat->literals_before_simpl);
-  printf(" subsumed lits.          : %"PRIu64"\n", stat->subsumed_literals);
-  printf(" deleted pb. clauses     : %"PRIu64"\n", stat->prob_clauses_deleted);
-  printf(" deleted learned clauses : %"PRIu64"\n", stat->learned_clauses_deleted);
-  printf(" deleted binary clauses  : %"PRIu64"\n", stat->bin_clauses_deleted);
+  printf(" lits in pb. clauses     : %" PRIu64 "\n", stat->prob_literals);
+  printf(" lits in learned clauses : %" PRIu64 "\n", stat->learned_literals);
+  printf(" total lits. in learned  : %" PRIu64 "\n", stat->literals_before_simpl);
+  printf(" subsumed lits.          : %" PRIu64 "\n", stat->subsumed_literals);
+  printf(" deleted pb. clauses     : %" PRIu64 "\n", stat->prob_clauses_deleted);
+  printf(" deleted learned clauses : %" PRIu64 "\n", stat->learned_clauses_deleted);
+  printf(" deleted binary clauses  : %" PRIu64 "\n", stat->bin_clauses_deleted);
 }
 
 static void show_egraph_stats(egraph_stats_t *stat) {
   printf("Egraph\n");
-  printf(" prop. to core           : %"PRIu32"\n", stat->th_props);
-  printf(" conflicts               : %"PRIu32"\n", stat->th_conflicts);
-  printf(" non-distinct lemmas     : %"PRIu32"\n", stat->nd_lemmas);
-  printf(" auxiliary eqs. created  : %"PRIu32"\n", stat->aux_eqs);
-  printf(" dyn boolack. lemmas     : %"PRIu32"\n", stat->boolack_lemmas);
-  printf(" other dyn ack.lemmas    : %"PRIu32"\n", stat->ack_lemmas);
-  printf(" final checks            : %"PRIu32"\n", stat->final_checks);
-  printf(" interface equalities    : %"PRIu32"\n", stat->interface_eqs);
+  printf(" prop. to core           : %" PRIu32 "\n", stat->th_props);
+  printf(" conflicts               : %" PRIu32 "\n", stat->th_conflicts);
+  printf(" non-distinct lemmas     : %" PRIu32 "\n", stat->nd_lemmas);
+  printf(" auxiliary eqs. created  : %" PRIu32 "\n", stat->aux_eqs);
+  printf(" dyn boolack. lemmas     : %" PRIu32 "\n", stat->boolack_lemmas);
+  printf(" other dyn ack.lemmas    : %" PRIu32 "\n", stat->ack_lemmas);
+  printf(" final checks            : %" PRIu32 "\n", stat->final_checks);
+  printf(" interface equalities    : %" PRIu32 "\n", stat->interface_eqs);
 }
 
 static void show_funsolver_stats(fun_solver_stats_t *stat) {
   printf("Arrays\n");
-  printf(" init. variables         : %"PRIu32"\n", stat->num_init_vars);
-  printf(" init. edges             : %"PRIu32"\n", stat->num_init_edges);
-  printf(" update axiom1           : %"PRIu32"\n", stat->num_update_axiom1);
-  printf(" update axiom2           : %"PRIu32"\n", stat->num_update_axiom2);
-  printf(" extensionality axioms   : %"PRIu32"\n", stat->num_extensionality_axiom);
+  printf(" init. variables         : %" PRIu32 "\n", stat->num_init_vars);
+  printf(" init. edges             : %" PRIu32 "\n", stat->num_init_edges);
+  printf(" update axiom1           : %" PRIu32 "\n", stat->num_update_axiom1);
+  printf(" update axiom2           : %" PRIu32 "\n", stat->num_update_axiom2);
+  printf(" extensionality axioms   : %" PRIu32 "\n", stat->num_extensionality_axiom);
 }
 
 static void show_quantsolver_stats(quant_solver_stats_t *stat) {
   printf("Quantifiers\n");
-  printf(" quantifiers             : %"PRIu32"\n", stat->num_quantifiers);
-  printf(" patterns                : %"PRIu32"\n", stat->num_patterns);
-  printf(" instances               : %"PRIu32"\n", stat->num_instances);
+  printf(" quantifiers             : %" PRIu32 "\n", stat->num_quantifiers);
+  printf(" patterns                : %" PRIu32 "\n", stat->num_patterns);
+  printf(" instances               : %" PRIu32 "\n", stat->num_instances);
 }
 
 static void show_simplex_stats(simplex_stats_t *stat) {
   printf("Simplex\n");
-  printf(" init. variables         : %"PRIu32"\n", stat->num_init_vars);
-  printf(" init. rows              : %"PRIu32"\n", stat->num_init_rows);
-  printf(" init. atoms             : %"PRIu32"\n", stat->num_atoms);
-  printf(" end atoms               : %"PRIu32"\n", stat->num_end_atoms);
-  printf(" elim. candidates        : %"PRIu32"\n", stat->num_elim_candidates);
-  printf(" elim. rows              : %"PRIu32"\n", stat->num_elim_rows);
-  printf(" fixed vars after simpl. : %"PRIu32"\n", stat->num_simpl_fvars);
-  printf(" rows after simpl.       : %"PRIu32"\n", stat->num_simpl_rows);
-  printf(" fixed vars              : %"PRIu32"\n", stat->num_fixed_vars);
-  printf(" rows in init. tableau   : %"PRIu32"\n", stat->num_rows);
-  printf(" rows in final tableau   : %"PRIu32"\n", stat->num_end_rows);
-  printf(" calls to make_feasible  : %"PRIu32"\n", stat->num_make_feasible);
-  printf(" pivots                  : %"PRIu32"\n", stat->num_pivots);
-  printf(" bland-rule activations  : %"PRIu32"\n", stat->num_blands);
-  printf(" simple lemmas           : %"PRIu32"\n", stat->num_binary_lemmas);
-  printf(" prop. to core           : %"PRIu32"\n", stat->num_props);
-  printf(" derived bounds          : %"PRIu32"\n", stat->num_bound_props);
-  printf(" productive propagations : %"PRIu32"\n", stat->num_prop_expl);
-  printf(" conflicts               : %"PRIu32"\n", stat->num_conflicts);
-  printf(" interface lemmas        : %"PRIu32"\n", stat->num_interface_lemmas);
-  printf(" reduced inter. lemmas   : %"PRIu32"\n", stat->num_reduced_inter_lemmas);
-  printf(" trichotomy lemmas       : %"PRIu32"\n", stat->num_tricho_lemmas);
-  printf(" reduced tricho. lemmas  : %"PRIu32"\n", stat->num_reduced_tricho);
+  printf(" init. variables         : %" PRIu32 "\n", stat->num_init_vars);
+  printf(" init. rows              : %" PRIu32 "\n", stat->num_init_rows);
+  printf(" init. atoms             : %" PRIu32 "\n", stat->num_atoms);
+  printf(" end atoms               : %" PRIu32 "\n", stat->num_end_atoms);
+  printf(" elim. candidates        : %" PRIu32 "\n", stat->num_elim_candidates);
+  printf(" elim. rows              : %" PRIu32 "\n", stat->num_elim_rows);
+  printf(" fixed vars after simpl. : %" PRIu32 "\n", stat->num_simpl_fvars);
+  printf(" rows after simpl.       : %" PRIu32 "\n", stat->num_simpl_rows);
+  printf(" fixed vars              : %" PRIu32 "\n", stat->num_fixed_vars);
+  printf(" rows in init. tableau   : %" PRIu32 "\n", stat->num_rows);
+  printf(" rows in final tableau   : %" PRIu32 "\n", stat->num_end_rows);
+  printf(" calls to make_feasible  : %" PRIu32 "\n", stat->num_make_feasible);
+  printf(" pivots                  : %" PRIu32 "\n", stat->num_pivots);
+  printf(" bland-rule activations  : %" PRIu32 "\n", stat->num_blands);
+  printf(" simple lemmas           : %" PRIu32 "\n", stat->num_binary_lemmas);
+  printf(" prop. to core           : %" PRIu32 "\n", stat->num_props);
+  printf(" derived bounds          : %" PRIu32 "\n", stat->num_bound_props);
+  printf(" productive propagations : %" PRIu32 "\n", stat->num_prop_expl);
+  printf(" conflicts               : %" PRIu32 "\n", stat->num_conflicts);
+  printf(" interface lemmas        : %" PRIu32 "\n", stat->num_interface_lemmas);
+  printf(" reduced inter. lemmas   : %" PRIu32 "\n", stat->num_reduced_inter_lemmas);
+  printf(" trichotomy lemmas       : %" PRIu32 "\n", stat->num_tricho_lemmas);
+  printf(" reduced tricho. lemmas  : %" PRIu32 "\n", stat->num_reduced_tricho);
   if (stat->num_make_intfeasible > 0 || stat->num_dioph_checks > 0) {
     printf("Integer arithmetic\n");
     printf("Integer arithmetic\n");
-    printf(" make integer feasible   : %"PRIu32"\n", stat->num_make_intfeasible);
-    printf(" branch atoms            : %"PRIu32"\n", stat->num_branch_atoms);
+    printf(" make integer feasible   : %" PRIu32 "\n", stat->num_make_intfeasible);
+    printf(" branch atoms            : %" PRIu32 "\n", stat->num_branch_atoms);
     printf("bound strengthening\n");
-    printf(" conflicts               : %"PRIu32"\n", stat->num_bound_conflicts);
-    printf(" recheck conflicts       : %"PRIu32"\n", stat->num_bound_recheck_conflicts);
+    printf(" conflicts               : %" PRIu32 "\n", stat->num_bound_conflicts);
+    printf(" recheck conflicts       : %" PRIu32 "\n", stat->num_bound_recheck_conflicts);
     printf("integrality tests\n");
-    printf(" conflicts               : %"PRIu32"\n", stat->num_itest_conflicts);
-    printf(" bound conflicts         : %"PRIu32"\n", stat->num_itest_bound_conflicts);
-    printf(" recheck conflicts       : %"PRIu32"\n", stat->num_itest_recheck_conflicts);
+    printf(" conflicts               : %" PRIu32 "\n", stat->num_itest_conflicts);
+    printf(" bound conflicts         : %" PRIu32 "\n", stat->num_itest_bound_conflicts);
+    printf(" recheck conflicts       : %" PRIu32 "\n", stat->num_itest_recheck_conflicts);
     printf("diohpantine solver\n");
-    printf(" gcd conflicts           : %"PRIu32"\n", stat->num_dioph_gcd_conflicts);
-    printf(" dioph checks            : %"PRIu32"\n", stat->num_dioph_checks);
-    printf(" dioph conflicts         : %"PRIu32"\n", stat->num_dioph_conflicts);
-    printf(" bound conflicts         : %"PRIu32"\n", stat->num_dioph_bound_conflicts);
-    printf(" recheck conflicts       : %"PRIu32"\n", stat->num_dioph_recheck_conflicts);
+    printf(" gcd conflicts           : %" PRIu32 "\n", stat->num_dioph_gcd_conflicts);
+    printf(" dioph checks            : %" PRIu32 "\n", stat->num_dioph_checks);
+    printf(" dioph conflicts         : %" PRIu32 "\n", stat->num_dioph_conflicts);
+    printf(" bound conflicts         : %" PRIu32 "\n", stat->num_dioph_bound_conflicts);
+    printf(" recheck conflicts       : %" PRIu32 "\n", stat->num_dioph_recheck_conflicts);
   }
 }
 
 static void show_bvsolver_stats(bv_solver_t *solver) {
   printf("Bit-vectors\n");
-  printf(" variables               : %"PRIu32"\n", bv_solver_num_vars(solver));
-  printf(" atoms                   : %"PRIu32"\n", bv_solver_num_atoms(solver));
-  printf(" eq. atoms               : %"PRIu32"\n", bv_solver_num_eq_atoms(solver));
-  printf(" dyn eq. atoms           : %"PRIu32"\n", solver->stats.on_the_fly_atoms);
-  printf(" ge atoms                : %"PRIu32"\n", bv_solver_num_ge_atoms(solver));
-  printf(" sge atoms               : %"PRIu32"\n", bv_solver_num_sge_atoms(solver));
-  printf(" equiv lemmas            : %"PRIu32"\n", solver->stats.equiv_lemmas);
-  printf(" interface lemmas        : %"PRIu32"\n", solver->stats.interface_lemmas);
+  printf(" variables               : %" PRIu32 "\n", bv_solver_num_vars(solver));
+  printf(" atoms                   : %" PRIu32 "\n", bv_solver_num_atoms(solver));
+  printf(" eq. atoms               : %" PRIu32 "\n", bv_solver_num_eq_atoms(solver));
+  printf(" dyn eq. atoms           : %" PRIu32 "\n", solver->stats.on_the_fly_atoms);
+  printf(" ge atoms                : %" PRIu32 "\n", bv_solver_num_ge_atoms(solver));
+  printf(" sge atoms               : %" PRIu32 "\n", bv_solver_num_sge_atoms(solver));
+  printf(" equiv lemmas            : %" PRIu32 "\n", solver->stats.equiv_lemmas);
+  printf(" interface lemmas        : %" PRIu32 "\n", solver->stats.interface_lemmas);
 }
 
 
@@ -2215,20 +2186,20 @@ static void yices_showstats_cmd(void) {
     core = context->core;
 
     show_stats(&core->stats);
-    printf(" boolean variables       : %"PRIu32"\n", core->nvars);
-    printf(" atoms                   : %"PRIu32"\n", core->atoms.natoms);
+    printf(" boolean variables       : %" PRIu32 "\n", core->nvars);
+    printf(" atoms                   : %" PRIu32 "\n", core->atoms.natoms);
 
     egraph = context->egraph;
     if (egraph != NULL) {
       show_egraph_stats(&egraph->stats);
-      printf(" egraph terms            : %"PRIu32"\n", egraph->terms.nterms);
-      printf(" egraph eq_quota         : %"PRIu32"\n", egraph->aux_eq_quota);
+      printf(" egraph terms            : %" PRIu32 "\n", egraph->terms.nterms);
+      printf(" egraph eq_quota         : %" PRIu32 "\n", egraph->aux_eq_quota);
       if (context_has_fun_solver(context)) {
-        fsolver = context->fun_solver;
+        fsolver = (fun_solver_t*)context->fun_solver;
         show_funsolver_stats(&fsolver->stats);
       }
       if (context_has_quant_solver(context)) {
-        qsolver = context->quant_solver;
+        qsolver = (quant_solver_t*)context->quant_solver;
         show_quantsolver_stats(&qsolver->stats);
       }
     }
@@ -2240,7 +2211,7 @@ static void yices_showstats_cmd(void) {
     }
 
     if (context_has_bv_solver(context)) {
-      show_bvsolver_stats(context->bv_solver);
+      show_bvsolver_stats((bv_solver_t*)context->bv_solver);
     }
     fputc('\n', stdout);
     printf("Runtime of '(check)'     : %.4f s\n", check_process_time);
@@ -2286,7 +2257,7 @@ static void yices_showtimeout_cmd(void) {
   if (timeout == 0) {
     printf("no timeout set\n");
   } else {
-    printf("timeout = %"PRIu32" s\n", timeout);
+    printf("timeout = %" PRIu32 " s\n", timeout);
   }
   fflush(stdout);
 }
@@ -2440,22 +2411,22 @@ static void yices_assert_cmd(term_t f) {
     switch (context_status(context)) {
     case STATUS_IDLE:
       if (yices_term_is_bool(f)) {
-	code = assert_formula(context, f);
-	if (code == CTX_NO_ERROR) {
-	  simple_istack_add(&assertions, f);
-	}
-	print_internalization_code(code);
+        code = assert_formula(context, f);
+        if (code == CTX_NO_ERROR) {
+          simple_istack_add(&assertions, f);
+        }
+        print_internalization_code(code);
       } else {
-	report_error("type error in assert: boolean term required");
+        report_error("type error in assert: boolean term required");
       }
       break;
 
     case STATUS_UNSAT:
       // cannot take more assertions
       if (context_base_level(context) == 0) {
-	fputs("The context is unsat. Try (reset).\n", stderr);
+        fputs("The context is unsat. Try (reset).\n", stderr);
       } else {
-	fputs("The context is unsat. Try (pop) or (reset).\n", stderr);
+        fputs("The context is unsat. Try (pop) or (reset).\n", stderr);
       }
       fflush(stderr);
       break;
@@ -2501,9 +2472,9 @@ static void yices_named_assert_cmd(term_t t, char *label) {
       // the context is unsat, but that wouldn't be consistent
       // with the regular assert.
       if (context_base_level(context) == 0) {
-	fputs("The context is unsat. Try (reset).\n", stderr);
+        fputs("The context is unsat. Try (reset).\n", stderr);
       } else {
-	fputs("The context is unsat. Try (pop) or (reset).\n", stderr);
+        fputs("The context is unsat. Try (pop) or (reset).\n", stderr);
       }
       fflush(stderr);
       break;
@@ -2523,8 +2494,8 @@ static void yices_named_assert_cmd(term_t t, char *label) {
  */
 static void timeout_handler(void *data) {
   assert(data == context && context != NULL);
-  if (context_status(data) == STATUS_SEARCHING) {
-    context_stop_search(data);
+  if (context_status((context_t*)data) == STATUS_SEARCHING) {
+    context_stop_search((context_t*)data);
     if (verbosity > 0) {
       // Fix this: not safe in a handler
       fputs("\nTimeout\n", stderr);
@@ -2739,7 +2710,7 @@ static void yices_check_cmd(void) {
 
     } else {
       if (code == TRIVIALLY_UNSAT) {
-	timeout = 0; // to be consistent
+        timeout = 0; // to be consistent
       }
       // either an error or trivially unsat
       print_internalization_code(code);
@@ -2770,45 +2741,45 @@ static void yices_check_cmd(void) {
 
     case STATUS_IDLE:
       if (labeled_assertion_stack_is_empty(&labeled_assertions)) {
-	/*
-	 * Regular check: no labeled assertions
-	 */
-	// call check than print the result
-	// if the search was interrupted, cleanup
-	stat = do_check();
-	print_status(stat);
-	if (stat == YICES_STATUS_INTERRUPTED) {
-	  if (mode == CTX_MODE_INTERACTIVE) {
-	    context_cleanup(context);
-	    assert(context_status(context) == STATUS_IDLE);
-	  } else {
-	    // force quit
-	    done = true;
-	  }
-	}
+        /*
+         * Regular check: no labeled assertions
+         */
+        // call check than print the result
+        // if the search was interrupted, cleanup
+        stat = do_check();
+        print_status(stat);
+        if (stat == YICES_STATUS_INTERRUPTED) {
+          if (mode == CTX_MODE_INTERACTIVE) {
+            context_cleanup(context);
+            assert(context_status(context) == STATUS_IDLE);
+          } else {
+            // force quit
+            done = true;
+          }
+        }
       } else {
-	/*
-	 * Compute an unsat core; labeled assertions are treated
-	 * as assumptions.
-	 */
-	stat = check_unsat_core();
-	if (stat != STATUS_ERROR) {
-	  print_status(stat);
-	}
-	if (stat == YICES_STATUS_INTERRUPTED) {
-	  // try to cleanup if we're in interactive mode
-	  if (mode == CTX_MODE_INTERACTIVE) {
-	    context_cleanup(context);
-	    assert(context_status(context) == STATUS_IDLE);
-	    if (unsat_core != NULL) {
-	      free_assumptions(unsat_core);
-	      unsat_core = NULL;
-	    }
-	  } else {
-	    // force quit
-	    done = true;
-	  }
-	}
+        /*
+         * Compute an unsat core; labeled assertions are treated
+         * as assumptions.
+         */
+        stat = check_unsat_core();
+        if (stat != STATUS_ERROR) {
+          print_status(stat);
+        }
+        if (stat == YICES_STATUS_INTERRUPTED) {
+          // try to cleanup if we're in interactive mode
+          if (mode == CTX_MODE_INTERACTIVE) {
+            context_cleanup(context);
+            assert(context_status(context) == STATUS_IDLE);
+            if (unsat_core != NULL) {
+              free_assumptions(unsat_core);
+              unsat_core = NULL;
+            }
+          } else {
+            // force quit
+            done = true;
+          }
+        }
       }
       break;
 
@@ -2849,16 +2820,16 @@ static void yices_check_assuming_cmd(uint32_t n, const signed_symbol_t *a) {
     }
     if (status == YICES_STATUS_INTERRUPTED) {
       if (mode == CTX_MODE_INTERACTIVE) {
-	// recover
-	context_cleanup(context);
-	assert(context_status(context) == STATUS_IDLE);
-	if (unsat_assumptions != NULL) {
-	  free_assumptions(unsat_assumptions);
-	  unsat_assumptions = NULL;
-	}
+        // recover
+        context_cleanup(context);
+        assert(context_status(context) == STATUS_IDLE);
+        if (unsat_assumptions != NULL) {
+          free_assumptions(unsat_assumptions);
+          unsat_assumptions = NULL;
+        }
       } else {
-	// force exit
-	done = true;
+        // force exit
+        done = true;
       }
     }
   }
@@ -2911,19 +2882,19 @@ static void yices_show_unsat_core_cmd(void) {
       switch (unsat_core->status) {
       case STATUS_UNKNOWN:
       case STATUS_SAT:
-	report_error("no unsat core: the context is satisfiable");
-	break;
+        report_error("no unsat core: the context is satisfiable");
+        break;
 
       case STATUS_UNSAT:
-	show_core(unsat_core);
-	break;
+        show_core(unsat_core);
+        break;
 
       case STATUS_IDLE:
       case STATUS_SEARCHING:
       case YICES_STATUS_INTERRUPTED:
       default:
-	freport_bug(stderr, "unexpected context status in 'show-unsat-core'");
-	break;
+        freport_bug(stderr, "unexpected context status in 'show-unsat-core'");
+        break;
       }
     }
   }
@@ -2947,19 +2918,19 @@ static void yices_show_unsat_assumptions_cmd(void) {
       switch (unsat_assumptions->status) {
       case STATUS_UNKNOWN:
       case STATUS_SAT:
-	report_error("no unsat assumptions: the context is satisfiable");
-	break;
+        report_error("no unsat assumptions: the context is satisfiable");
+        break;
 
       case STATUS_UNSAT:
-	show_core(unsat_assumptions);
-	break;
+        show_core(unsat_assumptions);
+        break;
 
       case STATUS_IDLE:
       case STATUS_SEARCHING:
       case YICES_STATUS_INTERRUPTED:
       default:
-	freport_bug(stderr, "unexpected context status in 'show-unsat-assumptions'");
-	break;
+        freport_bug(stderr, "unexpected context status in 'show-unsat-assumptions'");
+        break;
       }
     }
   }
@@ -3176,7 +3147,7 @@ static void print_ef_status(void) {
   assert(efsolver != NULL && ef_client_globals.efdone);
 
   if (verbosity > 0) {
-    printf("ef-solve: %"PRIu32" iterations\n", efsolver->iters);
+    printf("ef-solve: %" PRIu32 " iterations\n", efsolver->iters);
   }
 
   stat = efsolver->status;
@@ -3387,9 +3358,9 @@ static void yices_export_cmd(const char *s) {
     } else {
       assert(context != NULL && (context->logic == NONE || context->logic == QF_BV));
       if (context_status(context) == STATUS_IDLE) {
-	bitblast_then_export(context, s);
+        bitblast_then_export(context, s);
       } else {
-	do_export(context, s);
+        do_export(context, s);
       }
     }
     break;
@@ -3421,14 +3392,14 @@ static void yices_show_implicant_cmd(void) {
       report_show_implicant_error(yices_error_code());
     } else {
       if (yices_pp_term_array(stdout, v.size, v.data, 140, UINT32_MAX, 0, 0) < 0) {
-	/*
-	 * Error in pp_term_array
-	 */
-	if (yices_error_code() == OUTPUT_ERROR) {
-	  report_system_error("stdout");
-	} else {
-	  freport_bug(stderr, "invalid term in 'show-implicant'");
-	}
+        /*
+         * Error in pp_term_array
+         */
+        if (yices_error_code() == OUTPUT_ERROR) {
+          report_system_error("stdout");
+        } else {
+          freport_bug(stderr, "invalid term in 'show-implicant'");
+        }
       }
       fflush(stdout);
     }
@@ -3982,7 +3953,7 @@ static void init_yices_tstack(tstack_t *stack) {
  * This is a separate function so that we can invoke yices as a foreign
  * function call in LISP.
  */
-int yices_main(int argc, char *argv[]) {
+YICES_EXTERN int yices_main(int argc, char *argv[]) {
   int32_t code;
   int exit_code;
 

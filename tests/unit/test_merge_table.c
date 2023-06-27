@@ -23,7 +23,7 @@
 
 #include "solvers/bv/merge_table.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -38,7 +38,7 @@ static void show_all_roots(mtbl_t *table, uint32_t n) {
 
   for (x=0; x<n; x++) {
     y = mtbl_get_root(table, x);
-    printf("root[%"PRId32"] = %"PRId32"\n", x, y);
+    printf("root[%" PRId32 "] = %" PRId32 "\n", x, y);
   }
 }
 
@@ -52,7 +52,7 @@ static void show_roots(mtbl_t *table, uint32_t n) {
   for (x=0; x<n; x++) {
     y = mtbl_get_root(table, x);
     if (x != y) {
-      printf("root[%"PRId32"] = %"PRId32"\n", x, y);
+      printf("root[%" PRId32 "] = %" PRId32 "\n", x, y);
     }
   }
 }
@@ -96,20 +96,20 @@ static bool check_roots(mtbl_t *table, uint32_t n, int32_t *a) {
 static void test_merge(mtbl_t *table, int32_t x, int32_t y) {
   int32_t r, s;
 
-  printf("test_merge %"PRId32" and %"PRId32"\n", x, y);
+  printf("test_merge %" PRId32 " and %" PRId32 "\n", x, y);
   if (mtbl_equiv(table, x, y)) {
     printf(" ---> not mergeable: already in the same class\n");
   } else {
     r = mtbl_get_root(table, x);
     assert(mtbl_is_root(table, r));
-    printf(" ---> root[%"PRId32"] = %"PRId32"\n", x, r);
+    printf(" ---> root[%" PRId32 "] = %" PRId32 "\n", x, r);
 
     s = mtbl_get_root(table, y);
     assert(mtbl_is_root(table, s));
-    printf(" ---> root[%"PRId32"] = %"PRId32"\n", y, s);
+    printf(" ---> root[%" PRId32 "] = %" PRId32 "\n", y, s);
 
     mtbl_map(table, r, y);
-    printf(" ---> setting map[%"PRId32"] := %"PRId32"\n", r, y);
+    printf(" ---> setting map[%" PRId32 "] := %" PRId32 "\n", r, y);
 
     // check that all x, y, r all have root s
     if (mtbl_get_root(table, x) != s ||

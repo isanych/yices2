@@ -23,7 +23,7 @@
 
 #include "utils/int_bv_sets.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -41,8 +41,8 @@ static void print_set(int_bvset_t *s) {
   uint32_t i, k, n;
 
   printf("set %p\n", s);
-  printf("  size = %" PRIu32" (%"PRIu32" bytes)\n", s->size, s->size/8);
-  printf("  nelems = %"PRIu32"\n", s->nbits);
+  printf("  size = %" PRIu32" (%" PRIu32 " bytes)\n", s->size, s->size/8);
+  printf("  nelems = %" PRIu32 "\n", s->nbits);
   n = s->nbits;
   if (n == 0) {
     printf("  empty\n");
@@ -53,10 +53,10 @@ static void print_set(int_bvset_t *s) {
       if (int_bvset_member(s, i)) {
 	k ++;
 	if (k > 10) {
-	  printf("\n    %3"PRIu32, i);
+	  printf("\n    %3" PRIu32, i);
 	  k = 0;
 	} else {
-	  printf(" %3"PRIu32, i);
+	  printf(" %3" PRIu32, i);
 	}
       }
     }
@@ -78,7 +78,7 @@ int main(void) {
   print_set(&s);
 
   x = 7;
-  printf("\nAdding %"PRIu32": ", x);
+  printf("\nAdding %" PRIu32 ": ", x);
   if (int_bvset_add_check(&s, x)) {
     printf("new element\n");
   } else {
@@ -88,7 +88,7 @@ int main(void) {
 
 
   x = 8;
-  printf("\nAdding %"PRIu32": ", x);
+  printf("\nAdding %" PRIu32 ": ", x);
   if (int_bvset_add_check(&s, x)) {
     printf("new element\n");
   } else {
@@ -99,7 +99,7 @@ int main(void) {
   n = 400;
   for (i=0; i<n; i++) {
     x = random() % 200;
-    printf("\nAdding %"PRIu32": ", x);
+    printf("\nAdding %" PRIu32 ": ", x);
     if (int_bvset_add_check(&s, x)) {
       printf("new element\n");
     } else {
@@ -110,7 +110,7 @@ int main(void) {
 
   printf("\nCheck members\n");
   for (i=0; i<=200; i++) {
-    printf(" %"PRIu32": ", i);
+    printf(" %" PRIu32 ": ", i);
     if (int_bvset_member(&s, i)) {
       printf("present\n");
     } else {
@@ -130,7 +130,7 @@ int main(void) {
   n = 500;
   for (i=0; i<n; i++) {
     x = random() % 1000;
-    printf("\nAdding %"PRIu32": ", x);
+    printf("\nAdding %" PRIu32 ": ", x);
     if (int_bvset_add_check(&s, x)) {
       printf("new element\n");
     } else {
@@ -141,7 +141,7 @@ int main(void) {
 
   printf("\nCheck members\n");
   for (i=0; i<=1000; i++) {
-    printf(" %"PRIu32": ", i);
+    printf(" %" PRIu32 ": ", i);
     if (int_bvset_member(&s, i)) {
       printf("present\n");
     } else {

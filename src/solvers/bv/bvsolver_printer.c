@@ -35,13 +35,13 @@
  * VARIABLE TABLE
  */
 static void print_bvvar(FILE *f, thvar_t x) {
-  fprintf(f, "u!%"PRId32, x);
+  fprintf(f, "u!%" PRId32, x);
 }
 
 static void print_bvvar_power(FILE *f, varexp_t *p) {
   print_bvvar(f, p->var);
   if (p->exp > 1) {
-    fprintf(f, "^%"PRIu32, p->exp);
+    fprintf(f, "^%" PRIu32, p->exp);
   }
 }
 
@@ -221,7 +221,7 @@ static void print_bv_vardef(FILE *f, bv_vartable_t *vtbl, thvar_t x) {
 
   nbits = bvvar_bitsize(vtbl, x);
   print_bvvar(f, x);
-  fprintf(f, ":bv[%"PRIu32"] = ", nbits);
+  fprintf(f, ":bv[%" PRIu32 "] = ", nbits);
   switch (bvvar_tag(vtbl, x)) {
   case BVTAG_VAR:
     fputs("var", f);
@@ -322,7 +322,7 @@ static void print_pseudo_literal(FILE *f, remap_table_t *table, literal_t s) {
     fputs("f", f);
   } else {
     if (is_neg(s)) fputc('~', f);
-    fprintf(f, "p!%"PRId32, var_of(s));
+    fprintf(f, "p!%" PRId32, var_of(s));
   }
 }
 
@@ -704,7 +704,7 @@ void print_bv_solver_bounds(FILE *f, bv_solver_t *solver) {
   queue = &solver->bqueue;
   n = queue->top;
   for (i=0; i<n; i++) {
-    fprintf(f, " bound[%"PRIu32"]: ", i);
+    fprintf(f, " bound[%" PRIu32 "]: ", i);
     print_bv_solver_bound(f, solver, queue->data + i);
     fputc('\n', f);
   }
@@ -721,9 +721,9 @@ void print_bv_solver_bounds(FILE *f, bv_solver_t *solver) {
  */
 static void print_nocc(FILE *f, node_occ_t n) {
   if (sign_of_occ(n) == 0) {
-    fprintf(f, "+n%"PRId32, (n>>1));
+    fprintf(f, "+n%" PRId32, (n>>1));
   } else {
-    fprintf(f, "-n%"PRId32, (n>>1));
+    fprintf(f, "-n%" PRId32, (n>>1));
   }
 }
 
@@ -737,7 +737,7 @@ static void print_leaf_node(FILE *f, bvc_leaf_t *d) {
 }
 
 static void print_zero_node(FILE *f, bvc_zero_t *d) {
-  fprintf(f, "[ZERO %"PRIu32" bits]", d->header.bitsize);  
+  fprintf(f, "[ZERO %" PRIu32 " bits]", d->header.bitsize);  
 }
 
 static void print_constant_node(FILE *f, bvc_constant_t *d) {
@@ -792,7 +792,7 @@ static void print_prod_node(FILE *f, bvc_prod_t *d) {
     fputc(' ', f);
     print_nocc(f, d->prod[i].var);
     if (d->prod[i].exp > 1) {
-      fprintf(f, "^%"PRId32, d->prod[i].exp);
+      fprintf(f, "^%" PRId32, d->prod[i].exp);
     }
   }
   fputc(']', f);
@@ -872,7 +872,7 @@ static void print_use_list(FILE *f, int32_t *a) {
     fprintf(f, "(");
     for (i=0; i<n; i++) {
       if (i > 0) fputc(' ', f);
-      fprintf(f, "n%"PRId32, a[i]);
+      fprintf(f, "n%" PRId32, a[i]);
     }
     fprintf(f, ")");
   }
@@ -887,7 +887,7 @@ static void print_use_list(FILE *f, int32_t *a) {
 static void print_node(FILE *f, bvc_dag_t *dag, bvnode_t q) {
   assert(0 < q && q <= dag->nelems);
 
-  fprintf(f, "n%"PRId32": ", q);
+  fprintf(f, "n%" PRId32 ": ", q);
   print_node_descriptor(f, dag->desc[q]);
   fprintf(f, "\n");
 #if 0
@@ -910,7 +910,7 @@ static void print_list(FILE *f, bvc_dag_t *dag, int32_t k) {
     fprintf(f, " empty");
   } else {
     do {
-      fprintf(f, " n%"PRId32, i);
+      fprintf(f, " n%" PRId32, i);
       i = dag->list[i].next;
     } while (i != k);
   }
@@ -929,7 +929,7 @@ static void print_flipped_nodes(FILE *f, bvc_dag_t *dag) {
   n = dag->nelems;
   for (i=1; i<=n; i++) {
     if (tst_bit(flipped, i)) {
-      fprintf(f, " n%"PRId32, i);
+      fprintf(f, " n%" PRId32, i);
     }
   }
 }

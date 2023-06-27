@@ -48,11 +48,9 @@
 #include "utils/pointer_vectors.h"
 #include "utils/ptr_array_sort2.h"
 #include "utils/ptr_partitions.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 
@@ -949,8 +947,8 @@ static literal_t apply_edge_equal_args(fun_solver_t *solver, composite_t *c, fun
   if (n == 2) {
     l = egraph_make_eq(egraph, composite_child(c, 1), e->index[0]);
 
-#if TRACE
-    printf("edge constraint: f!%"PRId32" --> f!%"PRId32"\n", e->source, e->target);
+#if YICES_TRACE
+    printf("edge constraint: f!%" PRId32 " --> f!%" PRId32 "\n", e->source, e->target);
     print_literal(stdout, l);
     printf(" := ");
     print_egraph_atom_of_literal(stdout, egraph, l);
@@ -967,8 +965,8 @@ static literal_t apply_edge_equal_args(fun_solver_t *solver, composite_t *c, fun
     }
     l = mk_and_gate(solver->gate_manager, v->size, v->data);
 
-#if TRACE
-    printf("edge constraint: f!%"PRId32" --> f!%"PRId32"\n", e->source, e->target);
+#if YICES_TRACE
+    printf("edge constraint: f!%" PRId32 " --> f!%" PRId32 "\n", e->source, e->target);
     print_literal(stdout, l);
     printf(" := (AND");
     for (i=0; i<v->size; i++) {
@@ -1063,11 +1061,11 @@ static void fun_solver_extensionality_axiom(fun_solver_t *solver, thvar_t x, thv
   l2 = egraph_make_eq(egraph, pos_occ(vtbl->eterm[x]), pos_occ(vtbl->eterm[y]));
 
 #if 0
-  printf("---> ARRAY SOLVER: extensionality axiom for f!%"PRId32" /= f!%"PRId32" ----\n", x, y);
+  printf("---> ARRAY SOLVER: extensionality axiom for f!%" PRId32 " /= f!%" PRId32 " ----\n", x, y);
 #endif
 
-#if TRACE
-  printf("\n---- Extensionality axiom for f!%"PRId32" /= f!%"PRId32" ----\n", x, y);
+#if YICES_TRACE
+  printf("\n---- Extensionality axiom for f!%" PRId32 " /= f!%" PRId32 " ----\n", x, y);
   print_eterm_def(stdout, solver->egraph, vtbl->eterm[x]);
   print_eterm_def(stdout, solver->egraph, vtbl->eterm[y]);
   printf("New terms:\n");
@@ -1084,13 +1082,13 @@ static void fun_solver_extensionality_axiom(fun_solver_t *solver, thvar_t x, thv
   printf("\n");
   printf("Clause:\n");
   printf("  (OR ");
-  print_literal(stdout, not(l1));
+  print_literal(stdout, not_(l1));
   printf(" ");
   print_literal(stdout, l2);
   printf(")\n\n");
 #endif
 
-  add_binary_clause(solver->core, not(l1), l2);
+  add_binary_clause(solver->core, not_(l1), l2);
 
   ivector_reset(v);
 
@@ -1349,10 +1347,10 @@ static void normalize_app_vector(fun_solver_t *solver, void **v) {
     ptr_array_sort2(v, n, egraph, (ptr_cmp_fun_t) app_lt);
 
     // remove duplicates
-    c = v[0];
+    c = (composite_t*)v[0];
     j = 1;
     for (i=1; i<n; i++) {
-      d = v[i];
+      d = (composite_t*)v[i];
       if (! app_equiv(egraph, c, d)) {
         v[j] = d;
         c = d;
@@ -1456,12 +1454,12 @@ static void negate_vector(ivector_t *v) {
 
   n = v->size;
   for (i=0; i<n; i++) {
-    v->data[i] = not(v->data[i]);
+    v->data[i] = not_(v->data[i]);
   }
 }
 
 
-#if TRACE
+#if YICES_TRACE
 /*
  * For debugging/trace: return the length of the path from x to z
  */
@@ -1508,7 +1506,7 @@ static void fun_solver_add_axiom2(fun_solver_t *solver, thvar_t x, thvar_t z, co
 
   vtbl = &solver->vtbl;
 
-#if TRACE
+#if YICES_TRACE
   printf("\n--- Update conflict ---\n");
 #if 0
   printf("Classes:\n");
@@ -1520,15 +1518,15 @@ static void fun_solver_add_axiom2(fun_solver_t *solver, thvar_t x, thvar_t z, co
   printf("\n\n");
 #endif
 
-  printf("Source var: f!%"PRId32", ", x);
+  printf("Source var: f!%" PRId32 ", ", x);
   print_eterm_def(stdout, solver->egraph, fun_solver_eterm_of_var(solver, x));
-  printf("Target var: f!%"PRId32", ", z);
+  printf("Target var: f!%" PRId32 ", ", z);
   print_eterm_def(stdout, solver->egraph, fun_solver_eterm_of_var(solver, z));
   printf("Source app: ");
   print_eterm_def(stdout, solver->egraph, c->id);
   printf("Target app: ");
   print_eterm_def(stdout, solver->egraph, d->id);
-  printf("Path length: %"PRIu32"\n", path_length(solver, x, z));
+  printf("Path length: %" PRIu32 "\n", path_length(solver, x, z));
 
 #if 0
   printf("Path:\n");
@@ -1555,12 +1553,12 @@ static void fun_solver_add_axiom2(fun_solver_t *solver, thvar_t x, thvar_t z, co
   collect_path_atoms(solver, x, z, c, d, lemma);
   collect_equal_arg_atoms(solver, c, d, lemma);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n--- Update lemma ---\n");
 #endif
 
   if (lemma->size > 0) {
-#if TRACE
+#if YICES_TRACE
     printf("path constraints:\n");
     if (lemma->size == 1) {
       print_egraph_atom_of_literal(stdout, solver->egraph, lemma->data[0]);
@@ -1596,7 +1594,7 @@ static void fun_solver_add_axiom2(fun_solver_t *solver, thvar_t x, thvar_t z, co
   l = equal_applies(solver, c, d);
   ivector_push(lemma, l);
 
-#if TRACE
+#if YICES_TRACE
   if (lemma->size > 1) {
     printf("antecedents:\n");
     for (i=0; i<lemma->size - 1; i++) {
@@ -1615,7 +1613,7 @@ static void fun_solver_add_axiom2(fun_solver_t *solver, thvar_t x, thvar_t z, co
 
   add_clause(solver->core, lemma->size, lemma->data);
 
-#if TRACE
+#if YICES_TRACE
   printf("clause:\n  (OR");
   for (i=0; i<lemma->size; i++) {
     printf(" ");
@@ -1775,7 +1773,7 @@ static bool update_conflicts(fun_solver_t *solver) {
     m = ppv_size(v);
     assert(m >= 2);
     for (j=0; j<m; j++) {
-      c = v[j];
+      c = (composite_t*)v[j];
       x = root_app_var(egraph, c);
       if (update_conflict_for_application(solver, x, c)) {
         result = true;
@@ -1816,10 +1814,10 @@ static bool update_conflicts(fun_solver_t *solver) {
     if (num_updates == 1) {
       trace_printf(solver->core->trace, 5, "(array solver: 1 update lemma)\n");
     } else {
-      trace_printf(solver->core->trace, 5, "(array solver: %"PRIu32" update lemmas)\n", num_updates);
+      trace_printf(solver->core->trace, 5, "(array solver: %" PRIu32 " update lemmas)\n", num_updates);
     }
-#if TRACE
-    printf("---> ARRAY SOLVER: update axioms in %"PRIu32" classes out of %"PRIu32"\n", num_updates, n);
+#if YICES_TRACE
+    printf("---> ARRAY SOLVER: update axioms in %" PRIu32 " classes out of %" PRIu32 "\n", num_updates, n);
 #endif
   }
 
@@ -2061,7 +2059,7 @@ void fun_solver_start_search(fun_solver_t *solver) {
   solver->stats.num_init_edges = solver->etbl.nedges;
   solver->reconciled = false;
 
-#if TRACE
+#if YICES_TRACE
   printf("\n=== START SEARCH ===\n");
   print_fsolver_vars(stdout, solver);
   printf("\n");
@@ -2093,11 +2091,11 @@ bool fun_solver_propagate(fun_solver_t *solver) {
 fcheck_code_t fun_solver_final_check(fun_solver_t *solver) {
   fcheck_code_t result;
 
-#if TRACE
+#if YICES_TRACE
   printf("\n**** FUNSOLVER: FINAL CHECK ***\n\n");
 #endif
 
-#if TRACE
+#if YICES_TRACE
   print_egraph_terms(stdout, solver->egraph);
   printf("\n\n");
   print_egraph_root_classes_details(stdout, solver->egraph);
@@ -2112,7 +2110,7 @@ fcheck_code_t fun_solver_final_check(fun_solver_t *solver) {
   result = FCHECK_SAT;
   fun_solver_build_classes(solver);
   if (update_conflicts(solver)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> FUN Solver: update conflict\n");
 #endif
     result = FCHECK_CONTINUE;
@@ -2305,7 +2303,7 @@ bool fun_solver_var_is_constant(fun_solver_t *solver, thvar_t x) {
  * - always return (not l): branch on (x1 != x2)
  */
 literal_t fun_solver_select_eq_polarity(fun_solver_t *solver, thvar_t x1, thvar_t x2, literal_t l) {
-  return not(l);
+  return not_(l);
 }
 
 
@@ -2394,7 +2392,7 @@ static void build_apps_from_var(fun_solver_t *solver, thvar_t x, pvector_t *v) {
 
   n = v->size;
   for (i=0; i<n; i++) {
-    propagate_application(solver, v->data[i], x);
+    propagate_application(solver, (composite_t*)v->data[i], x);
   }
 }
 
@@ -2558,10 +2556,10 @@ static void fun_solver_assign_base_values(fun_solver_t *solver) {
       p = i - m;
       if (p > h) p = h;
 
-#if TRACE
-      printf("---> connected components of type tau: %"PRId32"\n", tau);
-      printf("--->   range type: sigma = %"PRId32" of card = %"PRIu32"\n", sigma, h);
-      printf("--->   num classes = %"PRIu32"\n", i - m);
+#if YICES_TRACE
+      printf("---> connected components of type tau: %" PRId32 "\n", tau);
+      printf("--->   range type: sigma = %" PRId32 " of card = %" PRIu32 "\n", sigma, h);
+      printf("--->   num classes = %" PRIu32 "\n", i - m);
       fflush(stdout);
 #endif
 
@@ -2593,8 +2591,8 @@ static void fun_solver_assign_base_values(fun_solver_t *solver) {
 	k = vtbl->base[x];
 	assert(solver->base_value[k] == UNKNOWN_BASE_VALUE);
 	solver->base_value[k] = buffer.data[h];
-#if TRACE
-	printf("--->   base_value[%"PRId32"] = %"PRId32"\n", k, solver->base_value[k]);
+#if YICES_TRACE
+	printf("--->   base_value[%" PRId32 "] = %" PRId32 "\n", k, solver->base_value[k]);
 #endif
 	h ++;
 	if (h >= p) h = 0;
@@ -2665,8 +2663,8 @@ static bool equal_mappings(fun_solver_t *solver, void **v, void **w, int32_t dv,
   j = 0;
   p = 0; // number of terms examined
   while (i < n && j < m) {
-    c = v[i];
-    d = w[j];
+    c = (composite_t*)v[i];
+    d = (composite_t*)w[j];
     if (c == d) {
       i ++;
       j ++;
@@ -2699,7 +2697,7 @@ static bool equal_mappings(fun_solver_t *solver, void **v, void **w, int32_t dv,
 
   while (i < n) {
     assert(j == m);
-    c = v[i];
+    c = (composite_t*)v[i];
     if (egraph_term_label(egraph, c->id) != dw) {
       return false;
     }
@@ -2709,7 +2707,7 @@ static bool equal_mappings(fun_solver_t *solver, void **v, void **w, int32_t dv,
 
   while (j < m) {
     assert(i == n);
-    d = w[j];
+    d = (composite_t*)w[j];
     if (egraph_term_label(egraph, d->id) != dv) {
       return false;
     }
@@ -2830,7 +2828,7 @@ static int32_t fun_solver_sample_value_for_var(fun_solver_t *solver, thvar_t x) 
     d = -1;
   }
   for (i=0; i<app_size; i++) {
-    c = v[i];
+    c = (composite_t*)v[i];
     label = egraph_term_label(solver->egraph, c->id);
     if (label > d) d = label;
   }
@@ -3002,7 +3000,7 @@ uint32_t fun_solver_reconcile_model(fun_solver_t *solver, uint32_t max_eq) {
 
   assert(!solver->bases_ready && !solver->apps_ready);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n--- FUN SOLVER: Reconcile model ---\n");
   print_egraph_terms(stdout, solver->egraph);
   printf("\n\n");
@@ -3019,7 +3017,7 @@ uint32_t fun_solver_reconcile_model(fun_solver_t *solver, uint32_t max_eq) {
   init_stratification(&levels, solver->types);
   fun_solver_stratify(&levels, solver);
 
-#if TRACE
+#if YICES_TRACE
   printf("Egraph:\n");
   print_egraph_terms(stdout, solver->egraph);
   printf("\nClasses:\n");
@@ -3125,11 +3123,11 @@ static void fun_solver_gen_interface_lemma(fun_solver_t *solver, literal_t l, th
   eq = egraph_make_eq(egraph, pos_occ(t), pos_occ(u));
 
 #if 0
-  printf("---> ARRAY SOLVER: interface lemma for f!%"PRId32" /= f!%"PRId32" ----\n", x1, x2);
+  printf("---> ARRAY SOLVER: interface lemma for f!%" PRId32 " /= f!%" PRId32 " ----\n", x1, x2);
 #endif
 
-#if TRACE
-  printf("\n---> Array solver: reconciliation lemma for f!%"PRId32" /= f!%"PRId32" ----\n", x1, x2);
+#if YICES_TRACE
+  printf("\n---> Array solver: reconciliation lemma for f!%" PRId32 " /= f!%" PRId32 " ----\n", x1, x2);
   print_eterm_def(stdout, solver->egraph, vtbl->eterm[x1]);
   print_eterm_def(stdout, solver->egraph, vtbl->eterm[x2]);
   printf("New terms:\n");
@@ -3147,13 +3145,13 @@ static void fun_solver_gen_interface_lemma(fun_solver_t *solver, literal_t l, th
   printf("\n");
   printf("Clause:\n");
   printf("  (OR ");
-  print_literal(stdout, not(l));
+  print_literal(stdout, not_(l));
   printf(" ");
-  print_literal(stdout, not(eq));
+  print_literal(stdout, not_(eq));
   printf(")\n\n");
 #endif
 
-  add_binary_clause(solver->core, not(l), not(eq));
+  add_binary_clause(solver->core, not_(l), not_(eq));
 
   ivector_reset(v);
 
@@ -3199,7 +3197,7 @@ static void fun_solver_collect_roots(fun_solver_t *solver, ivector_t *roots) {
 static particle_t fun_solver_fresh_particle(fun_solver_t *solver, int32_t k, type_t sigma, pstore_t *store) {
   int_hmap2_t *hmap;
   int_hmap2_rec_t *r;
-  bool new;
+  bool new_;
   particle_t d;
 
   assert(k < 0);
@@ -3209,8 +3207,8 @@ static particle_t fun_solver_fresh_particle(fun_solver_t *solver, int32_t k, typ
     assert(0 <= k && k < type_card(solver->types, sigma));
 
     hmap = fun_solver_get_fresh_hmap(solver);
-    r = int_hmap2_get(hmap, sigma, k, &new);
-    if (new) {
+    r = int_hmap2_get(hmap, sigma, k, &new_);
+    if (new_) {
       r->val = pstore_fresh_particle(store, sigma);
     }
     d = r->val;
@@ -3264,7 +3262,7 @@ static void convert_composite_to_map(egraph_t *egraph, function_type_t *f, map_t
   if (n <= 10) {
     a = aux;
   } else {
-    a = safe_malloc(n * sizeof(particle_t));
+    a = (particle_t*)safe_malloc(n * sizeof(particle_t));
   }
 
   for (i=0; i<n; i++) {
@@ -3316,11 +3314,11 @@ static map_t *build_map_for_var(fun_solver_t *solver, function_type_t *f, thvar_
    */
   if (f->ndom == 1) {
     for (i=0; i<n; i++) {
-      convert_composite_to_map1(egraph, f, map, app[i], store);
+      convert_composite_to_map1(egraph, f, map, (composite_t*)app[i], store);
     }
   } else {
     for (i=0; i<n; i++) {
-      convert_composite_to_map(egraph, f, map, app[i], store);
+      convert_composite_to_map(egraph, f, map, (composite_t*)app[i], store);
     }
   }
 
@@ -3558,7 +3556,7 @@ void fun_solver_build_model(fun_solver_t *solver, pstore_t *store) {
 
   assert(!solver->bases_ready && !solver->apps_ready);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n**** BUILD MODEL ***\n\n");
   print_egraph_terms(stdout, solver->egraph);
   printf("\n\n");
@@ -3578,7 +3576,7 @@ void fun_solver_build_model(fun_solver_t *solver, pstore_t *store) {
     fun_solver_init_values(solver);
     fun_solver_init_base_maps(solver, solver->num_bases);
 
-#if TRACE
+#if YICES_TRACE
     printf("\n--- Build model ---\n");
     printf("Classes:\n");
     print_fsolver_classes(stdout, solver);
@@ -3597,7 +3595,7 @@ void fun_solver_build_model(fun_solver_t *solver, pstore_t *store) {
     fun_solver_collect_roots(solver, &root_vector);
     fun_solver_build_maps(solver, &root_vector, &fun_tree, store);
 
-#if TRACE
+#if YICES_TRACE
     printf("\n--- Build model ---\n");
     print_fsolver_maps(stdout, solver);
     printf("\n\n");

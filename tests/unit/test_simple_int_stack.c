@@ -28,7 +28,7 @@ static void print_level(int32_t *data, uint32_t start, uint32_t end) {
 
   printf("[");
   for (i=start; i<end; i++) {
-    printf(" %"PRId32, data[i]);
+    printf(" %" PRId32, data[i]);
   }
   printf(" ]\n");
 }
@@ -37,19 +37,19 @@ static void print_stack(simple_istack_t *stack) {
   uint32_t i, j, n;
 
   printf("stack %p\n", stack);
-  printf("  top = %"PRIu32"\n", stack->top);
-  printf("  size = %"PRIu32"\n", stack->size);
-  printf("  nlevels = %"PRIu32"\n", stack->nlevels);
-  printf("  level_size = %"PRIu32"\n", stack->level_size);
+  printf("  top = %" PRIu32 "\n", stack->top);
+  printf("  size = %" PRIu32 "\n", stack->size);
+  printf("  nlevels = %" PRIu32 "\n", stack->nlevels);
+  printf("  level_size = %" PRIu32 "\n", stack->level_size);
 
   j = 0;
   n = stack->nlevels;
   for (i=0; i<n; i++) {
-    printf("  level[%"PRIu32"]: ", i);
+    printf("  level[%" PRIu32 "]: ", i);
     print_level(stack->data, j, stack->level[i]);
     j = stack->level[i];
   }
-  printf("  level[%"PRIu32"]: ", i);
+  printf("  level[%" PRIu32 "]: ", i);
   print_level(stack->data, j, stack->top);
   printf("---\n");
 }

@@ -25,7 +25,7 @@
 #include "utils/ptr_heap.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * random() does not exist on mingw but rand() does
@@ -73,7 +73,7 @@ static bool compare(pair_t *p1, pair_t *p2) {
  * Print pair p
  */
 static void print_pair(pair_t *p) {
-  printf("(%2"PRId32", %2"PRId32")\n", p->first, p->second);
+  printf("(%2" PRId32 ", %2" PRId32 ")\n", p->first, p->second);
 }
 
 
@@ -128,7 +128,7 @@ static void run_test(uint32_t n) {
   q = NULL;
   i = 0;
   for (;;) {
-    p = ptr_heap_get_min(&heap);
+    p = (pair_t*)ptr_heap_get_min(&heap);
     if (p == NULL) break;
     print_pair(p);
     if (q != NULL && ! compare(q, p)) {
@@ -151,14 +151,14 @@ int main(void) {
 
   init_ptr_heap(&heap, 0, (ptr_heap_cmp_fun_t) compare);
   for (i=0; i<10; i++) {
-    printf("\n=== Test %"PRIu32" ===\n", i);
+    printf("\n=== Test %" PRIu32 " ===\n", i);
     init_test_data(i);
     run_test(i);
     assert(ptr_heap_is_empty(&heap));
   }
 
   for (i=10; i<20; i++) {
-    printf("\n=== Test %"PRIu32" ===\n", i);
+    printf("\n=== Test %" PRIu32 " ===\n", i);
     init_test_data(20);
     run_test(20);
     assert(ptr_heap_is_empty(&heap));
@@ -166,7 +166,7 @@ int main(void) {
 
 
   for (i=20; i<30; i++) {
-    printf("\n=== Test %"PRIu32" ===\n", i);
+    printf("\n=== Test %" PRIu32 " ===\n", i);
     init_test_data_constant(6);
     run_test(6);
     assert(ptr_heap_is_empty(&heap));
@@ -174,7 +174,7 @@ int main(void) {
 
 
   for (i=30; i<50; i++) {
-    printf("\n=== Test %"PRIu32" ===\n", i);
+    printf("\n=== Test %" PRIu32 " ===\n", i);
     init_test_data(200);
     run_test(200);
     assert(ptr_heap_is_empty(&heap));

@@ -71,7 +71,7 @@ static inline int32_t sign_of(literal_t l) {
 }
 
 // negation of literal l
-static inline literal_t not(literal_t l) {
+static inline literal_t not_(literal_t l) {
   return l ^ 1;
 }
 

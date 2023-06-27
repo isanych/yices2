@@ -28,7 +28,7 @@
 #include "utils/cputime.h"
 #include "utils/memalloc.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -109,7 +109,7 @@ static void print_array(int32_t *a, uint32_t n) {
 
   l = 0;
   for (i=0; i<n; i++) {
-    printf(" %4"PRId32, a[i]);
+    printf(" %4" PRId32, a[i]);
     l ++;
     if (l >= 20) {
       printf("\n");
@@ -135,7 +135,7 @@ static void test_binary_search(int32_t *a, uint32_t n) {
   for (x=-12; x <top; x ++) {
     k = binary_search(a, n, x);
     j = sequential_search(a, n, x);
-    printf("index of %4"PRId32" = %"PRId32"\n", x, k);
+    printf("index of %4" PRId32 " = %" PRId32 "\n", x, k);
     if (j != k || (k>=0 && a[k] != x)) {
       printf("*** BUG ***\n");
     }
@@ -152,7 +152,7 @@ static void speed_test_binary_search(int32_t *a, uint32_t n) {
   int32_t x, top;
 
   top = 5 * n + 12;
-  printf("Binary search: size = %"PRIu32"   (10000*%"PRId32" searches)\n", n, top+12);
+  printf("Binary search: size = %" PRIu32 "   (10000*%" PRId32 " searches)\n", n, top+12);
   start = get_cpu_time();
   for (i=0; i<10000; i++) {
     for (x = -12; x<top; x++) {
@@ -173,7 +173,7 @@ static void speed_test_sequential_search(int32_t *a, uint32_t n) {
   int32_t x, top;
 
   top = 5 * n + 12;
-  printf("Sequential search: size = %"PRIu32"   (10000*%"PRId32" searches)\n", n, top+12);
+  printf("Sequential search: size = %" PRIu32 "   (10000*%" PRId32 " searches)\n", n, top+12);
   start = get_cpu_time();
   for (i=0; i<10000; i++) {
     for (x = -12; x<top; x++) {
@@ -194,7 +194,7 @@ int main(void) {
 
   for (n=0; n<30; n++) {
     a = (int32_t *) safe_malloc((n+1) * sizeof(int32_t));
-    printf("\n=== Test %"PRId32" ===\n", n);
+    printf("\n=== Test %" PRId32 " ===\n", n);
     init_array(a, n);
     test_binary_search(a, n);
     safe_free(a);

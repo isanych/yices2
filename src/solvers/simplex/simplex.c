@@ -35,28 +35,9 @@
 #include "utils/dprng.h"
 #include "utils/hash_functions.h"
 #include "utils/int_hash_classes.h"
+#include "yices_config.h"
 
-
-/*
- * To enable general trace, set TRACE to 1
- * To enable the debugging code, set DEBUG to 1
- * To dump the initial tableau, set DUMP to 1
- *
- * To trace simplifications and tableau initialization set TRACE_INIT to 1
- * To trace the theory propagation set TRACE_PROPAGATION to 1 (in
- * To trace the branch&bound algorithm set TRACE_BB to 1
- * To get a summary of general solution + bounds: TRACE_INTFEAS to 1
- */
-#define TRACE   0
-#define DEBUG   0
-#define DUMP    0
-
-#define TRACE_INIT 0
-#define TRACE_PROPAGATION 0
-#define TRACE_BB 0
-#define TRACE_INTFEAS 0
-
-#if TRACE || DEBUG || DUMP || TRACE_INIT || TRACE_PROPAGATION || TRACE_BB || TRACE_INTFEAS || !defined(NDEBUG)
+#if YICES_TRACE || YICES_DEBUG || YICES_DUMP || YICES_TRACE_INIT || YICES_TRACE_PROPAGATION || YICES_TRACE_BB || YICES_TRACE_INTFEAS || !defined(NDEBUG)
 
 #include <stdio.h>
 
@@ -73,7 +54,7 @@
 /*
  * Debugging functions are defined at the end of this file
  */
-#if DUMP
+#if YICES_DUMP
 
 static void print_simplex(FILE *f, simplex_solver_t *solver);
 static void dump_state(simplex_solver_t *solver);
@@ -81,7 +62,7 @@ static void dump_state(simplex_solver_t *solver);
 #endif
 
 
-#if DEBUG
+#if YICES_DEBUG
 
 static void check_assignment(simplex_solver_t *solver);
 static void check_nonbasic_assignment(simplex_solver_t *solver);
@@ -95,7 +76,7 @@ static void check_equation_satisfied(simplex_solver_t *solver, uint32_t r);
 #endif
 
 
-#if TRACE
+#if YICES_TRACE
 
 static void show_heap(FILE *f, simplex_solver_t *solver);
 
@@ -401,13 +382,13 @@ static inline uint32_t sign_of_assertion(int32_t a) {
   return ((uint32_t) a) & 1;
 }
 
-#if DEBUG || TRACE
+#if YICES_DEBUG || YICES_TRACE
 static inline bool assertion_is_true(int32_t a) {
   return sign_of_assertion(a) == 0;
 }
 #endif
 
-#if DEBUG
+#if YICES_DEBUG
 static inline bool assertion_is_false(int32_t a) {
   return sign_of_assertion(a) == 1;
 }
@@ -587,7 +568,7 @@ static void delete_saved_rows(pvector_t *v, uint32_t n) {
   assert(n <= k);
 
   for (i=n; i<k; i++) {
-    free_polynomial(v->data[i]);
+    free_polynomial((polynomial_t*)v->data[i]);
     v->data[i] = NULL;
   }
   pvector_shrink(v, n);
@@ -1133,12 +1114,12 @@ static void prop_eq_to_egraph(void *s, eterm_t t1, eterm_t t2) {
   simplex_solver_t *solver;
   egraph_t *egraph;
 
-  solver = s;
+  solver = (simplex_solver_t*)s;
   egraph = solver->egraph;
   assert(egraph != NULL);
 
 #if 0
-  printf("---> eq prop: g!%"PRId32" == g!%"PRId32"\n", t1, t2);
+  printf("---> eq prop: g!%" PRId32 " == g!%" PRId32 "\n", t1, t2);
 #endif
   egraph_propagate_equality(egraph, t1, t2, EXPL_ARITH_PROPAGATION, NULL);
 }
@@ -1181,7 +1162,7 @@ static bool eqprop_relevant_var(simplex_solver_t *solver, thvar_t x) {
 
   assert(arith_var_kind(vtbl, x) == AVAR_FREE || arith_var_kind(vtbl, x) == AVAR_POLY);
 
-  p = arith_var_def(vtbl, x);
+  p = (polynomial_t*)arith_var_def(vtbl, x);
 
   /*
    * If p is NULL, then x is a variable => relevant?
@@ -1388,7 +1369,7 @@ static void eqprop_record_eterm(simplex_solver_t *solver, thvar_t x, eterm_t t) 
   eqprop = solver->eqprop;
 
   assert(eqprop != NULL && (arith_var_kind(vtbl, x) == AVAR_FREE || arith_var_kind(vtbl, x) == AVAR_POLY));
-  p = arith_var_def(vtbl, x);
+  p = (polynomial_t*)arith_var_def(vtbl, x);
 
   record_offset_poly(&eqprop->mngr, t, x, p);
 }
@@ -1438,7 +1419,7 @@ static void eqprop_process_frozen_var(simplex_solver_t *solver, thvar_t x) {
    * - we propagate x == a and y == z + (a - c)
    */
   a = fixed_variable_value(solver, x);
-  p = arith_var_def(&solver->vtbl, x);
+  p = (polynomial_t*)arith_var_def(&solver->vtbl, x);
 
   assert_offset_equality(&eqprop->mngr, x, -1, a, x); // x == a with id = x
 
@@ -1500,7 +1481,7 @@ static void simplex_propagate_equalities(simplex_solver_t *solver) {
       print_simplex_var(stdout, solver, x);
       printf(" == ");
       print_simplex_var_value(stdout, solver, x);
-      printf(" (bound = %"PRIu32")\n", i);
+      printf(" (bound = %" PRIu32 ")\n", i);
       if (!arith_var_is_free(&solver->vtbl, x)) {
 	printf("     ");
 	print_simplex_vardef(stdout, solver, x);
@@ -1726,7 +1707,7 @@ static void create_binary_lemma(simplex_solver_t *solver, arith_atom_t *atom1, a
   assert(var_of_atom(atom1) == var_of_atom(atom2) && atom1 != atom2);
   assert(tag_of_atom(atom1) != tag_of_atom(atom2) || q_neq(bound_of_atom(atom1), bound_of_atom(atom2)));
 
-#if TRACE
+#if YICES_TRACE
   printf("---> create_binary_lemma:\n");
   printf("     ");
   print_simplex_atomdef(stdout, solver, boolvar_of_atom(atom1));
@@ -1761,25 +1742,25 @@ static void create_binary_lemma(simplex_solver_t *solver, arith_atom_t *atom1, a
   case GE_ATM:
     assert(tag_of_atom(atom2) == GE_ATM);
     if (q_ge(a, b)) {
-      add_binary_clause(solver->core, not(l1), l2);  // (x >= a) ==> (x >= b)
+      add_binary_clause(solver->core, not_(l1), l2);  // (x >= a) ==> (x >= b)
     } else {
-      add_binary_clause(solver->core, l1, not(l2));  // (x < a) ==> (x < b)
+      add_binary_clause(solver->core, l1, not_(l2));  // (x < a) ==> (x < b)
     }
     break;
 
   case LE_ATM:
     if (tag_of_atom(atom2) == GE_ATM) {
       if (q_lt(a, b)) {
-        add_binary_clause(solver->core, not(l1), not(l2));  // (x > a) or (x > b)
+        add_binary_clause(solver->core, not_(l1), not_(l2));  // (x > a) or (x > b)
       } else {
         add_binary_clause(solver->core, l1, l2);   // (x <= a) or (x >= b)
       }
     } else {
       assert(tag_of_atom(atom2) == LE_ATM);
       if (q_le(a, b)) {
-        add_binary_clause(solver->core, not(l1), l2);  // (x <= a) ==> (x <= b)
+        add_binary_clause(solver->core, not_(l1), l2);  // (x <= a) ==> (x <= b)
       } else {
-        add_binary_clause(solver->core, l1, not(l2));  // (x > a) ==> (x > b))
+        add_binary_clause(solver->core, l1, not_(l2));  // (x > a) ==> (x > b))
       }
     }
     break;
@@ -1788,20 +1769,20 @@ static void create_binary_lemma(simplex_solver_t *solver, arith_atom_t *atom1, a
     switch (tag_of_atom(atom2)) {
     case GE_ATM:
       if (q_ge(a, b)) {
-        add_binary_clause(solver->core, not(l1), l2); // (x == a) ==> (x >= b))
+        add_binary_clause(solver->core, not_(l1), l2); // (x == a) ==> (x >= b))
       } else {
-        add_binary_clause(solver->core, not(l1), not(l2));  // (x == a) ==> (x < b)
+        add_binary_clause(solver->core, not_(l1), not_(l2));  // (x == a) ==> (x < b)
       }
       break;
     case LE_ATM:
       if (q_le(a, b)) {
-        add_binary_clause(solver->core, not(l1), l2);   // (x == a) ==> (x <= b)
+        add_binary_clause(solver->core, not_(l1), l2);   // (x == a) ==> (x <= b)
       } else {
-        add_binary_clause(solver->core, not(l1), not(l2)); // (x == a) ==> (x > b);
+        add_binary_clause(solver->core, not_(l1), not_(l2)); // (x == a) ==> (x > b);
       }
       break;
     case EQ_ATM:
-      add_binary_clause(solver->core, not(l1), not(l2)); // (not (x == a)) or (not (x == b))
+      add_binary_clause(solver->core, not_(l1), not_(l2)); // (not (x == a)) or (not (x == b))
       break;
     }
   }
@@ -1911,7 +1892,7 @@ static bool trivial_variable(arith_vartable_t *tbl, thvar_t x) {
    * - if x is a free variable, the definition is NULL
    * - otherwise, the definition is a pointer to a polynomial
    */
-  q = arith_var_def(tbl, x);
+  q = (polynomial_t*)arith_var_def(tbl, x);
   return q != NULL && simple_poly(q);
 }
 
@@ -2043,7 +2024,7 @@ static bool all_integer_vars(simplex_solver_t *solver) {
 static void activate_variable(simplex_solver_t *solver, thvar_t x) {
   polynomial_t *p;
 
-  p = arith_var_def(&solver->vtbl, x);
+  p = (polynomial_t*)arith_var_def(&solver->vtbl, x);
   if (p != NULL && ! simple_poly(p)) {
     matrix_add_eq(&solver->matrix, x, p->mono, p->nterms);
   }
@@ -2199,7 +2180,7 @@ static literal_t make_ge_atom(simplex_solver_t *solver) {
    * Check whether the atom is trivially true or false
    */
   if (poly_buffer_is_zero(b) || poly_buffer_is_pos_constant(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> true\n");
 #endif
     reset_poly_buffer(b);
@@ -2207,7 +2188,7 @@ static literal_t make_ge_atom(simplex_solver_t *solver) {
   }
 
   if (poly_buffer_is_neg_constant(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> false\n");
 #endif
     reset_poly_buffer(b);
@@ -2221,7 +2202,7 @@ static literal_t make_ge_atom(simplex_solver_t *solver) {
   if (is_int) {
     // make coefficients integers
     negated = poly_buffer_make_nonconstant_integral(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> int scaling: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
@@ -2240,7 +2221,7 @@ static literal_t make_ge_atom(simplex_solver_t *solver) {
   } else {
     // make lead coefficient = 1
     negated = poly_buffer_make_monic(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> monic: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
@@ -2255,7 +2236,7 @@ static literal_t make_ge_atom(simplex_solver_t *solver) {
    * it's (x >= constant)
    */
   if (negated) {
-#if TRACE
+#if YICES_TRACE
     printf("---> atom ");
     print_simplex_var(stdout, solver, x);
     printf(" <= ");
@@ -2270,7 +2251,7 @@ static literal_t make_ge_atom(simplex_solver_t *solver) {
     return get_le_atom(solver, x, is_int, &solver->constant);
 
   } else {
-#if TRACE
+#if YICES_TRACE
     printf("---> atom ");
     print_simplex_var(stdout, solver, x);
     printf(" >= ");
@@ -2304,7 +2285,7 @@ static literal_t simplify_eq_atom(simplex_solver_t *solver, literal_t *l1, liter
   b = &solver->buffer;
 
   if (poly_buffer_is_zero(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> true\n");
 #endif
     reset_poly_buffer(b);
@@ -2312,7 +2293,7 @@ static literal_t simplify_eq_atom(simplex_solver_t *solver, literal_t *l1, liter
   }
 
   if (poly_buffer_is_nzconstant(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> false\n");
 #endif
     reset_poly_buffer(b);
@@ -2322,13 +2303,13 @@ static literal_t simplify_eq_atom(simplex_solver_t *solver, literal_t *l1, liter
   is_int = all_integer_vars(solver);
   if (is_int) {
     poly_buffer_make_integral(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> int scaling: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
 #endif
     if (! poly_buffer_gcd_test(b)) {
-#if TRACE
+#if YICES_TRACE
       printf("---> false by GCD test\n");
 #endif
       reset_poly_buffer(b);
@@ -2337,7 +2318,7 @@ static literal_t simplify_eq_atom(simplex_solver_t *solver, literal_t *l1, liter
   } else {
     poly_buffer_make_monic(b); // make lead coefficient = 1
 
-#if TRACE
+#if YICES_TRACE
     printf("---> monic: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
@@ -2346,7 +2327,7 @@ static literal_t simplify_eq_atom(simplex_solver_t *solver, literal_t *l1, liter
 
   x = decompose_and_get_var(solver);  // buffer is now equal to x - c where c = &solver->constant
 
-#if TRACE
+#if YICES_TRACE
   printf("---> atom ");
   print_simplex_var(stdout, solver, x);
   printf(" == ");
@@ -2392,7 +2373,7 @@ static void add_lb_axiom(simplex_solver_t *solver, thvar_t x, rational_t *c, boo
 
   assert(solver->base_level == solver->decision_level);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> add_lb_axiom: ");
   print_simplex_var(stdout, solver, x);
   if (strict) {
@@ -2420,7 +2401,7 @@ static void add_lb_axiom(simplex_solver_t *solver, thvar_t x, rational_t *c, boo
   if (k >= 0 && xq_lt(solver->bstack.bound + k, b)) {
     // Unsat: the existing upper bound on x is < b
     solver->unsat_before_search = true;
-#if TRACE
+#if YICES_TRACE
     printf("---> Conflict\n\n");
 #endif
     return;
@@ -2429,7 +2410,7 @@ static void add_lb_axiom(simplex_solver_t *solver, thvar_t x, rational_t *c, boo
   k = arith_var_lower_index(&solver->vtbl, x);
   if (k >= 0 && xq_ge(solver->bstack.bound + k, b)) {
     // Redundant: the existing lower bound is >= b
-#if TRACE
+#if YICES_TRACE
     printf("---> Redundant\n\n");
 #endif
     return;
@@ -2449,7 +2430,7 @@ static void add_ub_axiom(simplex_solver_t *solver, thvar_t x, rational_t *c, boo
 
   assert(solver->base_level == solver->decision_level);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> add_ub_axiom: ");
   print_simplex_var(stdout, solver, x);
   if (strict) {
@@ -2478,7 +2459,7 @@ static void add_ub_axiom(simplex_solver_t *solver, thvar_t x, rational_t *c, boo
   if (k >= 0 && xq_gt(solver->bstack.bound + k, b)) {
     // Unsat: existing lower bound on x is > b
     solver->unsat_before_search = true;
-#if TRACE
+#if YICES_TRACE
     printf("---> Conflict\n\n");
 #endif
     return;
@@ -2487,7 +2468,7 @@ static void add_ub_axiom(simplex_solver_t *solver, thvar_t x, rational_t *c, boo
   k = arith_var_upper_index(&solver->vtbl, x);
   if (k >= 0 && xq_le(solver->bstack.bound + k, b)) {
     // redundant: existing upper bound <= b
-#if TRACE
+#if YICES_TRACE
     printf("---> Redundant\n\n");
 #endif
     return;
@@ -2510,7 +2491,7 @@ static void add_eq_axiom(simplex_solver_t *solver) {
   poly_buffer_t *b;
   thvar_t x;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> simplex_add_eq_axiom: ");
   print_simplex_buffer(stdout, solver);
   printf(" == 0\n");
@@ -2518,14 +2499,14 @@ static void add_eq_axiom(simplex_solver_t *solver) {
 
   b = &solver->buffer;
   if (poly_buffer_is_zero(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> true\n");
 #endif
     goto done;
   }
 
   if (poly_buffer_is_nzconstant(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> false\n");
 #endif
     solver->unsat_before_search = true;
@@ -2534,13 +2515,13 @@ static void add_eq_axiom(simplex_solver_t *solver) {
 
   if (all_integer_vars(solver)) {
     poly_buffer_make_integral(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> int scaling: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
 #endif
     if (! poly_buffer_gcd_test(b)) {
-#if TRACE
+#if YICES_TRACE
       printf("---> false by GCD test\n");
 #endif
       solver->unsat_before_search = true;
@@ -2552,7 +2533,7 @@ static void add_eq_axiom(simplex_solver_t *solver) {
   // Check whether p == 0 can be rewritten to (x == constant)
   x = poly_buffer_convert_to_vareq(b, &solver->constant);
   if (x >= 0) {
-#if TRACE
+#if YICES_TRACE
     printf("---> simplified to ");
     print_simplex_var(stdout, solver, x);
     printf(" == ");
@@ -2566,7 +2547,7 @@ static void add_eq_axiom(simplex_solver_t *solver) {
   }
 
 
-#if TRACE
+#if YICES_TRACE
   printf("---> new row\n");
 #endif
   if (solver->save_rows) {
@@ -2595,11 +2576,11 @@ static void add_eq_or_diseq_axiom(simplex_solver_t *solver, bool tt) {
     l = simplify_eq_atom(solver, &l1, &l2);
     if (l == null_literal) {
       // l1 is (p >= 0), l2 is (p <= 0): assert (or (not l1) (not l2))
-      add_binary_clause(solver->core, not(l1), not(l2));
+      add_binary_clause(solver->core, not_(l1), not_(l2));
 
-#if TRACE
+#if YICES_TRACE
       printf("---> adding clause: ");
-      print_binary_clause(stdout, not(l1), not(l2));
+      print_binary_clause(stdout, not_(l1), not_(l2));
       printf("\n");
       if (var_of(l1) != const_bvar) {
 	print_simplex_atomdef(stdout, solver, var_of(l1));
@@ -2629,7 +2610,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
   bool negated;
   thvar_t x;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> simplex_add_ge_axiom: ");
   print_simplex_buffer(stdout, solver);
   if (tt) {
@@ -2643,7 +2624,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
   if (poly_buffer_is_zero(b) || poly_buffer_is_pos_constant(b)) {
     // p >= 0 is trivially true
     if (! tt) solver->unsat_before_search = true;
-#if TRACE
+#if YICES_TRACE
     if (!tt) {
       printf("---> unsat\n");
     } else {
@@ -2656,7 +2637,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
   if (poly_buffer_is_neg_constant(b)) {
     // p >= 0 is trivially false
     if (tt) solver->unsat_before_search = true;
-#if TRACE
+#if YICES_TRACE
     if (!tt) {
       printf("---> unsat\n");
     } else {
@@ -2672,7 +2653,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
    */
   if (all_integer_vars(solver)) {
     negated = poly_buffer_make_nonconstant_integral(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> int scaling: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
@@ -2685,7 +2666,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
       if (tt) {
         // (p >= 0) is equivalent to (x <= constant)
         add_ub_axiom(solver, x, &solver->constant, false);
-#if TRACE
+#if YICES_TRACE
 	printf("---> ");
 	print_simplex_vardef(stdout, solver, x);
 	printf("---> bound: ");
@@ -2696,7 +2677,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
         // not (p >= 0) is equivalent to (x >= constant + 1)
         q_add_one(&solver->constant);
         add_lb_axiom(solver, x, &solver->constant, false);
-#if TRACE
+#if YICES_TRACE
 	printf("---> ");
 	print_simplex_vardef(stdout, solver, x);
 	printf("---> bound: ");
@@ -2710,7 +2691,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
       if (tt) {
         // (p >= 0) is equivalent to (x >= constant)
         add_lb_axiom(solver, x, &solver->constant, false);
-#if TRACE
+#if YICES_TRACE
 	printf("---> ");
 	print_simplex_vardef(stdout, solver, x);
 	printf("---> bound: ");
@@ -2721,7 +2702,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
         // not (p >= 0) is equivalent to (x <= constant - 1)
         q_sub_one(&solver->constant);
         add_ub_axiom(solver, x, &solver->constant, false);
-#if TRACE
+#if YICES_TRACE
 	printf("---> ");
 	print_simplex_vardef(stdout, solver, x);
 	printf("---> bound: ");
@@ -2733,7 +2714,7 @@ static void add_ge_axiom(simplex_solver_t *solver, bool tt) {
 
   } else {
     negated = poly_buffer_make_monic(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> monic: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
@@ -2819,7 +2800,7 @@ thvar_t simplex_create_const(simplex_solver_t *solver, rational_t *q) {
  *   in the solver
  */
 thvar_t simplex_create_poly(simplex_solver_t *solver, polynomial_t *p, thvar_t *map) {
-#if TRACE
+#if YICES_TRACE
   thvar_t x;
 
   printf("\n---> simplex_create_poly: ");
@@ -2895,7 +2876,7 @@ literal_t simplex_create_ge_atom(simplex_solver_t *solver, thvar_t x) {
   add_var_or_subst(solver, b, x);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_create_ge_atom: ");
   print_simplex_var(stdout, solver, x);
   printf(" >= 0\n");
@@ -2915,7 +2896,7 @@ literal_t simplex_create_ge_atom(simplex_solver_t *solver, thvar_t x) {
 literal_t simplex_create_poly_ge_atom(simplex_solver_t *solver, polynomial_t *p, thvar_t *map) {
   rename_poly(solver, p, map);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_create_poly_ge_atom: ");
   print_polynomial(stdout, p);
   printf(" >= 0\n");
@@ -2941,7 +2922,7 @@ literal_t simplex_create_eq_atom(simplex_solver_t *solver, thvar_t x) {
   add_var_or_subst(solver, b, x);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_create_eq_atom: ");
   print_simplex_var(stdout, solver, x);
   printf(" == 0\n");
@@ -2961,7 +2942,7 @@ literal_t simplex_create_eq_atom(simplex_solver_t *solver, thvar_t x) {
 literal_t simplex_create_poly_eq_atom(simplex_solver_t *solver, polynomial_t *p, thvar_t *map) {
   rename_poly(solver, p, map);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_create_poly_eq_atom: ");
   print_polynomial(stdout, p);
   printf(" == 0\n");
@@ -2988,7 +2969,7 @@ literal_t simplex_create_vareq_atom(simplex_solver_t *solver, thvar_t x, thvar_t
   sub_var_or_subst(solver, b, y);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_create_vareq_atom: ");
   print_simplex_var(stdout, solver, x);
   printf(" == ");
@@ -3023,7 +3004,7 @@ void simplex_assert_ge_axiom(simplex_solver_t *solver, thvar_t x, bool tt){
   add_var_or_subst(solver, b, x);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_assert_ge_axiom: ");
   print_simplex_var(stdout, solver, x);
   if (tt) {
@@ -3048,7 +3029,7 @@ void simplex_assert_ge_axiom(simplex_solver_t *solver, thvar_t x, bool tt){
 void simplex_assert_poly_ge_axiom(simplex_solver_t *solver, polynomial_t *p, thvar_t *map, bool tt) {
   rename_poly(solver, p, map);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_assert_poly_ge_axiom: ");
   //  print_polynomial(stdout, p);
   print_simplex_buffer(stdout, solver);
@@ -3079,7 +3060,7 @@ void simplex_assert_eq_axiom(simplex_solver_t *solver, thvar_t x, bool tt) {
   add_var_or_subst(solver, b, x);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_assert_eq_axiom: ");
   print_simplex_var(stdout, solver, x);
   if (tt) {
@@ -3105,7 +3086,7 @@ void simplex_assert_eq_axiom(simplex_solver_t *solver, thvar_t x, bool tt) {
 void simplex_assert_poly_eq_axiom(simplex_solver_t *solver, polynomial_t *p, thvar_t *map, bool tt) {
   rename_poly(solver, p, map);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_assert_poly_eq_axiom: ");
   print_polynomial(stdout, p);
   if (tt) {
@@ -3137,7 +3118,7 @@ void simplex_assert_vareq_axiom(simplex_solver_t *solver, thvar_t x, thvar_t y, 
   sub_var_or_subst(solver, b, y);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_assert_vareq_axiom: ");
   print_simplex_buffer(stdout, solver);
   if (tt) {
@@ -3167,7 +3148,7 @@ void simplex_assert_cond_vareq_axiom(simplex_solver_t *solver, literal_t c, thva
   sub_var_or_subst(solver, b, y);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> simplex_assert_cond_vareq_axiom: ");
   print_literal(stdout, c);
   printf(" implies ");
@@ -3186,14 +3167,14 @@ void simplex_assert_cond_vareq_axiom(simplex_solver_t *solver, literal_t c, thva
   if (l == null_literal) {
     // l1 is (p >= 0) and l2 is (p <= 0)
     // assert (c ==> l1) and (c ==> l2)
-    add_binary_clause(solver->core, not(c), l1);
-    add_binary_clause(solver->core, not(c), l2);
+    add_binary_clause(solver->core, not_(c), l1);
+    add_binary_clause(solver->core, not_(c), l2);
   } else {
     assert(l == false_literal || l == true_literal);
     // if p == 0 is true, nothing to do
     // if p == 0 is false, assert (not c)
     if (l == false_literal) {
-      add_unit_clause(solver->core, not(c));
+      add_unit_clause(solver->core, not_(c));
     }
   }
 }
@@ -3290,7 +3271,7 @@ static void simplex_simplify_matrix(simplex_solver_t *solver) {
   byte_t *keep;
   byte_t *ivars;
 
-#if TRACE_INIT
+#if YICES_TRACE_INIT
   printf("\n**** SIMPLIFYING THE MATRIX ****\n\n");
   print_simplex_matrix(stdout, solver);
   printf("==== Simplex variables ====\n");
@@ -3335,7 +3316,7 @@ static void simplex_simplify_matrix(simplex_solver_t *solver) {
   matrix_collect_constants(&solver->matrix);
   for (i=1; i<n; i++) { // skip const_idx == 0
     if (simplex_fixed_variable(solver, i)) {
-#if TRACE_INIT
+#if YICES_TRACE_INIT
       printf("---> eliminate fixed variable ");
       print_simplex_var(stdout, solver, i);
       printf("\n");
@@ -3349,8 +3330,8 @@ static void simplex_simplify_matrix(simplex_solver_t *solver) {
   }
   matrix_cleanup_constants(&solver->matrix);
 
-#if TRACE_INIT
-  printf("---> %"PRIu32" rows after elim fixed vars.\n", solver->matrix.nrows);
+#if YICES_TRACE_INIT
+  printf("---> %" PRIu32 " rows after elim fixed vars.\n", solver->matrix.nrows);
   print_simplex_matrix(stdout, solver);
 #endif
 
@@ -3367,9 +3348,9 @@ static void simplex_simplify_matrix(simplex_solver_t *solver) {
   solver->stats.num_simpl_fvars = solver->fvars.nvars;
   solver->stats.num_simpl_rows = solver->matrix.nrows;
 
-#if TRACE_INIT
-  printf("---> %"PRIu32" rows after gauss. elim.\n", solver->matrix.nrows);
-  printf("---> %"PRIu32" fixed variables detected\n\n", solver->fvars.nvars);
+#if YICES_TRACE_INIT
+  printf("---> %" PRIu32 " rows after gauss. elim.\n", solver->matrix.nrows);
+  printf("---> %" PRIu32 " fixed variables detected\n\n", solver->fvars.nvars);
   print_simplex_matrix(stdout, solver);
   print_elim_matrix(stdout, &solver->vtbl, &solver->elim);
   print_simplex_vars(stdout, solver);
@@ -3397,9 +3378,9 @@ static void simplex_init_tableau(simplex_solver_t *solver) {
   solver->stats.num_rows = solver->matrix.nrows;
   solver->stats.num_fixed_vars = solver->fvars.nvars;
 
-#if TRACE_INIT
-  printf("---> %"PRIu32" rows in initial tableau\n", solver->matrix.nrows);
-  printf("---> %"PRIu32" fixed variables detected:\n\n", solver->fvars.nvars);
+#if YICES_TRACE_INIT
+  printf("---> %" PRIu32 " rows in initial tableau\n", solver->matrix.nrows);
+  printf("---> %" PRIu32 " fixed variables detected:\n\n", solver->fvars.nvars);
   print_fixed_var_vector(stdout, &solver->vtbl, &solver->fvars);
 #endif
 
@@ -3407,10 +3388,10 @@ static void simplex_init_tableau(simplex_solver_t *solver) {
   solver->tableau_ready = true;
   solver->matrix_ready = false;
 
-  trace_printf(solver->core->trace, 12, "(initial tableau: %"PRIu32" rows, %"PRIu32" variables, %"PRIu32" atoms)\n",
+  trace_printf(solver->core->trace, 12, "(initial tableau: %" PRIu32 " rows, %" PRIu32 " variables, %" PRIu32 " atoms)\n",
 	       solver->stats.num_rows, solver->vtbl.nvars, solver->atbl.natoms);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n==== Variables ====\n");
   print_simplex_vars(stdout, solver);
   printf("\n==== Tableau ====\n");
@@ -3437,7 +3418,7 @@ static void simplex_check_fixed_vars(simplex_solver_t *solver) {
   v = &solver->fvars;
   n = v->nvars;
 
-#if TRACE_INIT
+#if YICES_TRACE_INIT
   if (n > 0) {
     printf("\n---> CHECKING FIXED VARIABLES\n");
   }
@@ -3447,7 +3428,7 @@ static void simplex_check_fixed_vars(simplex_solver_t *solver) {
     x = v->fvar[i].var;
     a = &v->fvar[i].value;
 
-#if TRACE_INIT
+#if YICES_TRACE_INIT
     printf("\n---> checking ");
     print_simplex_var(stdout, solver, x);
     printf(" == ");
@@ -3554,7 +3535,7 @@ static void simplex_set_basic_var_value(simplex_solver_t *solver, thvar_t x, row
   }
 
   if (! value_satisfies_bounds(solver, x)) {
-#if TRACE_INIT
+#if YICES_TRACE_INIT
     printf("---> infeasible var: ");
     print_simplex_var(stdout, solver, x);
     printf("\n");
@@ -3731,7 +3712,7 @@ static void simplex_fix_nonbasic_assignment(simplex_solver_t *solver) {
   int32_t cmp;
   thvar_t x;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Simplex: update non-basic assignment\n");
 #endif
 
@@ -3753,7 +3734,7 @@ static void simplex_fix_nonbasic_assignment(simplex_solver_t *solver) {
         if (matrix_is_nonbasic_var(matrix, x)) {
           // x is non-basic: correct its value
           update_to_lower_bound(solver, x);
-#if TRACE
+#if YICES_TRACE
           printf("     val[");
           print_simplex_var(stdout, solver, x);
           printf("] := ");
@@ -3781,7 +3762,7 @@ static void simplex_fix_nonbasic_assignment(simplex_solver_t *solver) {
         if (matrix_is_nonbasic_var(matrix, x)) {
           // correct x's value
           update_to_upper_bound(solver, x);
-#if TRACE
+#if YICES_TRACE
           printf("     val[");
           print_simplex_var(stdout, solver, x);
           printf("] := ");
@@ -4222,7 +4203,7 @@ static bool simplex_check_feasibility(simplex_solver_t *solver) {
   uint32_t repeats, loops, bthreshold;
   bool feasible;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> SIMPLEX: CHECK FEASIBILITY\n");
 #endif
 
@@ -4269,7 +4250,7 @@ static bool simplex_check_feasibility(simplex_solver_t *solver) {
       break;
     }
 
-#if TRACE
+#if YICES_TRACE
     show_heap(stdout, solver);
 #endif
 
@@ -4326,7 +4307,7 @@ static bool simplex_check_feasibility(simplex_solver_t *solver) {
         if (repeats > bthreshold) {
           solver->use_blands_rule = true;
           solver->stats.num_blands ++;
-	  trace_printf(solver->core->trace, 15, "(activating bland's rule: %"PRIu32")\n", solver->stats.num_blands);
+	  trace_printf(solver->core->trace, 15, "(activating bland's rule: %" PRIu32 ")\n", solver->stats.num_blands);
         }
       }
     }
@@ -4346,7 +4327,7 @@ static bool simplex_check_feasibility(simplex_solver_t *solver) {
     }
   }
 
-#if TRACE
+#if YICES_TRACE
   if (feasible) {
     printf("---> Simplex: make feasible succeeded\n");
   } else {
@@ -4428,14 +4409,14 @@ static void simplex_build_explanation(simplex_solver_t *solver, ivector_t *v) {
     case ARITH_DERIVED_LB:
     case ARITH_DERIVED_UB:
       // add antecedents to the queue
-      enqueue_cnstr_array_indices(queue, bstack->expl[i].ptr, bstack);
+      enqueue_cnstr_array_indices(queue, (int32_t*)bstack->expl[i].ptr, bstack);
       solver->stats.num_prop_expl ++;
       break;
 
     case ARITH_EGRAPHEQ_LB:
     case ARITH_EGRAPHEQ_UB:
       // add explanation from the egraph into aux
-      collect_egraph_eq_expl(solver, bstack->expl[i].ptr, aux);
+      collect_egraph_eq_expl(solver, (egraph_expl_triple_t*)bstack->expl[i].ptr, aux);
       break;
 
     default:
@@ -4489,7 +4470,7 @@ static void convert_expl_to_clause(ivector_t *v) {
   n = v->size;
   a = v->data;
   for (i=0; i<n; i++) {
-    a[i] = not(a[i]);
+    a[i] = not_(a[i]);
   }
 }
 
@@ -4502,7 +4483,7 @@ static void convert_expl_to_clause(ivector_t *v) {
  * - then this is turned into a clause
  */
 static void simplex_build_conflict_clause(simplex_solver_t *solver, ivector_t *v) {
-#if TRACE
+#if YICES_TRACE
   uint32_t i, j, n;
   literal_t l;
   bool show;
@@ -4512,11 +4493,11 @@ static void simplex_build_conflict_clause(simplex_solver_t *solver, ivector_t *v
   assert(v->size == 0);
   simplex_build_explanation(solver, v);
   convert_expl_to_clause(v);
-#if TRACE
+#if YICES_TRACE
   show = true;
   n = v->size;
   if (show) {
-    printf("---> Simplex: conflict clause (size = %"PRIu32")\n", n);
+    printf("---> Simplex: conflict clause (size = %" PRIu32 ")\n", n);
     show = false;
   }
   for (i=0; i<n; i++) {
@@ -4542,7 +4523,7 @@ static void simplex_build_conflict_clause(simplex_solver_t *solver, ivector_t *v
   printf("\n");
   for (j=i+1; j<n; j++) {
     if (v->data[i] == v->data[j]) {
-      printf("     duplicate literal: %"PRId32" (at index %"PRIu32" and %"PRIu32")\n", v->data[i], i, j);
+      printf("     duplicate literal: %" PRId32 " (at index %" PRIu32 " and %" PRIu32 ")\n", v->data[i], i, j);
     }
   }
 #endif
@@ -4643,14 +4624,14 @@ static void simplex_build_theory_explanation(simplex_solver_t *solver, ivector_t
     case ARITH_DERIVED_LB:
     case ARITH_DERIVED_UB:
       // add antecedents to the queue
-      enqueue_cnstr_array_indices(queue, bstack->expl[i].ptr, bstack);
+      enqueue_cnstr_array_indices(queue, (int32_t*)bstack->expl[i].ptr, bstack);
       solver->stats.num_prop_expl ++;
       break;
 
     case ARITH_EGRAPHEQ_LB:
     case ARITH_EGRAPHEQ_UB:
       // add eq to the result
-      explain_vareq_from_egraph(solver, bstack->expl[i].ptr, result);
+      explain_vareq_from_egraph(solver, (egraph_expl_triple_t*)bstack->expl[i].ptr, result);
       break;
 
     default:
@@ -4708,7 +4689,7 @@ static void simplex_expand_th_explanation(simplex_solver_t *solver, thvar_t x1, 
   simplex_build_theory_explanation(solver, queue, result);
 
 #if 0
-  printf("---> simplex provides explanation for g!%"PRId32" == g!%"PRId32"\n",
+  printf("---> simplex provides explanation for g!%" PRId32 " == g!%" PRId32 "\n",
 	 arith_var_eterm(&solver->vtbl, x1), arith_var_eterm(&solver->vtbl, x2));
   printf("     antecedents: ");
   print_theory_explanation(stdout, result);
@@ -4735,7 +4716,7 @@ static void simplex_expand_th_explanation(simplex_solver_t *solver, thvar_t x1, 
 static bool simplex_make_feasible(simplex_solver_t *solver) {
   bool feasible;
 
-#if DEBUG
+#if YICES_DEBUG
   check_nonbasic_assignment(solver);
   check_vartags(solver);
   check_infeasible_vars(solver);
@@ -4749,7 +4730,7 @@ static bool simplex_make_feasible(simplex_solver_t *solver) {
     simplex_report_conflict(solver);
   }
 
-#if DEBUG
+#if YICES_DEBUG
   check_bound_marks(solver);
   check_vartags(solver);
   if (feasible) {
@@ -4787,13 +4768,13 @@ static void record_simple_conflict(simplex_solver_t *solver, int32_t k, literal_
    * into the clause (or (not l1) ... (not l_m) (not l))
    */
   convert_expl_to_clause(v);
-  ivector_push(v, not(l));
+  ivector_push(v, not_(l));
 
 #if 0
   if (is_pos(l)) {
-    printf("\n---> SIMPLEX CONFLICT: bound %"PRId32" => ~p!%"PRId32"\n", k, var_of(l));
+    printf("\n---> SIMPLEX CONFLICT: bound %" PRId32 " => ~p!%" PRId32 "\n", k, var_of(l));
   } else {
-    printf("\n---> SIMPLEX CONFLICT: bound %"PRId32" => p!%"PRId32"\n", k, var_of(l));
+    printf("\n---> SIMPLEX CONFLICT: bound %" PRId32 " => p!%" PRId32 "\n", k, var_of(l));
   }
 #endif
   // add the end marker
@@ -4836,7 +4817,7 @@ static bool add_lower_bound(simplex_solver_t *solver, thvar_t x, rational_t *c, 
     }
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("---> checking bound: ");
   print_simplex_var(stdout, solver, x);
   printf(" >= ");
@@ -4850,7 +4831,7 @@ static bool add_lower_bound(simplex_solver_t *solver, thvar_t x, rational_t *c, 
     // conflict: current upper bound on x is less than b
     record_simple_conflict(solver, k, l);
 
-#if TRACE
+#if YICES_TRACE
     printf("---> conflict with bound ");
     print_simplex_bound(stdout, solver, k);
     printf("\n");
@@ -4864,7 +4845,7 @@ static bool add_lower_bound(simplex_solver_t *solver, thvar_t x, rational_t *c, 
     // the new bound is not redundant
     push_lb_assertion(solver, x, b, l);
 
-#if TRACE
+#if YICES_TRACE
     printf("---> added ");
     print_simplex_bound(stdout, solver, solver->bstack.top - 1);
     printf("\n");
@@ -4911,7 +4892,7 @@ static bool add_upper_bound(simplex_solver_t *solver, thvar_t x, rational_t *c, 
   }
 
 
-#if TRACE
+#if YICES_TRACE
   printf("---> checking bound: ");
   print_simplex_var(stdout, solver, x);
   printf(" <= ");
@@ -4924,7 +4905,7 @@ static bool add_upper_bound(simplex_solver_t *solver, thvar_t x, rational_t *c, 
     // conflict: current lower bound on x is more than b
     record_simple_conflict(solver, k, l);
 
-#if TRACE
+#if YICES_TRACE
     printf("---> conflict with bound ");
     print_simplex_bound(stdout, solver, k);
     printf("\n");
@@ -4938,7 +4919,7 @@ static bool add_upper_bound(simplex_solver_t *solver, thvar_t x, rational_t *c, 
     // the new bound is not redundant
     push_ub_assertion(solver, x, b, l);
 
-#if TRACE
+#if YICES_TRACE
     printf("---> added ");
     print_simplex_bound(stdout, solver, solver->bstack.top - 1);
     printf("\n");
@@ -5000,7 +4981,7 @@ static bool simplex_process_assertion(simplex_solver_t *solver, int32_t a) {
   z = boolvar_of_atom(atom);
 
 
-#if TRACE
+#if YICES_TRACE
   printf("---> processing assertion: ");
   print_simplex_atom(stdout, solver, id);
   if (assertion_is_true(a)) {
@@ -5121,8 +5102,8 @@ static void check_lower_bound_implications(simplex_solver_t *solver, uint32_t i,
          */
         if (xq_ge_q(a, bound_of_atom(p))) {
 
-#if TRACE
-          printf("---> atom[%"PRId32"]:\t", atm);
+#if YICES_TRACE
+          printf("---> atom[%" PRId32 "]:\t", atm);
           print_simplex_atom(stdout, solver, atm);
           printf("\t\tis true by ");
           print_simplex_bound(stdout, solver, i);
@@ -5140,8 +5121,8 @@ static void check_lower_bound_implications(simplex_solver_t *solver, uint32_t i,
          */
         if (xq_gt_q(a, bound_of_atom(p))) {
 
-#if TRACE
-          printf("---> atom[%"PRId32"]:\t", atm);
+#if YICES_TRACE
+          printf("---> atom[%" PRId32 "]:\t", atm);
           print_simplex_atom(stdout, solver, atm);
           printf("\t\tis false by ");
           print_simplex_bound(stdout, solver, i);
@@ -5179,8 +5160,8 @@ static void check_upper_bound_implications(simplex_solver_t *solver, uint32_t i,
          */
         if (xq_le_q(a, bound_of_atom(p))) {
 
-#if TRACE
-          printf("---> atom[%"PRId32"]:\t", atm);
+#if YICES_TRACE
+          printf("---> atom[%" PRId32 "]:\t", atm);
           print_simplex_atom(stdout, solver, atm);
           printf("\t\tis true by ");
           print_simplex_bound(stdout, solver, i);
@@ -5198,8 +5179,8 @@ static void check_upper_bound_implications(simplex_solver_t *solver, uint32_t i,
          */
         if (xq_lt_q(a, bound_of_atom(p))) {
 
-#if TRACE
-          printf("---> atom[%"PRId32"]:\t", atm);
+#if YICES_TRACE
+          printf("---> atom[%" PRId32 "]:\t", atm);
           print_simplex_atom(stdout, solver, atm);
           printf("\t\tis false by ");
           print_simplex_bound(stdout, solver, i);
@@ -5370,7 +5351,7 @@ static bool simplex_add_derived_lower_bound(simplex_solver_t *solver, thvar_t x,
   // Add the bound
   push_lb_derived(solver, x, b, a);
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
   printf("---> Derived bound\n");
   print_simplex_bound(stdout, solver, arith_var_lower_index(&solver->vtbl, x));
   printf("\n");
@@ -5430,7 +5411,7 @@ static bool simplex_add_derived_upper_bound(simplex_solver_t *solver, thvar_t x,
   // Add the bound
   push_ub_derived(solver, x, b, a);
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
   printf("---> Derived bound\n");
   print_simplex_bound(stdout, solver, arith_var_upper_index(&solver->vtbl, x));
   printf("\n");
@@ -6037,14 +6018,14 @@ static void simplex_restore_matrix(simplex_solver_t *solver) {
       // saved rows for level i
       while (ns < trail->nsaved_rows) {
 	assert(ns < v->size);
-	p = v->data[ns];
+	p = (polynomial_t*)v->data[ns];
 	matrix_add_row(&solver->matrix, p->mono, p->nterms);
 	ns ++;
       }
 
       // definition rows for level i
       while (nv < trail->nvars) {
-	p = arith_var_def(&solver->vtbl, nv);
+	p = (polynomial_t*)arith_var_def(&solver->vtbl, nv);
 	if (p != NULL && !simple_poly(p)) {
 	  matrix_add_eq(&solver->matrix, nv, p->mono, p->nterms);
 	}
@@ -6058,14 +6039,14 @@ static void simplex_restore_matrix(simplex_solver_t *solver) {
      * Restore rows added at the current base level
      */
     while (ns < v->size) {
-      p = v->data[ns];
+      p = (polynomial_t*)v->data[ns];
       matrix_add_row(&solver->matrix, p->mono, p->nterms);
       ns ++;
     }
 
     n = solver->vtbl.nvars;
     while (nv < n) {
-      p = arith_var_def(&solver->vtbl, nv);
+      p = (polynomial_t*)arith_var_def(&solver->vtbl, nv);
       if (p != NULL && !simple_poly(p)) {
         matrix_add_eq(&solver->matrix, nv, p->mono, p->nterms);
       }
@@ -6133,7 +6114,7 @@ static thvar_t decompose_and_get_dynamic_var(simplex_solver_t *solver) {
 	eqprop_set_relevance(solver, x);
       }
 
-#if TRACE
+#if YICES_TRACE
       printf("     new simplex variable: ");
       print_simplex_vardef(stdout, solver, x);
 #endif
@@ -6159,7 +6140,7 @@ static literal_t simplify_dynamic_vareq(simplex_solver_t *solver, thvar_t x1, th
   poly_buffer_t *b;
   bool is_int;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Simplex: simplify dynamic vareq: ");
   print_simplex_var(stdout, solver, x1);
   printf(" == ");
@@ -6177,21 +6158,21 @@ static literal_t simplify_dynamic_vareq(simplex_solver_t *solver, thvar_t x1, th
   sub_var_or_subst(solver, b, x2);
   normalize_poly_buffer(b);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> buffer: ");
   print_simplex_buffer(stdout, solver);
   printf("\n");
 #endif
 
   if (poly_buffer_is_zero(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> vareq is true\n");
 #endif
     return true_literal;
   }
 
   if (poly_buffer_is_nzconstant(b)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> vareq is false\n");
 #endif
     return false_literal;
@@ -6200,20 +6181,20 @@ static literal_t simplify_dynamic_vareq(simplex_solver_t *solver, thvar_t x1, th
   is_int = all_integer_vars(solver);
   if (is_int) {
     poly_buffer_make_integral(b);
-#if TRACE
+#if YICES_TRACE
     printf("---> int scaling: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
 #endif
     if (! poly_buffer_gcd_test(b)) {
-#if TRACE
+#if YICES_TRACE
       printf("---> vareq is false by GCD test\n");
 #endif
       return false_literal;
     }
   } else {
     poly_buffer_make_monic(b); // make lead coefficient = 1
-#if TRACE
+#if YICES_TRACE
     printf("---> monic: ");
     print_simplex_buffer(stdout, solver);
     printf("\n");
@@ -6250,7 +6231,7 @@ static bool simplex_assignment_integer_valid(simplex_solver_t *solver) {
 }
 
 
-#if TRACE_BB
+#if YICES_TRACE_BB
 /*
  * Number of integer variables with a non-integer value
  */
@@ -6440,7 +6421,7 @@ static void prepare_for_integer_solving(simplex_solver_t *solver) {
     make_integer_vars_nonbasic(solver);
   }
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
   printf("\nMOVED NON-INTEGER VARIABLES TO THE BASIS\n\n");
   print_simplex_matrix(stdout, solver);
   print_simplex_bounds(stdout, solver);
@@ -6455,7 +6436,7 @@ static void prepare_for_integer_solving(simplex_solver_t *solver) {
     abort();
   }
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
   printf("\nASSIGNED INTEGER VALUES TO NON_BASIC INTEGER VARIABLES\n\n");
   print_simplex_matrix(stdout, solver);
   print_simplex_bounds(stdout, solver);
@@ -6467,7 +6448,7 @@ static void prepare_for_integer_solving(simplex_solver_t *solver) {
 
   assert(non_integer_vars_are_basic(solver));
 
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
   check_vartags(solver);
 #endif
@@ -6820,7 +6801,7 @@ static void show_column_data(simplex_solver_t *solver, thvar_t x) {
   }
 
 #if 0
-  printf("---> column of var = i!%"PRId32"\n", x);
+  printf("---> column of var = i!%" PRId32 "\n", x);
   if (interval.has_lb) {
     printf("     lower bound: ");
     xq_print(stdout, &interval.lb);
@@ -6930,7 +6911,7 @@ static bool make_column_integral(simplex_solver_t *solver, thvar_t x) {
   }
 
 #if 0
-  printf("---> make column integral: var = i!%"PRId32"\n", x);
+  printf("---> make column integral: var = i!%" PRId32 "\n", x);
   if (interval.has_lb) {
     printf("     lower bound: ");
     xq_print(stdout, &interval.lb);
@@ -7053,7 +7034,7 @@ static bool simplex_try_naive_integer_search(simplex_solver_t *solver) {
   bool ok;
 
 #if 0
-  printf("\nNAIVE INTEGER SEARCH %"PRIu32" [dlevel = %"PRIu32", decisions = %"PRIu64"]\n\n",
+  printf("\nNAIVE INTEGER SEARCH %" PRIu32 " [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n\n",
 	 solver->stats.num_make_intfeasible, solver->core->decision_level, solver->core->stats.decisions);
   print_simplex_matrix(stdout, solver);
   print_simplex_bounds(stdout, solver);
@@ -7097,7 +7078,7 @@ static bool simplex_try_naive_integer_search(simplex_solver_t *solver) {
 
   delete_ivector(&aux);
 
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
   check_vartags(solver);
 #endif
@@ -7125,7 +7106,7 @@ static bool simplex_try_naive_integer_search(simplex_solver_t *solver) {
  * BRANCHING
  */
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
 static void print_branch_candidates(FILE *f, simplex_solver_t *solver, ivector_t *v) {
   uint32_t i, n;
 
@@ -7208,7 +7189,7 @@ static void create_branch_atom(simplex_solver_t *solver, thvar_t x) {
     build_binary_lemmas_for_atom(solver, x, new_idx);
     attach_atom_to_arith_var(&solver->vtbl, x, new_idx);
 
-#if TRACE_BB || TRACE_INTFEAS
+#if YICES_TRACE_BB || YICES_TRACE_INTFEAS
     printf("---> Branch & bound: create ");
     print_simplex_atomdef(stdout, solver, var_of(l));
 #endif
@@ -7400,7 +7381,7 @@ static thvar_t select_branch_variable(simplex_solver_t *solver, ivector_t *v, ui
   uint32_t i, n, best_score, score, k;
   thvar_t x, best_var;
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
   printf("\nSELECT BRANCH VARIABLE\n\n");
   print_simplex_matrix(stdout, solver);
   print_simplex_bounds(stdout, solver);
@@ -7958,9 +7939,9 @@ static void show_array_of_bound_ids(ivector_t *a) {
   if (n == 0) {
     printf("[]");
   } else {
-    printf("[%"PRId32, a->data[0]);
+    printf("[%" PRId32, a->data[0]);
     for (i=1; i<n; i++) {
-      printf(" %"PRId32, a->data[i]);
+      printf(" %" PRId32, a->data[i]);
     }
     printf("]");
   }
@@ -8294,7 +8275,7 @@ static bool plausible_period_and_phase(int_constraint_t *cnstr, uint32_t k, rati
       printf("phase = ");
       q_print(stdout, phase);
       printf("\n");
-      printf("test z = %"PRId32"\n", z);
+      printf("test z = %" PRId32 "\n", z);
       printf("test_val = ");
       q_print(stdout, &test_val);
       printf("\n\n");
@@ -8604,7 +8585,7 @@ static literal_t mk_gomory_atom(simplex_solver_t *solver) {
 
 
 
-#if TRACE
+#if YICES_TRACE
   printf("---> New var:\n");
   print_simplex_vardef(stdout, solver, x);
   printf("\n");
@@ -8700,7 +8681,7 @@ static void add_gomory_cut(simplex_solver_t *solver, gomory_vector_t *g) {
 
   cut = mk_gomory_atom(solver);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> cut atom:\n");
   printf("     ");
   print_simplex_atomdef(stdout, solver, var_of(cut));
@@ -8722,7 +8703,7 @@ static void add_gomory_cut(simplex_solver_t *solver, gomory_vector_t *g) {
 	l = assumed_ub(solver, x, is_int, g->bound + i);
       }
       if (l != true_literal) {
-	ivector_push(v, not(l));
+	ivector_push(v, not_(l));
       }
     }
   }
@@ -8731,7 +8712,7 @@ static void add_gomory_cut(simplex_solver_t *solver, gomory_vector_t *g) {
 
   add_clause(solver->core, v->size, v->data);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> cut atom:\n");
   printf("     ");
   print_simplex_atomdef(stdout, solver, var_of(cut));
@@ -8777,7 +8758,7 @@ static bool try_gomory_cut_for_var(simplex_solver_t *solver, gomory_vector_t *g,
   assert(r >= 0);
   row = matrix_row(&solver->matrix, r);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n--- Try Gomory cut for ");
   print_simplex_var(stdout, solver, x);
   printf(" ---\n");
@@ -8822,7 +8803,7 @@ static bool try_gomory_cut_for_var(simplex_solver_t *solver, gomory_vector_t *g,
 	assert(is_lb || is_ub);
 	gomory_vector_add_elem(g, y, a, &val->main, is_int, is_lb);
 
-#if TRACE
+#if YICES_TRACE
 	print_simplex_var(stdout, solver, y);
 	printf(" = ");
 	print_simplex_var_value(stdout, solver, y);
@@ -8840,7 +8821,7 @@ static bool try_gomory_cut_for_var(simplex_solver_t *solver, gomory_vector_t *g,
    * - the bound is stored in solver->aux
    */
   if (make_gomory_cut(g, &solver->buffer)) {
-#if TRACE
+#if YICES_TRACE
     printf("\n---> Gomory cut:\n");
     print_simplex_buffer(stdout, solver);
     printf(" >= 0\n\n");
@@ -8867,8 +8848,8 @@ static uint32_t try_gomory_cuts(simplex_solver_t *solver, ivector_t *v, uint32_t
   gomory_vector_t cut;
   uint32_t i, n, num_cuts;
 
-#if TRACE
-  printf("\nTRY GOMORY CUTS: dlevel = %"PRIu32", base_level = %"PRIu32"\n", solver->decision_level, solver->base_level);
+#if YICES_TRACE
+  printf("\nTRY GOMORY CUTS: dlevel = %" PRIu32 ", base_level = %" PRIu32 "\n", solver->decision_level, solver->base_level);
   fflush(stdout);
 #endif
 
@@ -8936,7 +8917,7 @@ static bool intfeas_wrapper(simplex_solver_t *solver, const char *name, bool (*f
     solver->stats.num_bound_conflicts ++;
     return false;
   } else {
-    trace_printf(solver->core->trace, 10, "(%s: %"PRIu32" new bounds)\n", name, solver->bstack.top - nbounds);
+    trace_printf(solver->core->trace, 10, "(%s: %" PRIu32 " new bounds)\n", name, solver->bstack.top - nbounds);
     if (solver->recheck) {
       /*
        * Strengthened bounds require rechecking feasibility
@@ -9006,13 +8987,13 @@ static bool simplex_make_integer_feasible(simplex_solver_t *solver) {
   thvar_t x;
   uint32_t nbounds, bb_score, n;
 
-#if TRACE_BB
-  printf("\n--- make integer feasible [dlevel = %"PRIu32", decisions = %"PRIu64"]: %"PRId32
+#if YICES_TRACE_BB
+  printf("\n--- make integer feasible [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]: %" PRId32
          " integer-invalid vars\n", solver->core->decision_level, solver->core->stats.decisions,
          simplex_num_integer_invalid_vars(solver));
 #endif
 
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
   check_vartags(solver);
 #endif
@@ -9025,8 +9006,8 @@ static bool simplex_make_integer_feasible(simplex_solver_t *solver) {
 
   trace_printf(solver->core->trace, 10, "(testing integer feasibility)\n");
 
-#if TRACE_INTFEAS
-  printf("\nMAKE INTEGER FEASIBLE %"PRIu32" [dlevel = %"PRIu32", decisions = %"PRIu64"]\n\n",
+#if YICES_TRACE_INTFEAS
+  printf("\nMAKE INTEGER FEASIBLE %" PRIu32 " [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n\n",
 	 solver->stats.num_make_intfeasible, solver->core->decision_level, solver->core->stats.decisions);
   print_simplex_vars(stdout, solver);
   printf("\n");
@@ -9090,8 +9071,8 @@ static bool simplex_make_integer_feasible(simplex_solver_t *solver) {
     return true;
   }
 
-#if TRACE_INTFEAS
-  printf("\nMAKE INTEGER FEASIBLE %"PRIu32" [dlevel = %"PRIu32", decisions = %"PRIu64"]\n\n",
+#if YICES_TRACE_INTFEAS
+  printf("\nMAKE INTEGER FEASIBLE %" PRIu32 " [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n\n",
 	 solver->stats.num_make_intfeasible, solver->core->decision_level, solver->core->stats.decisions);
   printf("BRANCHING REQUIRED\n");
   print_simplex_vars(stdout, solver);
@@ -9109,23 +9090,23 @@ static bool simplex_make_integer_feasible(simplex_solver_t *solver) {
    */
   x = select_branch_variable(solver, v, &bb_score);
   trace_printf(solver->core->trace, 3,
-	       "(branch & bound: %"PRIu32" candidates, branch variable = i!%"PRId32", score = %"PRIu32")\n",
+	       "(branch & bound: %" PRIu32 " candidates, branch variable = i!%" PRId32 ", score = %" PRIu32 ")\n",
 	       v->size, x, bb_score);
 
   if (solver->stats.num_branch_atoms >= 20) {
     if (false && v->size > 1 && bb_score > 200000000 && solver->stats.num_gomory_cuts < 100) {
       n = try_gomory_cuts(solver, v, 100);
       solver->stats.num_gomory_cuts += n;
-      trace_printf(solver->core->trace, 3, "(Gomory cuts: %"PRIu32" cuts created)\n", n);
+      trace_printf(solver->core->trace, 3, "(Gomory cuts: %" PRIu32 " cuts created)\n", n);
       if (n > 0) goto done;
       solver->core->stats.conflicts += 1000;
     } else if (bb_score > 100000000) {
       n = gomory_cut_for_var(solver, x);
       solver->stats.num_gomory_cuts ++;
       if (n > 0) {
-	trace_printf(solver->core->trace, 3, "(Created Gomory cut on var i!%"PRId32")\n", x);
+	trace_printf(solver->core->trace, 3, "(Created Gomory cut on var i!%" PRId32 ")\n", x);
       } else {
-	trace_printf(solver->core->trace, 3, "(Failed to create Gomory cut on var i!%"PRId32")\n", x);
+	trace_printf(solver->core->trace, 3, "(Failed to create Gomory cut on var i!%" PRId32 ")\n", x);
       }
       if (n > 0) goto done;
       //      solver->core->stats.conflicts += 1000;
@@ -9135,7 +9116,7 @@ static bool simplex_make_integer_feasible(simplex_solver_t *solver) {
   create_branch_atom(solver, x);
   solver->core->stats.conflicts += 40;
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
   print_branch_candidates(stdout, solver, v);
   printf("\n\nDONE\n");
   fflush(stdout);
@@ -9185,7 +9166,7 @@ static void record_egraph_eq_conflict(simplex_solver_t *solver, int32_t k, thvar
   ivector_push(v, null_literal); // end-marker
 
 #if 0
-  printf("\n---> SIMPLEX CONFLICT on g!%"PRId32" == g!%"PRId32" (conflict with bound)\n",
+  printf("\n---> SIMPLEX CONFLICT on g!%" PRId32 " == g!%" PRId32 " (conflict with bound)\n",
 	 arith_var_eterm(&solver->vtbl, x1), arith_var_eterm(&solver->vtbl, x2));
 #endif
   record_theory_conflict(solver->core, v->data);
@@ -9210,12 +9191,12 @@ static bool simplex_process_var_eq(simplex_solver_t *solver, thvar_t x1, thvar_t
 
   assert(arith_var_has_eterm(&solver->vtbl, x1) && arith_var_has_eterm(&solver->vtbl, x2) && x1 != x2);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Simplex: process egraph equality: ");
   print_simplex_var(stdout, solver, x1);
   printf(" = ");
   print_simplex_var(stdout, solver, x2);
-  printf(" [dlevel = %"PRIu32"]\n", solver->core->decision_level);
+  printf(" [dlevel = %" PRIu32 "]\n", solver->core->decision_level);
   if (!arith_var_is_free(&solver->vtbl, x1)) {
     printf("     ");
     print_simplex_vardef(stdout, solver, x1);
@@ -9248,7 +9229,7 @@ static bool simplex_process_var_eq(simplex_solver_t *solver, thvar_t x1, thvar_t
     c = &solver->constant;
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("     asserting ");
   print_simplex_var(stdout, solver, y);
   printf(" == ");
@@ -9282,7 +9263,7 @@ static bool simplex_process_var_eq(simplex_solver_t *solver, thvar_t x1, thvar_t
     if (cmp_lb > 0) {
       record_egraph_eq_conflict(solver, k, x1, x2, id);
 
-#if TRACE
+#if YICES_TRACE
       printf("     conflict with bound ");
       print_simplex_bound(stdout, solver, k);
       printf("\n");
@@ -9297,7 +9278,7 @@ static bool simplex_process_var_eq(simplex_solver_t *solver, thvar_t x1, thvar_t
     if (cmp_ub < 0) {
       record_egraph_eq_conflict(solver, k, x1, x2, id);
 
-#if TRACE
+#if YICES_TRACE
       printf("     conflict with bound ");
       print_simplex_bound(stdout, solver, k);
       printf("\n");
@@ -9343,7 +9324,7 @@ static literal_t create_pos_atom(simplex_solver_t *solver, thvar_t y, rational_t
     build_binary_lemmas_for_atom(solver, y, new_idx);
     attach_atom_to_arith_var(&solver->vtbl, y, new_idx);
   }
-  return not(l);
+  return not_(l);
 }
 
 /*
@@ -9361,7 +9342,7 @@ static literal_t create_neg_atom(simplex_solver_t *solver, thvar_t y, rational_t
     build_binary_lemmas_for_atom(solver, y, new_idx);
     attach_atom_to_arith_var(&solver->vtbl, y, new_idx);
   }
-  return not(l);
+  return not_(l);
 }
 
 
@@ -9387,7 +9368,7 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
     y = x1; x1 = x2; x2 = y;
   }
 
-#if TRACE
+#if YICES_TRACE
   t1 = arith_var_eterm(&solver->vtbl, x1);
   t2 = arith_var_eterm(&solver->vtbl, x2);
   printf("---> Simplex: trichotomy lemma:\n");
@@ -9415,7 +9396,7 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
   e = cache_get(cache, TRICHOTOMY_LEMMA, x1, x2);
   if (e->flag != NEW_CACHE_ELEM) {
     // trichotomy instance already exists for x1 and x2
-#if TRACE
+#if YICES_TRACE
     printf("     redundant\n");
 #endif
     return 0;
@@ -9431,7 +9412,7 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
   assert(t1 != null_eterm && t2 != null_eterm);
   l = egraph_make_simple_eq(solver->egraph, pos_occ(t1), pos_occ(t2));
 
-#if TRACE
+#if YICES_TRACE
   printf("     trichotomy lemma: egraph atom: ");
   print_literal(stdout, l);
   printf(" := ");
@@ -9449,13 +9430,13 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
     /*
      * x1 = x2 is false: add (not (eq t1 t2)))) as an axiom for the egraph
      */
-#if TRACE
+#if YICES_TRACE
     printf("     reduced to 1 != 0\n");
     printf("     add unit clause: ");
-    print_egraph_atom_of_literal(stdout, solver->egraph, not(l));
+    print_egraph_atom_of_literal(stdout, solver->egraph, not_(l));
     printf("\n");
 #endif
-    add_unit_clause(solver->core, not(l));
+    add_unit_clause(solver->core, not_(l));
     reset_poly_buffer(&solver->buffer);
 
 #if 0
@@ -9479,7 +9460,7 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
     l1 = create_pos_atom(solver, y, c);   // l1 := y > c
     l2 = create_neg_atom(solver, y, c);   // l2 := y < c
 
-#if TRACE
+#if YICES_TRACE
     printf("     reduced to: ");
     print_simplex_var(stdout, solver, y);
     printf(" != ");
@@ -9508,14 +9489,14 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
     print_simplex_atom_of_literal(stdout, solver, l2);
     printf(")\n");
     printf("     (OR ");
-    print_simplex_atom_of_literal(stdout, solver, not(l1));
+    print_simplex_atom_of_literal(stdout, solver, not_(l1));
     printf(" ");
-    print_egraph_atom_of_literal(stdout, solver->egraph, not(l));
+    print_egraph_atom_of_literal(stdout, solver->egraph, not_(l));
     printf(")\n");
     printf("     (OR ");
-    print_simplex_atom_of_literal(stdout, solver, not(l2));
+    print_simplex_atom_of_literal(stdout, solver, not_(l2));
     printf(" ");
-    print_egraph_atom_of_literal(stdout, solver->egraph, not(l));
+    print_egraph_atom_of_literal(stdout, solver->egraph, not_(l));
     printf(")\n");
 #endif
 
@@ -9527,8 +9508,8 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
      *   (t1 = t2) => (x1 - x2) >= 0
      * They are redundant but adding them improves performance.
      */
-    add_binary_clause(solver->core, not(l), not(l1));
-    add_binary_clause(solver->core, not(l), not(l2));
+    add_binary_clause(solver->core, not_(l), not_(l1));
+    add_binary_clause(solver->core, not_(l), not_(l2));
 
     solver->stats.num_tricho_lemmas ++;
 #if 0
@@ -9553,12 +9534,12 @@ static uint32_t simplex_trichotomy_lemma(simplex_solver_t *solver, thvar_t x1, t
 static void simplex_process_var_diseq(simplex_solver_t *solver, thvar_t x1, thvar_t x2) {
   assert(arith_var_has_eterm(&solver->vtbl, x1) && arith_var_has_eterm(&solver->vtbl, x2) && x1 != x2);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Simplex: egraph disequality: ");
   print_simplex_var(stdout, solver, x1);
   printf(" != ");
   print_simplex_var(stdout, solver, x2);
-  printf(" [dlevel = %"PRIu32", decisions = %"PRIu64"]\n", solver->core->decision_level, solver->core->stats.decisions);
+  printf(" [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n", solver->core->decision_level, solver->core->stats.decisions);
   if (! arith_var_is_free(&solver->vtbl, x1)) {
     printf("     ");
     print_simplex_vardef(stdout, solver, x1);
@@ -9580,7 +9561,7 @@ static void simplex_process_var_diseq(simplex_solver_t *solver, thvar_t x1, thva
  * - this does nothing: just print trace if TRACE is enabled
  */
 static void simplex_process_var_distinct(simplex_solver_t *solver, uint32_t n, thvar_t *a, composite_t *hint) {
-#if TRACE
+#if YICES_TRACE
   uint32_t i, j;
 
   for (i=0; i<n-1; i++) {
@@ -9618,7 +9599,7 @@ static bool simplex_process_egraph_assertions(simplex_solver_t *solver) {
       case EGRAPH_VAR_EQ:
 	if (! simplex_process_var_eq(solver, a->var[0], a->var[1], a->id)) {
 #if 0
-	  printf("---> SIMPLEX CONFLICT on g!%"PRId32" == g!%"PRId32"\n",
+	  printf("---> SIMPLEX CONFLICT on g!%" PRId32 " == g!%" PRId32 "\n",
 		 arith_var_eterm(&solver->vtbl, a->var[0]),
 		 arith_var_eterm(&solver->vtbl, a->var[1]));
 #endif
@@ -9759,11 +9740,11 @@ void simplex_start_internalization(simplex_solver_t *solver) {
 void simplex_start_search(simplex_solver_t *solver) {
   bool feasible;
 
-#if TRACE
+#if YICES_TRACE
   uint32_t i, n;
 
   printf("---> SIMPLEX START SEARCH\n");
-  printf("---> %"PRIu32" initial bounds\n", solver->bstack.top);
+  printf("---> %" PRIu32 " initial bounds\n", solver->bstack.top);
   n = solver->bstack.top;
   for (i=0; i<n; i++) {
     printf("     ");
@@ -9843,7 +9824,7 @@ void simplex_start_search(simplex_solver_t *solver) {
   solver->integer_solving = false;
   solver->enable_dfeas = true;
   if (simplex_has_integer_vars(solver) && simplex_option_enabled(solver, SIMPLEX_ICHECK)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> icheck active\n");
     fflush(stdout);
 #endif
@@ -9854,7 +9835,7 @@ void simplex_start_search(simplex_solver_t *solver) {
 
   // check initial integer feasibility
   if (! simplex_assignment_integer_valid(solver)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> initial assignment not integer feasible\n");
     fflush(stdout);
 #endif
@@ -9869,7 +9850,7 @@ void simplex_start_search(simplex_solver_t *solver) {
   }
 
  done:
-#if DUMP
+#if YICES_DUMP
   dump_state(solver);
 #endif
 
@@ -9921,7 +9902,7 @@ void simplex_stop_search(simplex_solver_t *solver) {
 bool simplex_propagate(simplex_solver_t *solver) {
   bool feasible;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> SIMPLEX PROPAGATE\n");
 #endif
 
@@ -10005,7 +9986,7 @@ bool simplex_propagate(simplex_solver_t *solver) {
         solver->bstack.fix_ptr = solver->bstack.top;
       }
 
-#if DEBUG
+#if YICES_DEBUG
       check_vartags(solver);
       check_assignment(solver);
       check_integer_bounds(solver);
@@ -10043,7 +10024,7 @@ bool simplex_propagate(simplex_solver_t *solver) {
       feasible = simplex_dsolver_check(solver);
       if (! feasible) goto done;
 
-#if TRACE_INTFEAS
+#if YICES_TRACE_INTFEAS
       assert(solver->dsolver != NULL);
       printf("--- general solution from dsolver ---\n");
       dsolver_print_gen_solution(stdout, solver->dsolver);
@@ -10061,7 +10042,7 @@ bool simplex_propagate(simplex_solver_t *solver) {
         solver->bstack.fix_ptr = solver->bstack.top;
       }
 
-#if DEBUG
+#if YICES_DEBUG
       check_vartags(solver);
       check_assignment(solver);
       check_integer_bounds(solver);
@@ -10077,7 +10058,7 @@ bool simplex_propagate(simplex_solver_t *solver) {
   }
 
  done:
-#if DEBUG
+#if YICES_DEBUG
   check_bound_marks(solver);
 #endif
 
@@ -10095,15 +10076,15 @@ bool simplex_propagate(simplex_solver_t *solver) {
  * Check for integer feasibility
  */
 fcheck_code_t simplex_final_check(simplex_solver_t *solver) {
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
   check_integer_bounds(solver);
   check_vartags(solver);
   check_bound_marks(solver);
 #endif
 
-#if TRACE
-  printf("---> SIMPLEX FINAL CHECK [dlevel = %"PRIu32", decisions = %"PRIu64"]\n",
+#if YICES_TRACE
+  printf("---> SIMPLEX FINAL CHECK [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n",
          solver->decision_level, solver->core->stats.decisions);
   fflush(stdout);
 #endif
@@ -10155,12 +10136,12 @@ void simplex_increase_decision_level(simplex_solver_t *solver) {
   simplex_increase_dlevel(solver);
   if (solver->eqprop != NULL) {
 #if 0
-    printf("---> eq prop: increase decision level to %"PRIu32"\n", solver->decision_level);
+    printf("---> eq prop: increase decision level to %" PRIu32 "\n", solver->decision_level);
 #endif
     offset_manager_increase_decision_level(&solver->eqprop->mngr);
   }
-#if TRACE
-  printf("\n---> Simplex: increase decision level to %"PRIu32"\n", solver->decision_level);
+#if YICES_TRACE
+  printf("\n---> Simplex: increase decision level to %" PRIu32 "\n", solver->decision_level);
 #endif
 }
 
@@ -10299,20 +10280,20 @@ static void simplex_go_back(simplex_solver_t *solver, uint32_t back_level) {
  * Full backtrack
  */
 void simplex_backtrack(simplex_solver_t *solver, uint32_t back_level) {
-#if TRACE
-  printf("---> Simplex: backtracking to level %"PRIu32"\n", back_level);
+#if YICES_TRACE
+  printf("---> Simplex: backtracking to level %" PRIu32 "\n", back_level);
 #endif
 
   simplex_go_back(solver, back_level);
   if (solver->eqprop != NULL) {
 #if 0
-    printf("---> eq prop: backtrack to level %"PRIu32"\n", back_level);
+    printf("---> eq prop: backtrack to level %" PRIu32 "\n", back_level);
 #endif
     offset_manager_backtrack(&solver->eqprop->mngr, back_level);
   }
 
 
-#if DEBUG
+#if YICES_DEBUG
   if (solver->tableau_ready) {
     /*
      * NOTE: this may give false alarms if backtrack is called
@@ -10327,7 +10308,7 @@ void simplex_backtrack(simplex_solver_t *solver, uint32_t back_level) {
   }
 #endif
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Simplex: end backtracking\n\n");
 #endif
 
@@ -10444,7 +10425,7 @@ static uint32_t num_active_vars(arith_vartable_t *vtbl) {
   n = vtbl->nvars;
   // skip var 0 since it's not a polynomial
   for (i=1; i<n; i++) {
-    p = arith_var_def(vtbl, i);
+    p = (polynomial_t*)arith_var_def(vtbl, i);
     if (p != NULL && !simple_poly(p)) {
       a++;
     }
@@ -10709,16 +10690,16 @@ bool simplex_assert_atom(simplex_solver_t *solver, void *a, literal_t l) {
     push_assertion(&solver->assertion_queue, mk_assertion(id, sign_of(l)));
     mark_arith_atom(&solver->atbl, id);
 
-#if TRACE
-    printf("---> added atom[%"PRId32"]: ", id);
+#if YICES_TRACE
+    printf("---> added atom[%" PRId32 "]: ", id);
     print_simplex_atom(stdout, solver, id);
     if (is_pos(l)) {
-      printf("  (p!%"PRId32" is true)\n", var_of(l));
+      printf("  (p!%" PRId32 " is true)\n", var_of(l));
     } else {
-      printf("  (p!%"PRId32" is false)\n", var_of(l));
+      printf("  (p!%" PRId32 " is false)\n", var_of(l));
     }
   } else {
-    printf("---> skipped atom[%"PRId32"]: ", id);
+    printf("---> skipped atom[%" PRId32 "]: ", id);
     print_simplex_atom(stdout, solver, id);
     if (is_pos(l)) {
       printf("  (true)\n");
@@ -10778,7 +10759,7 @@ static bool simplex_eval_atom(simplex_solver_t *solver, arith_atom_t *atom) {
     break;
   }
 
-#if TRACE && ! DEBUG
+#if YICES_TRACE && ! YICES_DEBUG
   printf("---> atom: ");
   print_simplex_atom(stdout, solver, arith_atom_id(&solver->atbl, atom));
   if (b) {
@@ -10836,7 +10817,7 @@ literal_t simplex_select_eq_polarity(simplex_solver_t *solver, thvar_t x1, thvar
   if (xq_eq(arith_var_value(&solver->vtbl, x1), arith_var_value(&solver->vtbl, x2))) {
     return l;
   } else {
-    return not(l);
+    return not_(l);
   }
 }
 
@@ -10932,7 +10913,7 @@ void simplex_assert_var_eq(simplex_solver_t *solver, thvar_t x1, thvar_t x2, int
   assert(arith_var_has_eterm(&solver->vtbl, x1) && arith_var_has_eterm(&solver->vtbl, x2));
   eassertion_push_eq(&solver->egraph_queue, x1, x2, id);
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> Simplex: received egraph equality: ");
   print_simplex_var(stdout, solver, x1);
   printf(" = ");
@@ -10943,10 +10924,10 @@ void simplex_assert_var_eq(simplex_solver_t *solver, thvar_t x1, thvar_t x2, int
   print_simplex_vardef(stdout, solver, x2);
   printf("---> eterm[");
   print_simplex_var(stdout, solver, x1);
-  printf("] = g!%"PRId32"\n", arith_var_get_eterm(&solver->vtbl, x1));
+  printf("] = g!%" PRId32 "\n", arith_var_get_eterm(&solver->vtbl, x1));
   printf("---> eterm[");
   print_simplex_var(stdout, solver, x2);
-  printf("] = g!%"PRId32"\n", arith_var_get_eterm(&solver->vtbl, x2));
+  printf("] = g!%" PRId32 "\n", arith_var_get_eterm(&solver->vtbl, x2));
 #endif
 }
 
@@ -10954,7 +10935,7 @@ void simplex_assert_var_diseq(simplex_solver_t *solver, thvar_t x1, thvar_t x2, 
   assert(arith_var_has_eterm(&solver->vtbl, x1) && arith_var_has_eterm(&solver->vtbl, x2));
   eassertion_push_diseq(&solver->egraph_queue, x1, x2, hint);
 
-#if TRACE
+#if YICES_TRACE
   printf("---> Simplex: received egraph disequality: ");
   print_simplex_var(stdout, solver, x1);
   printf(" != ");
@@ -11009,7 +10990,7 @@ bool simplex_var_is_constant(simplex_solver_t *solver, thvar_t x) {
   if (x == const_idx) {
     return true;
   }
-  q = arith_var_def(&solver->vtbl, x);
+  q = (polynomial_t*)arith_var_def(&solver->vtbl, x);
   return q != NULL && polynomial_is_constant(q);
 }
 
@@ -11056,7 +11037,7 @@ static void simplex_prepare_model(simplex_solver_t *solver) {
   uint32_t i, n;
 
   assert(simplex_assignment_integer_valid(solver));
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
   check_integer_bounds(solver);
   check_vartags(solver);
@@ -11066,7 +11047,7 @@ static void simplex_prepare_model(simplex_solver_t *solver) {
   vtbl = &solver->vtbl;
   n = vtbl->nvars;
   for (i=1; i<n; i++) { // skip const_idx
-    p = arith_var_def(vtbl, i);
+    p = (polynomial_t*)arith_var_def(vtbl, i);
     if (p != NULL && simple_poly(p)) {
       assert(trivial_variable(vtbl, i));
       // i is a trivial variable: compute its value = evaluate p
@@ -11137,7 +11118,7 @@ static bool simple_dependent_var(arith_vartable_t *tbl, thvar_t x) {
   assert(arith_var_kind(tbl, x) == AVAR_FREE ||
          arith_var_kind(tbl, x) == AVAR_POLY);
 
-  q = arith_var_def(tbl, x);
+  q = (polynomial_t*)arith_var_def(tbl, x);
   if (q != NULL) {
     n = q->nterms;
     return (n == 1 && q->mono[0].var != const_idx) // q is b.y
@@ -11530,7 +11511,7 @@ static void simplex_shift_var_value(simplex_solver_t *solver, dep_table_t *deps,
         xq_add_q(arith_var_value(vtbl, y), &a);
         assert(value_satisfies_bounds(solver, y));
 
-#if DEBUG
+#if YICES_DEBUG
         check_equation_satisfied(solver, r);
 #endif
         simplex_shift_var_dependents(vtbl, deps, y, &a); // shift y's dependents
@@ -11623,10 +11604,10 @@ static void simplex_adjust_var(simplex_solver_t *solver, dep_table_t *deps, xq_h
       simplex_full_adjust_var(solver, aux, deps, x, &delta);
       n = xq_hmap_num_classes(aux);
 
-#if TRACE
+#if YICES_TRACE
       printf("    delta = ");
       q_print(stdout, &delta);
-      printf(": %"PRIu32" classes\n", n);
+      printf(": %" PRIu32 " classes\n", n);
 #endif
 
       assert(xq_hmap_num_entries(aux) == xq_hmap_num_entries(hmap));
@@ -11647,10 +11628,10 @@ static void simplex_adjust_var(simplex_solver_t *solver, dep_table_t *deps, xq_h
    * to hmap.
    */
   if (! q_is_zero(&best_delta)) {
-#if TRACE
+#if YICES_TRACE
     printf("    adjustment: delta = ");
     q_print(stdout, &best_delta);
-    printf(": %"PRIu32" classes\n", best_num_classes);
+    printf(": %" PRIu32 " classes\n", best_num_classes);
 #endif
     // We must adjust hmap first
     simplex_full_adjust_var(solver, hmap, deps, x, &best_delta);
@@ -11676,7 +11657,7 @@ static void simplex_adjust_assignment(simplex_solver_t *solver, dep_table_t *dep
   xq_hmap_t aux;
   uint32_t i, n;
 
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
   check_integer_bounds(solver);
   check_vartags(solver);
@@ -11704,7 +11685,7 @@ static void simplex_adjust_assignment(simplex_solver_t *solver, dep_table_t *dep
         /*
          * Modify the value of x to maximize the number of classes in hmap
          */
-#if TRACE
+#if YICES_TRACE
         printf("interval for ");
         print_simplex_var(stdout, solver, i);
         if (interval.has_lb) {
@@ -11728,7 +11709,7 @@ static void simplex_adjust_assignment(simplex_solver_t *solver, dep_table_t *dep
 
         simplex_adjust_var(solver, deps, hmap, &aux, &interval, i);
 
-#if DEBUG
+#if YICES_DEBUG
         check_assignment(solver);
         check_integer_bounds(solver);
         check_vartags(solver);
@@ -11773,13 +11754,13 @@ static void simplex_adjust_model(simplex_solver_t *solver) {
   }
 
   if (xq_hmap_num_classes(&hmap) < xq_hmap_num_entries(&hmap)) {
-#if TRACE
-    printf("---> before adjustment: %"PRIu32" entries, %"PRIu32" classes\n",
+#if YICES_TRACE
+    printf("---> before adjustment: %" PRIu32 " entries, %" PRIu32 " classes\n",
            xq_hmap_num_entries(&hmap), xq_hmap_num_classes(&hmap));
 #endif
     simplex_adjust_assignment(solver, &deps, &hmap);
-#if TRACE
-    printf("---> after adjustment: %"PRIu32" entries, %"PRIu32" classes\n",
+#if YICES_TRACE
+    printf("---> after adjustment: %" PRIu32 " entries, %" PRIu32 " classes\n",
            xq_hmap_num_entries(&hmap), xq_hmap_num_classes(&hmap));
 #endif
   }
@@ -11815,7 +11796,7 @@ uint32_t simplex_reconcile_model(simplex_solver_t *solver, uint32_t max_eq) {
   }
 
 
-#if TRACE
+#if YICES_TRACE
   printf("SIMPLEX: reconcile model\n");
   print_simplex_vars(stdout, solver);
   printf("\n");
@@ -11843,8 +11824,8 @@ uint32_t simplex_reconcile_model(simplex_solver_t *solver, uint32_t max_eq) {
 
   delete_int_hclass(&hclass);
 
-#if TRACE
-  printf("---> reconcile model: %"PRIu32" trichotomy lemmas\n\n", neq);
+#if YICES_TRACE
+  printf("---> reconcile model: %" PRIu32 " trichotomy lemmas\n\n", neq);
 #endif
 
   return neq;
@@ -11861,7 +11842,7 @@ static void simplex_prep_model(simplex_solver_t *solver) {
   if (simplex_option_enabled(solver, SIMPLEX_ADJUST_MODEL)) {
     simplex_adjust_model(solver);
   }
-#if TRACE
+#if YICES_TRACE
   printf("SIMPLEX: prepare model\n");
   print_simplex_vars(stdout, solver);
   printf("\n");
@@ -11898,7 +11879,7 @@ static void simplex_gen_interface_lemma(simplex_solver_t *solver, literal_t l, t
     /*
      * x1 = x2 is false: add (not l) as an axiom for the egraph
      */
-    add_unit_clause(solver->core, not(l));
+    add_unit_clause(solver->core, not_(l));
     solver->stats.num_reduced_inter_lemmas ++;
 
 #if 0
@@ -11909,7 +11890,7 @@ static void simplex_gen_interface_lemma(simplex_solver_t *solver, literal_t l, t
     printf(" (axiom)\n");
 #endif
 
-#if TRACE
+#if YICES_TRACE
     printf("---> Simplex: reconciliation lemma for ");
     print_simplex_var(stdout, solver, x1);
     printf(" /= ");
@@ -11931,7 +11912,7 @@ static void simplex_gen_interface_lemma(simplex_solver_t *solver, literal_t l, t
     printf("\n");
     printf("     equality is false\n");
     printf("     add unit clause: ");
-    print_egraph_atom_of_literal(stdout, solver->egraph, not(l));
+    print_egraph_atom_of_literal(stdout, solver->egraph, not_(l));
     printf("\n");
 #endif
 
@@ -11947,10 +11928,10 @@ static void simplex_gen_interface_lemma(simplex_solver_t *solver, literal_t l, t
     l1 = create_pos_atom(solver, y, c); // l1 is (y > c)
     l2 = create_neg_atom(solver, y, c); // l2 is (y < c)
 
-    add_ternary_clause(solver->core, not(l), l1, l2); // clause: (not l) or (y > c) or (y < c))
+    add_ternary_clause(solver->core, not_(l), l1, l2); // clause: (not l) or (y > c) or (y < c))
     if (equiv) {
-      add_binary_clause(solver->core, l, not(l1)); // y > c => t1 /= t2
-      add_binary_clause(solver->core, l, not(l2)); // y < c => t1 /= t2
+      add_binary_clause(solver->core, l, not_(l1)); // y > c => t1 /= t2
+      add_binary_clause(solver->core, l, not_(l2)); // y < c => t1 /= t2
     }
 
     solver->stats.num_interface_lemmas ++;
@@ -11964,7 +11945,7 @@ static void simplex_gen_interface_lemma(simplex_solver_t *solver, literal_t l, t
 #endif
 
 
-#if TRACE
+#if YICES_TRACE
     printf("---> Simplex: reconciliation lemma for ");
     print_simplex_var(stdout, solver, x1);
     printf(" /= ");
@@ -12004,7 +11985,7 @@ static void simplex_gen_interface_lemma(simplex_solver_t *solver, literal_t l, t
     print_simplex_atom_of_literal(stdout, solver, l2);
     printf("\n");
     printf("     add clause: (OR ");
-    print_egraph_atom_of_literal(stdout, solver->egraph, not(l));
+    print_egraph_atom_of_literal(stdout, solver->egraph, not_(l));
     printf(" ");
     print_simplex_atom_of_literal(stdout, solver, l1);
     printf(" ");
@@ -12345,7 +12326,7 @@ static void simplex_model_for_trivial_vars(simplex_solver_t *solver) {
   vtbl = &solver->vtbl;
   n = vtbl->nvars;
   for (i=1; i<n; i++) {
-    p = arith_var_def(vtbl, i);
+    p = (polynomial_t*)arith_var_def(vtbl, i);
     if (p != NULL && simple_poly(p)) {
       assert(trivial_variable(vtbl, i));
       simplex_eval_rational_poly(solver->value, p, aux);
@@ -12419,7 +12400,7 @@ static bool equations_hold_in_model(simplex_solver_t *solver) {
     simplex_eval_rational_row(solver->value, row, &check);
     if (q_is_nonzero(&check)) {
       printf("---> BUG: invalid Simplex model: equation not satisfied\n");
-      printf("   row[%"PRIu32"]: ", i);
+      printf("   row[%" PRIu32 "]: ", i);
       print_simplex_row(stdout, solver, row);
       printf("\n");
       fflush(stdout);
@@ -12605,7 +12586,7 @@ void simplex_build_model(simplex_solver_t *solver) {
   byte_t *mark;
   uint32_t i, n;
 
-#if DEBUG
+#if YICES_DEBUG
   check_assignment(solver);
 #endif
 
@@ -12832,7 +12813,7 @@ arith_egraph_interface_t *simplex_arith_egraph_interface(simplex_solver_t *solve
  *   DEBUGGING FUNCTIONS   *
  **************************/
 
-#if DUMP
+#if YICES_DUMP
 
 static void print_simplex(FILE *f, simplex_solver_t *solver) {
   fprintf(f, "\n==== Variables ====\n");
@@ -12874,7 +12855,7 @@ static void dump_state(simplex_solver_t *solver) {
 
 
 
-#if DEBUG
+#if YICES_DEBUG
 
 /*
  * Error messages about variable x
@@ -12964,7 +12945,7 @@ static void check_assertion(simplex_solver_t *solver, int32_t a) {
   case VAL_FALSE:
     if (assertion_is_true(a)) {
       printf("---> ERROR: truth assignment mismatch\n");
-      printf("     atom %"PRId32" asserted true\n", i);
+      printf("     atom %" PRId32 " asserted true\n", i);
       printf("     var ");
       print_bvar(stdout, boolvar_of_atom(atom));
       printf(" is false\n");
@@ -12973,8 +12954,8 @@ static void check_assertion(simplex_solver_t *solver, int32_t a) {
   case VAL_UNDEF_TRUE:
   case VAL_UNDEF_FALSE:
     printf("---> ERROR: truth assignment mismatch\n");
-    printf("     atom %"PRId32" asserted\n", i);
-    printf("     atom %"PRId32" is ", i);
+    printf("     atom %" PRId32 " asserted\n", i);
+    printf("     atom %" PRId32 " is ", i);
     print_simplex_atom(stdout, solver, i);
     printf("\n");
     printf("     var ");
@@ -12984,7 +12965,7 @@ static void check_assertion(simplex_solver_t *solver, int32_t a) {
   case VAL_TRUE:
     if (assertion_is_false(a)) {
       printf("---> ERROR: truth assignment mismatch\n");
-      printf("     atom %"PRId32" asserted false\n", i);
+      printf("     atom %" PRId32 " asserted false\n", i);
       printf("     var ");
       print_bvar(stdout, boolvar_of_atom(atom));
       printf(" is true\n");
@@ -13073,7 +13054,7 @@ static void check_equation_satisfied(simplex_solver_t *solver, uint32_t r) {
   }
 
   if (! xq_is_zero(&check)) {
-    printf("---> ERROR: row[%"PRIu32"] not satisfied\n", r);
+    printf("---> ERROR: row[%" PRIu32 "] not satisfied\n", r);
     fflush(stdout);
   }
   xq_clear(&check);
@@ -13215,7 +13196,7 @@ static void check_bound_marks(simplex_solver_t *solver) {
   n = bstack->top;
   for (i=0; i<n; i++) {
     if (arith_cnstr_is_marked(bstack, i)) {
-      printf("---> ERROR: mark on bound %"PRIu32" is not cleared\n", i);
+      printf("---> ERROR: mark on bound %" PRIu32 " is not cleared\n", i);
       fflush(stdout);
     }
   }
@@ -13226,7 +13207,7 @@ static void check_bound_marks(simplex_solver_t *solver) {
 
 
 
-#if TRACE
+#if YICES_TRACE
 
 /*
  * Show the list of infeasible variables (bounds not satisfied)
@@ -13240,7 +13221,7 @@ static void show_heap(FILE *f, simplex_solver_t *solver) {
   fprintf(f, "Infeasible vars:");
   for (i=0; i<n; i++) {
     if (int_heap_member(&solver->infeasible_vars, i)) {
-      fprintf(f, " x_%"PRIu32, i);
+      fprintf(f, " x_%" PRIu32, i);
     }
   }
   fprintf(f, "\n");

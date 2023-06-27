@@ -91,7 +91,7 @@ static void test_small_small(void) {
       q_set32(&c, x);
       q_integer_rem(&c, &b);
 
-      printf("div[%3"PRId32", %"PRId32"]: quotient = ", x, y);
+      printf("div[%3" PRId32 ", %" PRId32 "]: quotient = ", x, y);
       q_print(stdout, &a);
       printf(", remainder = ");
       q_print(stdout, &c);
@@ -126,7 +126,7 @@ static void test_big_small(void) {
       q_integer_div(&a, &b);
       q_integer_rem(&c, &b);
 
-      printf("div[%s, %"PRId32"]: quotient = ", large_signed[i], y);
+      printf("div[%s, %" PRId32 "]: quotient = ", large_signed[i], y);
       q_print(stdout, &a);
       printf(", remainder = ");
       q_print(stdout, &c);
@@ -160,7 +160,7 @@ static void test_small_big(void) {
       q_integer_div(&a, &b);
       q_integer_rem(&c, &b);
 
-      printf("div[%"PRId32", %s]: quotient = ", x, large_divisor[i]);
+      printf("div[%" PRId32 ", %s]: quotient = ", x, large_divisor[i]);
       q_print(stdout, &a);
       printf(", remainder = ");
       q_print(stdout, &c);

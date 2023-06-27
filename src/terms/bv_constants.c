@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
+#include <malloc.h>
 
 #include "terms/bv_constants.h"
 #include "utils/bit_tricks.h"
@@ -1414,7 +1416,7 @@ void bvconst_mul2(uint32_t *bv, uint32_t k, uint32_t *a1, uint32_t *a2) {
 
 // bv := bv * a
 void bvconst_mul(uint32_t *bv, uint32_t k, uint32_t *a) {
-  uint32_t tmp[k]; // Warning: this is a GCC extension of C. Dangerous is k is large
+  uint32_t* tmp = (uint32_t*)alloca(k * sizeof(uint32_t)); // Warning: Dangerous if k is large
 
   bvconst_set(tmp, k, bv);
   bvconst_clear(bv, k);
@@ -1428,8 +1430,8 @@ void bvconst_mul(uint32_t *bv, uint32_t k, uint32_t *a) {
  * - bv and a must be distinct and have word size = k
  */
 void bvconst_mulpower(uint32_t *bv, uint32_t k, uint32_t *a, uint32_t d) {
-  uint32_t tmp[k];
-  uint32_t sq[k];
+  uint32_t* tmp = (uint32_t*)alloca(k * sizeof(uint32_t));
+  uint32_t* sq = (uint32_t*)alloca(k * sizeof(uint32_t));
 
   // deal with small exponents d
   if (d == 0) return; // we take 0^0 = 1

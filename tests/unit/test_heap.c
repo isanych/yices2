@@ -25,7 +25,7 @@
 #include "utils/assert_utils.h"
 #include "utils/memalloc.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -363,7 +363,7 @@ static void print_heap(var_heap_t *heap, char *msg) {
   printf("%s\n", msg);
   for (i=1; i<=heap->heap_last; i++) {
     x = heap->heap[i];
-    printf("Heap[%2"PRId32"]: var: %3"PRId32", act: %f\n", i, x, heap->activity[x]);
+    printf("Heap[%2" PRId32 "]: var: %3" PRId32 ", act: %f\n", i, x, heap->activity[x]);
   }
   printf("\n");
 }

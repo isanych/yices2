@@ -22,7 +22,7 @@
 
 #include "utils/uint_rbtrees.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -39,7 +39,7 @@ static inline long int random(void) {
 static void recur_print_tree(rbtree_t *tree, uint32_t i) {
   if (i > 0) {
     recur_print_tree(tree, rbtree_node_left_child(tree, i));
-    printf(" %"PRIu32, rbtree_node_value(tree, i));
+    printf(" %" PRIu32, rbtree_node_value(tree, i));
     recur_print_tree(tree, rbtree_node_right_child(tree, i));
   }
 }
@@ -49,9 +49,9 @@ static void recur_print_tree(rbtree_t *tree, uint32_t i) {
  */
 static void print_tree(rbtree_t *tree) {
   printf("Tree %p\n", tree);
-  printf("  size = %"PRIu32"\n", tree->size);
-  printf("  num nodes = %"PRIu32"\n", tree->nbnodes);
-  printf("  root = %"PRIu32"\n", tree->root);
+  printf("  size = %" PRIu32 "\n", tree->size);
+  printf("  num nodes = %" PRIu32 "\n", tree->nbnodes);
+  printf("  root = %" PRIu32 "\n", tree->root);
   printf("  content: ");
   recur_print_tree(tree, tree->root);
   printf("\n");
@@ -67,7 +67,7 @@ static void print_all_nodes(rbtree_t *tree) {
   printf("  nodes\n");
   n = tree->nbnodes;
   for (i=1; i<n; i++) {
-    printf("   node[%"PRIu32"]: val = %"PRIu32", left = %"PRIu32", right = %"PRIu32,
+    printf("   node[%" PRIu32 "]: val = %" PRIu32 ", left = %" PRIu32 ", right = %" PRIu32,
 	   i, rbtree_node_value(tree, i), rbtree_node_left_child(tree, i),
 	   rbtree_node_right_child(tree, i));
     if (tst_bit(tree->isred, i)) {
@@ -76,7 +76,7 @@ static void print_all_nodes(rbtree_t *tree) {
       printf(", black\n");
     }
   }
-  printf("  root = %"PRId32"\n\n", tree->root);
+  printf("  root = %" PRId32 "\n\n", tree->root);
 }
 
 
@@ -139,19 +139,19 @@ static void random_decreasing(uint32_t *a, uint32_t n) {
 static void test_tree(rbtree_t *tree, uint32_t *a, uint32_t n) {
   uint32_t i, x;
   uint32_t j, k;
-  bool new;
+  bool new_;
 
   for (i=0; i<n; i++) {
     x = a[i];
     j = rbtree_find(tree, x);
-    k = rbtree_get(tree, x, &new);
+    k = rbtree_get(tree, x, &new_);
     assert(rbtree_node_value(tree, k) == x);
     if (j == null_rbnode) {
-      printf("--> adding %"PRIu32" at node %"PRIu32"\n", x, k);
-      assert(new);
+      printf("--> adding %" PRIu32 " at node %" PRIu32 "\n", x, k);
+      assert(new_);
     } else {
-      printf("--> found %"PRIu32" at node %"PRIu32"\n", x, j);
-      assert(!new && k == j);
+      printf("--> found %" PRIu32 " at node %" PRIu32 "\n", x, j);
+      assert(!new_ && k == j);
     }
   }
 
@@ -174,12 +174,12 @@ static void test_scan_tree(rbtree_t *tree) {
   for (;;) {
     i = rbtree_find_sup(tree, x);
     if (i == 0) {
-      printf("sup(%"PRIu32"): node %"PRIu32" (no element)\n", x, i);
+      printf("sup(%" PRIu32 "): node %" PRIu32 " (no element)\n", x, i);
       break;
     } else {
       y = rbtree_node_value(tree, i);
       assert(x <= y);
-      printf("sup(%"PRIu32"): node %"PRIu32", val = %"PRIu32"\n", x, i, y);
+      printf("sup(%" PRIu32 "): node %" PRIu32 ", val = %" PRIu32 "\n", x, i, y);
       if (y == UINT32_MAX) break;
       x = y+1;
     }
@@ -194,17 +194,17 @@ static void test_scan_tree(rbtree_t *tree) {
 static void test_tree_speed_add(rbtree_t *tree, uint32_t *a, uint32_t n) {
   uint32_t i, x;
   uint32_t cnt; // number of additions
-  bool new;
+  bool new_;
 
   cnt = 0;
   for (i=0; i<n; i++) {
     x = a[i];
-    (void) rbtree_get(tree, x, &new);
-    if (new) {
+    (void) rbtree_get(tree, x, &new_);
+    if (new_) {
       cnt ++;
     }
   }
-  printf("Add test:    size = %"PRIu32", added = %"PRIu32"\n", n, cnt);
+  printf("Add test:    size = %" PRIu32 ", added = %" PRIu32 "\n", n, cnt);
 }
 
 /*
@@ -222,7 +222,7 @@ static void test_tree_speed_find(rbtree_t *tree, uint32_t *a, uint32_t n) {
       cnt ++;
     }
   }
-  printf("Search test: size = %"PRIu32", found = %"PRIu32"\n", n, cnt);
+  printf("Search test: size = %" PRIu32 ", found = %" PRIu32 "\n", n, cnt);
 }
 
 /*
@@ -304,7 +304,7 @@ static void test_rotations(rbtree_t *tree) {
       if (p != null_rbnode) {
 	test_rotate(tree, p, q, r);
 
-	printf("--- After rotation of %"PRIu32" and %"PRIu32" ---\n", p, q);
+	printf("--- After rotation of %" PRIu32 " and %" PRIu32 " ---\n", p, q);
 	print_tree(tree);
 	//	print_all_nodes(tree);
 	printf("\n");

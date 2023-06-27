@@ -39,11 +39,9 @@
 
 #include "api/yices_globals.h"
 #include "mt/thread_macros.h"
+#include "yices_config.h"
 
-#define TRACE 0
-#define TRACE_FCHECK 0
-
-#if TRACE || TRACE_FCHECK
+#if YICES_TRACE || YICES_TRACE_FCHECK
 
 #include <stdio.h>
 
@@ -1729,7 +1727,7 @@ static inline void add_eq_implies_eq(egraph_t *egraph, composite_t *p, occ_t x, 
   egraph->stack.edata[k].t[0] = t1;
   egraph->stack.edata[k].t[1] = t2;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: equality ");
   print_occurrence(stdout, pos_occ(p->id));
   printf(" == ");
@@ -1765,7 +1763,7 @@ static inline void add_diseq_implies_eq(egraph_t *egraph, composite_t *p, occ_t 
   egraph->stack.edata[k].t[0] = t1;
   egraph->stack.edata[k].t[1] = t2;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: equality ");
   print_occurrence(stdout, pos_occ(p->id));
   printf(" == ");
@@ -1797,7 +1795,7 @@ static bool analyze_basic(egraph_t *egraph, composite_t *p) {
     // basic_congruence between p and q
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), pos_occ(q->id));
     egraph->stack.etag[k] = EXPL_BASIC_CONGRUENCE;
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: equality ");
     print_occurrence(stdout, pos_occ(p->id));
     printf(" == ");
@@ -1879,7 +1877,7 @@ static bool analyze_eq(egraph_t *egraph, composite_t *p) {
     } else {
       egraph->stack.etag[k] = EXPL_EQ_CONGRUENCE2;
     }
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: equality ");
     print_occurrence(stdout, pos_occ(p->id));
     printf(" == ");
@@ -1949,7 +1947,7 @@ static bool analyze_ite(egraph_t *egraph, composite_t *p) {
       assert(egraph_label(egraph, q->child[0]) == opposite_label(l1));
       egraph->stack.etag[k] = EXPL_ITE_CONGRUENCE2;
     }
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: equality ");
     print_occurrence(stdout, pos_occ(p->id));
     printf(" == ");
@@ -1984,7 +1982,7 @@ static bool analyze_distinct(egraph_t *egraph, composite_t *p) {
     if (sgn->sigma[i] == sgn->sigma[i+1]) {
       k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), false_occ);
       gen_distinct_simpl_antecedent(egraph, p, sgn->sigma[i], k);
-#if TRACE
+#if YICES_TRACE
       printf("---> EGRAPH: distinct term ");
       print_occurrence(stdout, pos_occ(p->id));
       printf(" reduced to false because ");
@@ -2002,7 +2000,7 @@ static bool analyze_distinct(egraph_t *egraph, composite_t *p) {
   if (q != p) {
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), pos_occ(q->id));
     gen_distinct_congruence_antecedent(egraph, p, q, k);
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: equality ");
     print_occurrence(stdout, pos_occ(p->id));
     printf(" == ");
@@ -2057,7 +2055,7 @@ static bool analyze_or(egraph_t *egraph, composite_t *p) {
     // (or t_1 ... t_n) == false
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), false_occ);
     egraph->stack.etag[k] = EXPL_SIMP_OR;
-#if TRACE
+#if YICES_TRACE
       printf("---> EGRAPH: or term ");
       print_occurrence(stdout, pos_occ(p->id));
       printf(" = ");
@@ -2082,7 +2080,7 @@ static bool analyze_or(egraph_t *egraph, composite_t *p) {
     assert(t >= 0);
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), t);
     egraph->stack.etag[k] = EXPL_SIMP_OR;
-#if TRACE
+#if YICES_TRACE
       printf("---> EGRAPH: or term ");
       print_occurrence(stdout, pos_occ(p->id));
       printf(" = ");
@@ -2114,7 +2112,7 @@ static bool analyze_or(egraph_t *egraph, composite_t *p) {
   if (q != p) {
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), pos_occ(q->id));
     gen_or_congruence_antecedent(egraph, p, q, k);
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: equality ");
     print_occurrence(stdout, pos_occ(p->id));
     printf(" == ");
@@ -2152,7 +2150,7 @@ static bool analyze_lambda(egraph_t *egraph, composite_t *p) {
     // basic congruence
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(p->id), pos_occ(q->id));
     egraph->stack.etag[k] = EXPL_BASIC_CONGRUENCE;
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: equality ");
     print_occurrence(stdout, pos_occ(p->id));
     printf(" == ");
@@ -2321,7 +2319,7 @@ static void egraph_reactivate_dynamic_terms(egraph_t *egraph) {
   v = &egraph->reanalyze_vector;
   n = v->size;
   for (i=0; i<n; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     assert(composite_body(p));
     egraph_activate_composite(egraph, p);
   }
@@ -2673,7 +2671,7 @@ static void expand_distinct(egraph_t *egraph, uint32_t n, occ_t *a, ivector_t *v
 
 /*
  * Create a fresh boolean variable x and assert clauses equivalent to
- * - not(x) == (distinct a[0] ... a[n-1])
+ * - not_(x) == (distinct a[0] ... a[n-1])
  */
 static literal_t assert_distinct_def_clauses(egraph_t *egraph, uint32_t n, occ_t *a) {
   ivector_t *v;
@@ -2690,12 +2688,12 @@ static literal_t assert_distinct_def_clauses(egraph_t *egraph, uint32_t n, occ_t
   // clauses for pos_lit(x) == (or (eq a[0] a[1]) .... (eq a[n-1] a[n]))
   p = v->size;
   for (i=0; i<p; i++) {
-    add_binary_clause(core, l, not(v->data[i]));
+    add_binary_clause(core, l, not_(v->data[i]));
   }
-  ivector_push(v, not(l));
+  ivector_push(v, not_(l));
   add_clause(core, p+1, v->data);
 
-  return not(l);
+  return not_(l);
 }
 
 
@@ -3529,7 +3527,7 @@ static void create_ackermann_lemma(egraph_t *egraph, composite_t *c1, composite_
               l = egraph_make_aux_eq(egraph, c1->child[i], c2->child[i]);
               if (l == null_literal) return; // quota exceeded: fail
               if (l != true_literal) {
-                ivector_push(v, not(l));
+                ivector_push(v, not_(l));
               }
             }
             i = v->size;
@@ -3572,14 +3570,14 @@ static void create_ackermann_lemma(egraph_t *egraph, composite_t *c1, composite_
             l = egraph_make_aux_eq(egraph, c1->child[i], c2->child[i]);
             if (l == null_literal) return; // aux_eq_quota exceeded
             if (l != true_literal) {
-              ivector_push(v, not(l));
+              ivector_push(v, not_(l));
             }
           }
           l = egraph_make_eq(egraph, pos_occ(b1), pos_occ(b2));
           ivector_push(v, l);
 
 #if 0
-          printf("---> ackermann lemma[%"PRIu32"]:\n", egraph->stats.ack_lemmas + 1);
+          printf("---> ackermann lemma[%" PRIu32 "]:\n", egraph->stats.ack_lemmas + 1);
           n = v->size;
           assert(n > 0);
           if (n > 1) {
@@ -3717,8 +3715,8 @@ static void propagate_boolean_equality(egraph_t *egraph, bvar_t v1, bvar_t v2, i
   core = egraph->core;
   assert(core != NULL && bvar_has_atom(core, v1) && bvar_has_atom(core, v2));
 
-  atm1 = get_bvar_atom(core, v1);
-  atm2 = get_bvar_atom(core, v2);
+  atm1 = (atom_t*)get_bvar_atom(core, v1);
+  atm2 = (atom_t*)get_bvar_atom(core, v2);
 
   if (v1 == const_bvar) {
     atm = atm2;
@@ -3766,7 +3764,7 @@ static void propagate_thvar_equality(egraph_t *egraph, class_t c1, thvar_t v1, c
          v1 == egraph_class_thvar(egraph, c1) &&
          v2 == egraph_class_thvar(egraph, c2));
 
-  i = egraph->classes.etype[c1];
+  i = (etype_t)egraph->classes.etype[c1];
   switch (i) {
   case ETYPE_INT:
   case ETYPE_REAL:
@@ -3805,7 +3803,7 @@ static void undo_thvar_equality(egraph_t *egraph, class_t c1, thvar_t v1, class_
   if (egraph->classes.etype[c1] == ETYPE_BOOL) {
     core = egraph->core;
     assert(core != NULL && bvar_has_atom(core, v1) && bvar_has_atom(core, v2));
-    split_atom_lists(get_bvar_atom(core, v1), get_bvar_atom(core, v2));
+    split_atom_lists((atom_t*)get_bvar_atom(core, v1), (atom_t*)get_bvar_atom(core, v2));
   }
 }
 
@@ -3822,8 +3820,8 @@ static void fixup_atom_lists(egraph_t *egraph, bvar_t v1, bvar_t v2) {
 
   assert(core != NULL && bvar_has_atom(core, v1) && bvar_has_atom(core, v2));
 
-  atm1 = get_bvar_atom(core, v1);
-  atm2 = get_bvar_atom(core, v2);
+  atm1 = (atom_t*)get_bvar_atom(core, v1);
+  atm2 = (atom_t*)get_bvar_atom(core, v2);
 
   merge_atom_lists(atm1, atm2);
 }
@@ -3856,7 +3854,7 @@ static void check_eq_atom(egraph_t *egraph, occ_t t, composite_t *atom) {
       egraph->stack.etag[k] = EXPL_EQ;
       egraph->stack.edata[k].t[0] = t;
       egraph->stack.edata[k].t[1] = true_occ;
-#if TRACE
+#if YICES_TRACE
       printf("---> EGRAPH: equality ");
       print_occurrence(stdout, t1);
       printf(" == ");
@@ -3897,7 +3895,7 @@ static void check_eq_atom(egraph_t *egraph, occ_t t, composite_t *atom) {
         egraph->stack.etag[k] = EXPL_EQ;
         egraph->stack.edata[k].t[0] = t;
         egraph->stack.edata[k].t[1] = false_occ;
-#if TRACE
+#if YICES_TRACE
         printf("---> EGRAPH: equality ");
         print_occurrence(stdout, t1);
         printf(" == ");
@@ -3984,7 +3982,7 @@ static void assert_distinct(egraph_t *egraph, composite_t *atom) {
     dmask[c] |= msk;
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: asserting ");
   print_composite(stdout, atom);
   printf("\n");
@@ -3996,7 +3994,7 @@ static void assert_distinct(egraph_t *egraph, composite_t *atom) {
     v = egraph->classes.parents + c;
     m = v->last;
     for (j=0; j<m; j++) {
-      p = v->data[j];
+      p = (composite_t*)v->data[j];
       if (valid_entry(p) && p->tag == mk_eq_tag()) {
         // p in v implies that p is in the congruence table,
         // so it was not false (or true) on entry to this function
@@ -4141,7 +4139,7 @@ static void collect_eqterms(use_vector_t *u, pvector_t *v) {
   pvector_reset(v);
   n = u->last;
   for (i=0; i<n; i++) {
-    p = u->data[i];
+    p = (composite_t*)u->data[i];
     if (valid_entry(p) && p->tag == mk_eq_tag()) {
       pvector_push(v, p);
     }
@@ -4162,7 +4160,7 @@ static void check_false_eq(egraph_t *egraph, pvector_t *v) {
   dmask = egraph->classes.dmask;
 
   for (i=0; i<v->size; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     assert(p->tag == mk_eq_tag());
     t1 = p->child[0];
     t2 = p->child[1];
@@ -4187,7 +4185,7 @@ static bool eq_is_from_satellite(egraph_t *egraph, int32_t i) {
   expl_tag_t tag;
 
   assert(0 <= i && i < egraph->stack.top);
-  tag = egraph->stack.etag[i];
+  tag = (expl_tag_t)egraph->stack.etag[i];
   return tag == EXPL_ARITH_PROPAGATION || tag == EXPL_BV_PROPAGATION;
 }
 
@@ -4210,7 +4208,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
   occ_t t;
   thvar_t v1, v2;
 
-#if TRACE
+#if YICES_TRACE
   printf("\n---> EGRAPH: processing equality ");
   print_occurrence(stdout, t1);
   printf(" == ");
@@ -4228,7 +4226,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
 
   // check whether (t1 == t2) is redundant
   if (egraph_equal_occ(egraph, t1, t2)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> redundant\n");
     fflush(stdout);
 #endif
@@ -4237,7 +4235,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
 
   // check whether it's inconsistent and if so construct the explanation
   if (egraph_inconsistent_edge(egraph, t1, t2, i, &egraph->expl_vector)) {
-#if TRACE
+#if YICES_TRACE
     printf("---> conflict\n");
     fflush(stdout);
 #endif
@@ -4251,7 +4249,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
     return false;
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("---> merging ");
   print_label(stdout, egraph_label(egraph, t1));
   printf(" and ");
@@ -4291,7 +4289,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
   v = egraph->classes.parents + c2;
   n = v->last;
   for (j=0; j<n; j++) {
-    p = v->data[j];
+    p = (composite_t*)v->data[j];
     if (valid_entry(p)) {
       // p is valid, i.e., it's in the congruence table
       congruence_table_remove(&egraph->ctable, p);
@@ -4340,7 +4338,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
    *   pointer in v.
    */
   for (j=0; j<n; j++) {
-    p = v->data[j];
+    p = (composite_t*)v->data[j];
     if (valid_entry(p)) {
       if (composite_simplifies(egraph, p)) {
         // p is no longer in the congruence table
@@ -4420,7 +4418,7 @@ static bool process_equality(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
     }
   }
 
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
   printf("\nDONE PROCESSING EQUALITY\n\n");
   print_egraph_terms(stdout, egraph);
   printf("\n");
@@ -4462,8 +4460,8 @@ void egraph_start_internalization(egraph_t *egraph) {
 void egraph_start_search(egraph_t *egraph) {
   uint32_t i;
 
-#if TRACE
-  fprintf(stdout, "---> EGRAPH START_SEARCH [dlevel = %"PRIu32", decisions = %"PRIu64"]\n",
+#if YICES_TRACE
+  fprintf(stdout, "---> EGRAPH START_SEARCH [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n",
           egraph->decision_level, egraph->core->stats.decisions);
   fprintf(stdout, "\n=== EGRAPH TERMS ===\n");
   print_egraph_terms(stdout, egraph);
@@ -4485,7 +4483,7 @@ void egraph_start_search(egraph_t *egraph) {
     }
   }
 
-#if TRACE
+#if YICES_TRACE
   printf("\n=== EGRAPH TERMS ===\n");
   print_egraph_terms(stdout, egraph);
   printf("\n");
@@ -4518,8 +4516,8 @@ static void egraph_open_decision_level(egraph_t *egraph) {
   // open new scope in arena
   arena_push(&egraph->arena);
 
-#if TRACE
-  printf("\n---> Egraph: increase decision level to %"PRIu32"\n", egraph->decision_level);
+#if YICES_TRACE
+  printf("\n---> Egraph: increase decision level to %" PRIu32 "\n", egraph->decision_level);
 #endif
 }
 
@@ -4731,7 +4729,7 @@ static void undo_merge(egraph_t *egraph, occ_t t2, elabel_t l2) {
   v = egraph->classes.parents + c2;
   n = v->last;
   for (i=0; i<n; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     if (valid_entry(p)) {
       congruence_table_remove(&egraph->ctable, p);
       detach_composite(p, label, egraph->classes.parents);
@@ -4769,7 +4767,7 @@ static void undo_merge(egraph_t *egraph, occ_t t2, elabel_t l2) {
    * Put parents[c2] back into ctable
    */
   for (i=0; i<n; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     assert(valid_entry(p) || empty_entry(p));
     if (valid_entry(p)) {
       signature_composite(p, label, &egraph->sgn);
@@ -4866,8 +4864,8 @@ static void egraph_local_backtrack(egraph_t *egraph, uint32_t back_level) {
 
   assert(egraph->base_level <= back_level && back_level < egraph->decision_level);
 
-#if TRACE
-  printf("---> EGRAPH:   Backtracking to level %"PRIu32"\n\n", back_level);
+#if YICES_TRACE
+  printf("---> EGRAPH:   Backtracking to level %" PRIu32 "\n\n", back_level);
 #endif
 
 
@@ -4900,12 +4898,12 @@ static void egraph_local_backtrack(egraph_t *egraph, uint32_t back_level) {
       break;
 
     case UNDO_SIMPLIFY:
-      restore_composite(egraph, udata[i].ptr);
+      restore_composite(egraph, (composite_t*)udata[i].ptr);
       break;
 
     // store terms to reanalyze into reanalyze_vector
     case REANALYZE_CONGRUENCE_ROOT:
-      deactivate_congruence_root(egraph, udata[i].ptr);
+      deactivate_congruence_root(egraph, (composite_t*)udata[i].ptr);
       pvector_push(&egraph->reanalyze_vector, udata[i].ptr);
       break;
 
@@ -5067,7 +5065,7 @@ static bool reanalyze_to_delete(egraph_t *egraph) {
   v = &egraph->reanalyze_vector;
   n = v->size;
   for (i=0; i<n; i++) {
-    p = v->data[i];
+    p = (composite_t*)v->data[i];
     if (p->id < k) {
       return false;
     }
@@ -5192,8 +5190,8 @@ bool egraph_propagate(egraph_t *egraph) {
   uint32_t i, k;
   ivector_t *conflict;
 
-#if TRACE
-  printf("---> EGRAPH PROPAGATE [dlevel = %"PRIu32", decisions = %"PRIu64"]\n",
+#if YICES_TRACE
+  printf("---> EGRAPH PROPAGATE [dlevel = %" PRIu32 ", decisions = %" PRIu64 "]\n",
          egraph->decision_level, egraph->core->stats.decisions);
 #endif
 
@@ -5207,7 +5205,7 @@ bool egraph_propagate(egraph_t *egraph) {
        */
       conflict = &egraph->expl_vector;
       for (i=0; i<conflict->size; i++) {
-        conflict->data[i] = not(conflict->data[i]);
+        conflict->data[i] = not_(conflict->data[i]);
       }
       ivector_push(conflict, null_literal); // end marker
       record_theory_conflict(egraph->core, conflict->data);
@@ -5515,7 +5513,7 @@ static void egraph_release_models(egraph_t *egraph) {
 
 
 
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
 /*
  * Test: check whether there are duplicates in vector v
  */
@@ -5531,8 +5529,8 @@ static void check_interface_duplicates(ivector_t *v) {
       if ((v->data[j] == t1 && v->data[j+1] == t2)
           || (v->data[j] == t2 && v->data[j+1] == t1)) {
         printf("---> EGRAPH: interface lemma duplicate: "
-               "v[%"PRIu32", %"PRIu32"] = (%"PRId32", %"PRId32"); "
-               "v[%"PRIu32", %"PRIu32"] = (%"PRId32", %"PRId32")\n", i, i+1, t1, t2, j, j+1, v->data[j], v->data[j+1]);
+               "v[%" PRIu32 ", %" PRIu32 "] = (%" PRId32 ", %" PRId32 "); "
+               "v[%" PRIu32 ", %" PRIu32 "] = (%" PRId32 ", %" PRId32 ")\n", i, i+1, t1, t2, j, j+1, v->data[j], v->data[j+1]);
         fflush(stdout);
       }
     }
@@ -5549,13 +5547,13 @@ static void check_interface_duplicates(ivector_t *v) {
  */
 static uint32_t egraph_gen_interface_lemmas(egraph_t *egraph, uint32_t max_eqs, ivector_t *v) {
   void *satellite;
-  th_egraph_interface_t *interface;
+  th_egraph_interface_t *interface_;
   uint32_t i, n;
   occ_t t1, t2;
   thvar_t x1, x2;
   literal_t eq;
 
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
   check_interface_duplicates(v);
 #endif
 
@@ -5577,12 +5575,12 @@ static uint32_t egraph_gen_interface_lemmas(egraph_t *egraph, uint32_t max_eqs, 
     case ETYPE_INT:
     case ETYPE_REAL:
       satellite = egraph->th[ETYPE_REAL];
-      interface = egraph->eg[ETYPE_REAL];
+      interface_ = egraph->eg[ETYPE_REAL];
       break;
 
     case ETYPE_BV:
       satellite = egraph->th[ETYPE_BV];
-      interface = egraph->eg[ETYPE_BV];
+      interface_ = egraph->eg[ETYPE_BV];
       break;
 
     default:
@@ -5591,9 +5589,9 @@ static uint32_t egraph_gen_interface_lemmas(egraph_t *egraph, uint32_t max_eqs, 
       break;
     }
 
-    assert(interface->equal_in_model(satellite, x1, x2));
+    assert(interface_->equal_in_model(satellite, x1, x2));
     eq = egraph_make_simple_eq(egraph, t1, t2);
-    interface->gen_interface_lemma(satellite, not(eq), x1, x2, true);
+    interface_->gen_interface_lemma(satellite, not_(eq), x1, x2, true);
   }
 
   assert(n/2 <= max_eqs);
@@ -5684,7 +5682,7 @@ static void reconcile_thvar(egraph_t *egraph, class_t c1, thvar_t v1, class_t c2
          v1 == egraph_class_thvar(egraph, c1) &&
          v2 == egraph_class_thvar(egraph, c2));
 
-  i = egraph->classes.etype[c1];
+  i = (etype_t)egraph->classes.etype[c1];
 
   switch (i) {
   case ETYPE_INT:
@@ -5760,7 +5758,7 @@ static bool test_merge(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
   v = egraph->classes.parents + c2;
   n = v->last;
   for (j=0; j<n; j++) {
-    p  = v->data[j];
+    p  = (composite_t*)v->data[j];
     if (valid_entry(p)) {
       // p is in the congruence table
       congruence_table_remove(&egraph->ctable, p);
@@ -5789,7 +5787,7 @@ static bool test_merge(egraph_t *egraph, occ_t t1, occ_t t2, int32_t i) {
 
   // reprocess all the composites in v
   for (j=0; j<n; j++) {
-    p = v->data[j];
+    p = (composite_t*)v->data[j];
     if (valid_entry(p)) {
       if (composite_simplifies(egraph, p)) {
         // p no longer a congruence root: put a mark for backtracking
@@ -5840,7 +5838,7 @@ static void egraph_undo_reconcile_attempt(egraph_t *egraph, uint32_t k) {
       break;
 
     case UNDO_SIMPLIFY:
-      restore_composite(egraph, udata[i].ptr);
+      restore_composite(egraph, (composite_t*)udata[i].ptr);
       break;
 
     case UNDO_DISTINCT:
@@ -5850,7 +5848,7 @@ static void egraph_undo_reconcile_attempt(egraph_t *egraph, uint32_t k) {
 
     // store terms to reanalyze into reanalyze_vector
     case REANALYZE_CONGRUENCE_ROOT:
-      deactivate_congruence_root(egraph, udata[i].ptr);
+      deactivate_congruence_root(egraph, (composite_t*)udata[i].ptr);
       pvector_push(&egraph->reanalyze_vector, udata[i].ptr);
       break;
 
@@ -5962,7 +5960,7 @@ static bool egraph_reconcile_class(egraph_t *egraph, int32_t *v, void *solver, t
     t2 = eg->eterm_of_var(solver, v[i]);
     if (!egraph_reconcile_pair(egraph, pos_occ(t1), pos_occ(t2))) {
 #if 0
-      printf("Reconciliation failed for class with %"PRIu32" elements, at element %"PRIu32"\n", n, i);
+      printf("Reconciliation failed for class with %" PRIu32 " elements, at element %" PRIu32 "\n", n, i);
 #endif
       return false;
     }
@@ -6062,7 +6060,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
   fcheck_code_t c;
   uint32_t i, max_eq;
 
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
   printf("---> EGRAPH: final check (baseline)\n\n");
   print_egraph_terms(stdout, egraph);
   printf("\n");
@@ -6074,7 +6072,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
     // arithmetic solver
     c = egraph->ctrl[ETYPE_REAL]->final_check(egraph->th[ETYPE_REAL]);
     if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
       printf("---> exit at arith final check\n");
       fflush(stdout);
 #endif
@@ -6086,7 +6084,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
     // bitvector solver
     c = egraph->ctrl[ETYPE_BV]->final_check(egraph->th[ETYPE_BV]);
     if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
        printf("---> exit at bv final check\n");
        fflush(stdout);
 #endif
@@ -6098,7 +6096,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
     // array solver
     c = egraph->ctrl[ETYPE_FUNCTION]->final_check(egraph->th[ETYPE_FUNCTION]);
     if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
       printf("---> exit at array final check\n");
       fflush(stdout);
 #endif
@@ -6125,9 +6123,9 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
     i += egraph->eg[ETYPE_BV]->reconcile_model(egraph->th[ETYPE_BV], max_eq - i);
   }
 
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
   if (i > 0) {
-    printf("---> %"PRIu32" interface lemmas from bv/arith solvers\n", i);
+    printf("---> %" PRIu32 " interface lemmas from bv/arith solvers\n", i);
     fflush(stdout);
   }
 #endif
@@ -6142,7 +6140,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
     i = egraph->eg[ETYPE_FUNCTION]->reconcile_model(egraph->th[ETYPE_FUNCTION], 1);
 #if TRACE_CHECK
     if (i > 0) {
-      printf("---> %"PRIu32" interface lemmas from array solver\n", i);
+      printf("---> %" PRIu32 " interface lemmas from array solver\n", i);
       fflush(stdout);
     }
 #endif
@@ -6153,7 +6151,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
   if (i == 1) {
     trace_printf(egraph->core->trace, 3, "(final check: 1 interface lemma)\n");
   } else {
-    trace_printf(egraph->core->trace, 3, "(final check: %"PRIu32" interface lemmas)\n", i);
+    trace_printf(egraph->core->trace, 3, "(final check: %" PRIu32 " interface lemmas)\n", i);
   }
 
   c = FCHECK_SAT; // default value
@@ -6166,7 +6164,7 @@ static fcheck_code_t baseline_final_check(egraph_t *egraph) {
       // quant solver
       c = egraph->ctrl[ETYPE_QUANT]->final_check(egraph->th[ETYPE_QUANT]);
       if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
         printf("---> exit at quant final check\n");
         fflush(stdout);
 #endif
@@ -6186,7 +6184,7 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
   fcheck_code_t c;
   uint32_t i, max_eqs;
 
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
   printf("---> EGRAPH: final check (experimental)\n\n");
   print_egraph_terms(stdout, egraph);
   printf("\n\n");
@@ -6197,7 +6195,7 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
   if (egraph->ctrl[ETYPE_REAL] != NULL) {
     c = egraph->ctrl[ETYPE_REAL]->final_check(egraph->th[ETYPE_REAL]);
     if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
       printf("---> exit at arith final check\n");
       fflush(stdout);
 #endif
@@ -6209,7 +6207,7 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
     // bitvector solver
     c = egraph->ctrl[ETYPE_BV]->final_check(egraph->th[ETYPE_BV]);
     if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
       printf("---> exit at bv final check\n");
       fflush(stdout);
 #endif
@@ -6240,17 +6238,17 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
     if (i == 1) {
       trace_printf(egraph->core->trace, 3, "(final check: 1 interface lemma)\n");
     } else {
-      trace_printf(egraph->core->trace, 3, "(final check: %"PRIu32" interface lemmas)\n", i);
+      trace_printf(egraph->core->trace, 3, "(final check: %" PRIu32 " interface lemmas)\n", i);
     }
 
-#if TRACE_FCHECK
-    printf("---> egraph reconcile failed: %"PRIu32" interface lemmas\n", i);
+#if YICES_TRACE_FCHECK
+    printf("---> egraph reconcile failed: %" PRIu32 " interface lemmas\n", i);
     fflush(stdout);
 #endif
 
 
   } else if (egraph->ctrl[ETYPE_FUNCTION] != NULL) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
     printf("---> EGRAPH: final check: after reconcile\n\n");
     print_egraph_terms(stdout, egraph);
     printf("\n\n");
@@ -6266,16 +6264,16 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
       if (egraph_is_high_order(egraph)) {
         i = egraph->eg[ETYPE_FUNCTION]->reconcile_model(egraph->th[ETYPE_FUNCTION], 1);
         if (i > 0) {
-#if TRACE_FCHECK
-          printf("---> exit after array reconcile: %"PRIu32" lemmas\n", i);
+#if YICES_TRACE_FCHECK
+          printf("---> exit after array reconcile: %" PRIu32 " lemmas\n", i);
           fflush(stdout);
 #endif
-          trace_printf(egraph->core->trace, 3, "(final check: %"PRIu32" array lemmas)\n", i);
+          trace_printf(egraph->core->trace, 3, "(final check: %" PRIu32 " array lemmas)\n", i);
           c = FCHECK_CONTINUE;
         }
       }
     } else {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
       printf("---> exit at array final check\n");
       fflush(stdout);
 #endif
@@ -6294,7 +6292,7 @@ static fcheck_code_t experimental_final_check(egraph_t *egraph) {
       // quant solver
       c = egraph->ctrl[ETYPE_QUANT]->final_check(egraph->th[ETYPE_QUANT]);
       if (c != FCHECK_SAT) {
-#if TRACE_FCHECK
+#if YICES_TRACE_FCHECK
         printf("---> exit at quant final check\n");
         fflush(stdout);
 #endif
@@ -6361,12 +6359,12 @@ void egraph_clear(egraph_t *egraph) {
 void egraph_assert_term(egraph_t *egraph, occ_t t, literal_t l) {
   int32_t k;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: Asserting term ");
   print_occurrence(stdout, t);
   printf(", expl = ");
   print_literal(stdout, l);
-  printf(", decision level = %"PRIu32"\n", egraph->decision_level);
+  printf(", decision level = %" PRIu32 "\n", egraph->decision_level);
   if (egraph_term_is_composite(egraph, term_of_occ(t))) {
     printf("---> ");
     print_eterm_def(stdout, egraph, term_of_occ(t));
@@ -6392,14 +6390,14 @@ void egraph_assert_term(egraph_t *egraph, occ_t t, literal_t l) {
 void egraph_assert_eq(egraph_t *egraph, occ_t t1, occ_t t2, literal_t l) {
   int32_t k;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: Asserting ");
   print_occurrence(stdout, t1);
   printf(" == ");
   print_occurrence(stdout, t2);
   printf(" , expl = ");
   print_literal(stdout, l);
-  printf(", decision level = %"PRIu32"\n", egraph->decision_level);
+  printf(", decision level = %" PRIu32 "\n", egraph->decision_level);
   if (egraph_equal_occ(egraph, t1, t2)) {
     printf("---> EGRAPH: ");
     print_occurrence(stdout, t1);
@@ -6461,10 +6459,10 @@ bool egraph_assert_atom(egraph_t *egraph, void *atom, literal_t l) {
 void egraph_assert_axiom(egraph_t *egraph, occ_t t) {
   int32_t k;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: Asserting axiom ");
   print_occurrence(stdout, t);
-  printf(", decision level = %"PRIu32"\n", egraph->decision_level);
+  printf(", decision level = %" PRIu32 "\n", egraph->decision_level);
   if (egraph_term_is_composite(egraph, term_of_occ(t))) {
     printf("---> ");
     print_eterm_def(stdout, egraph, term_of_occ(t));
@@ -6483,12 +6481,12 @@ void egraph_assert_axiom(egraph_t *egraph, occ_t t) {
 void egraph_assert_eq_axiom(egraph_t *egraph, occ_t t1, occ_t t2) {
   int32_t k;
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: Asserting axiom ");
   print_occurrence(stdout, t1);
   printf(" == ");
   print_occurrence(stdout, t2);
-  printf(", decision level = %"PRIu32"\n", egraph->decision_level);
+  printf(", decision level = %" PRIu32 "\n", egraph->decision_level);
 #endif
 
   assert(egraph->decision_level == egraph->base_level);
@@ -6499,7 +6497,7 @@ void egraph_assert_eq_axiom(egraph_t *egraph, occ_t t1, occ_t t2) {
 
 /*
  * Assert (t1 != t2) as an axiom
- * - create equality atom l --> (eq t1 t2) then assert not(l)
+ * - create equality atom l --> (eq t1 t2) then assert not_(l)
  *   in the core
  */
 void egraph_assert_diseq_axiom(egraph_t *egraph, occ_t t1, occ_t t2) {
@@ -6511,19 +6509,19 @@ void egraph_assert_diseq_axiom(egraph_t *egraph, occ_t t1, occ_t t2) {
 #endif
 
 
-#if TRACE
+#if YICES_TRACE
   printf("---> EGRAPH: Asserting axiom ");
   print_occurrence(stdout, t1);
   printf(" != ");
   print_occurrence(stdout, t2);
-  printf(", decision level = %"PRIu32"\n", egraph->decision_level);
+  printf(", decision level = %" PRIu32 "\n", egraph->decision_level);
 #endif
 
   assert(egraph->decision_level == egraph->base_level);
 #if CONSERVATIVE_DISEQ_AXIOMS
   // conservative approach
   l = egraph_make_eq(egraph, t1, t2);
-  add_unit_clause(egraph->core, not(l));
+  add_unit_clause(egraph->core, not_(l));
 #else
   // avoid creation of an atom: eq has no theory variable attached
   eq = egraph_make_eq_term(egraph, t1, t2);
@@ -6548,10 +6546,10 @@ void egraph_assert_distinct_axiom(egraph_t *egraph, uint32_t n, occ_t *t) {
       egraph_set_term_real_type(egraph, d, bool_type(egraph->types));
       egraph_activate_term(egraph, d, ETYPE_BOOL, const_bvar);
     }
-#if TRACE
+#if YICES_TRACE
     printf("---> EGRAPH: Asserting axiom ");
     print_composite(stdout, egraph->terms.body[d]);
-    printf(", decision level = %"PRIu32"\n", egraph->decision_level);
+    printf(", decision level = %" PRIu32 "\n", egraph->decision_level);
 #endif
     k = egraph_stack_push_eq(&egraph->stack, pos_occ(d), true_occ);
     egraph->stack.etag[k] = EXPL_AXIOM;
@@ -6620,7 +6618,7 @@ void egraph_assert_notpred_axiom(egraph_t *egraph, occ_t f, uint32_t n, occ_t *t
   literal_t l;
 
   l = egraph_make_pred(egraph, f, n, t);
-  add_unit_clause(egraph->core, not(l));
+  add_unit_clause(egraph->core, not_(l));
 }
 
 
@@ -6648,14 +6646,14 @@ void egraph_propagate_equality(egraph_t *egraph, eterm_t t1, eterm_t t2, expl_ta
 
   if (egraph_equal_occ(egraph, pos_occ(t1), pos_occ(t2))) {
 #if 0
-    printf("---> EGRAPH: redundant eq prop: g!%"PRId32" == g!%"PRId32"\n", t1, t2);
+    printf("---> EGRAPH: redundant eq prop: g!%" PRId32 " == g!%" PRId32 "\n", t1, t2);
 #endif
     // redundant
     return;
   }
 
 #if 0
-  printf("---> EGRAPH: good eq prop: g!%"PRId32" == g!%"PRId32"\n", t1, t2);
+  printf("---> EGRAPH: good eq prop: g!%" PRId32 " == g!%" PRId32 "\n", t1, t2);
 #endif
   egraph->stats.eq_props ++;
 
@@ -6695,7 +6693,7 @@ void egraph_expand_explanation(egraph_t *egraph, literal_t l, void *expl, ivecto
 #if 0
     printf("---> EGRAPH: expand explanation for ");
     print_literal(stdout, l);
-    printf(" (trigger edge = %"PRId32")\n", id);
+    printf(" (trigger edge = %" PRId32 ")\n", id);
 #endif
     /*
      * Build the explanation for u == true
@@ -7092,7 +7090,7 @@ void egraph_collect_applications(egraph_t *egraph, eterm_t f, pvector_t *v) {
   u = egraph_class_parents(egraph, c);
   n = u->last;
   for (i=0; i<n; i++) {
-    p = u->data[i];
+    p = (composite_t*)u->data[i];
     if (valid_entry(p) && composite_kind(p) == COMPOSITE_APPLY) {
       g = composite_child(p, 0); // function term of p
       if (egraph_class(egraph, g) == c) {
@@ -7684,7 +7682,7 @@ static value_t egraph_make_fun_value(egraph_t *egraph, value_table_t *vtbl, clas
 
   j = 0;
   for (i=0; i<n; i++) {
-    p = u->data[i];
+    p = (composite_t*)u->data[i];
     if (valid_entry(p) && composite_kind(p) == COMPOSITE_APPLY) {
       g = composite_child(p, 0); // function term of p
       if (egraph_class(egraph, g) == c) {

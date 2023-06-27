@@ -122,7 +122,7 @@ static void test_gcd(void) {
       q_set32(&r1, num[j]);
       q_gcd(&r0, &r1);
       // print result
-      printf("gcd(%"PRId32", %"PRId32") = ", num[i], num[j]);
+      printf("gcd(%" PRId32 ", %" PRId32 ") = ", num[i], num[j]);
       q_print(stdout, &r0);
       printf("\n");
       // check
@@ -141,7 +141,7 @@ static void test_gcd(void) {
       assert_true(code == 0);
       q_gcd(&r0, &r1);
       // print
-      printf("gcd(%"PRId32", %s) = ", num[i], big_num[j]);
+      printf("gcd(%" PRId32 ", %s) = ", num[i], big_num[j]);
       q_print(stdout, &r0);
       printf("\n");
       // check
@@ -160,7 +160,7 @@ static void test_gcd(void) {
       q_set32(&r1, num[j]);
       q_gcd(&r0, &r1);
       // print
-      printf("gcd(%s, %"PRId32") = ", big_num[i], num[j]);
+      printf("gcd(%s, %" PRId32 ") = ", big_num[i], num[j]);
       q_print(stdout, &r0);
       printf("\n");
       // check
@@ -208,7 +208,7 @@ static void test_lcm(void) {
       q_set32(&r1, num[j]);
       q_lcm(&r0, &r1);
       // print result
-      printf("lcm(%"PRId32", %"PRId32") = ", num[i], num[j]);
+      printf("lcm(%" PRId32 ", %" PRId32 ") = ", num[i], num[j]);
       q_print(stdout, &r0);
       printf("\n");
       // check
@@ -227,7 +227,7 @@ static void test_lcm(void) {
       assert_true(code == 0);
       q_lcm(&r0, &r1);
       // print
-      printf("lcm(%"PRId32", %s) = ", num[i], big_num[j]);
+      printf("lcm(%" PRId32 ", %s) = ", num[i], big_num[j]);
       q_print(stdout, &r0);
       printf("\n");
       // check
@@ -246,7 +246,7 @@ static void test_lcm(void) {
       q_set32(&r1, num[j]);
       q_lcm(&r0, &r1);
       // print
-      printf("lcm(%s, %"PRId32") = ", big_num[i], num[j]);
+      printf("lcm(%s, %" PRId32 ") = ", big_num[i], num[j]);
       q_print(stdout, &r0);
       printf("\n");
       // check
@@ -295,9 +295,9 @@ static void test_divides(void) {
       result = q_divides(&r0, &r1);
       // print result
       if (result) {
-	printf("%"PRId32" divides %"PRId32"\n", num[i], num[j]);
+	printf("%" PRId32 " divides %" PRId32 "\n", num[i], num[j]);
       } else {
-	printf("%"PRId32" does not divide %"PRId32"\n", num[i], num[j]);
+	printf("%" PRId32 " does not divide %" PRId32 "\n", num[i], num[j]);
       }
       // check
       mpz_set_si(z0, num[i]);
@@ -319,9 +319,9 @@ static void test_divides(void) {
       result = q_divides(&r0, &r1);
       // print
       if (result) {
-	printf("%"PRId32" divides %s\n", num[i], big_num[j]);
+	printf("%" PRId32 " divides %s\n", num[i], big_num[j]);
       } else {
-	printf("%"PRId32" does not divide %s\n", num[i], big_num[j]);
+	printf("%" PRId32 " does not divide %s\n", num[i], big_num[j]);
       }
       // check
       mpz_set_si(z0, num[i]);
@@ -343,9 +343,9 @@ static void test_divides(void) {
       result = q_divides(&r0, &r1);
       // print
       if (result) {
-	printf("%s divides %"PRId32"\n", big_num[i], num[j]);
+	printf("%s divides %" PRId32 "\n", big_num[i], num[j]);
       } else {
-	printf("%s does not divide %"PRId32"\n", big_num[i], num[j]);
+	printf("%s does not divide %" PRId32 "\n", big_num[i], num[j]);
       }
       // check
       mpz_set_str(z0, big_num[i], 10);

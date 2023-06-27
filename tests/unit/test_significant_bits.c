@@ -106,27 +106,27 @@ static uint32_t num_significant_bits_var3(int64_t x) {
 static void test_significant_bits(int64_t x, uint32_t expected_value) {
   uint32_t n;
 
-  printf("\ntesting: %"PRId64"\n", x);
+  printf("\ntesting: %" PRId64 "\n", x);
   n = num_significant_bits(x);
-  printf("first method: %"PRIu32" significant bits\n", n);
+  printf("first method: %" PRIu32 " significant bits\n", n);
   if (n != expected_value) goto error;
 
   n = num_significant_bits_var(x);
-  printf("variant method: %"PRIu32" significant bits\n", n);
+  printf("variant method: %" PRIu32 " significant bits\n", n);
   if (n != expected_value) goto error;
 
   n = num_significant_bits_var2(x);
-  printf("third method: %"PRIu32" significant bits\n", n);
+  printf("third method: %" PRIu32 " significant bits\n", n);
   if (n != expected_value)  goto error;
 
   n = num_significant_bits_var3(x);
-  printf("fourth method: %"PRIu32" significant bits\n", n);
+  printf("fourth method: %" PRIu32 " significant bits\n", n);
   if (n != expected_value)  goto error;
 
   return;
   
  error:
-  printf("*** BUG DETECTED: expected value = %"PRIu32" ***\n", expected_value);
+  printf("*** BUG DETECTED: expected value = %" PRIu32 " ***\n", expected_value);
   fflush(stdout);
   exit(1);
 }

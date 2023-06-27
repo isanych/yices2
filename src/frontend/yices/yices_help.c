@@ -1937,7 +1937,7 @@ static void help_for_category(FILE *f, const char *topic, const char *aux, int32
   ivector_t v;
 
   init_ivector(&v, 50);
-  collect_records(&v, idx);
+  collect_records(&v, (htype_t)idx);
 
   if (aux != NULL) {
     fputc('\n', f);

@@ -46,12 +46,14 @@
 #include <assert.h>
 #include <stdbool.h>
 
-static inline __attribute__ ((always_inline)) bool assert_true(bool flag) {
+#include <yices_config.h>
+
+ATTRIBUTE_ALWAYS_INLINE static inline bool assert_true(bool flag) {
   assert(flag);
   return flag;
 }
 
-static inline __attribute__ ((always_inline)) bool assert_false(bool flag) {
+ATTRIBUTE_ALWAYS_INLINE static inline bool assert_false(bool flag) {
   assert(!flag);
   return flag;
 }

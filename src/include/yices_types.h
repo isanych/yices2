@@ -26,7 +26,7 @@
 #define __YICES_TYPES_H
 
 #include <stdint.h>
-
+#include "yices_config.h"
 
 /*********************
  *  TERMS AND TYPES  *
@@ -297,7 +297,7 @@ typedef enum yices_gen_mode {
  *   that depends on the error code.
  */
 typedef enum error_code {
-  NO_ERROR = 0,
+  YICES_NO_ERROR = 0,
 
   /*
    * Errors in type or term construction

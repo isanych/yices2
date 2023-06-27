@@ -200,7 +200,7 @@ extern term_t bitvector_factoring_right_term(context_t *ctx, bvfactoring_t *r); 
  *
  * Side effect: use ctx's small_cache then reset it
  */
-extern void flatten_or_term(context_t *ctx, ivector_t *v, composite_term_t *or);
+extern void flatten_or_term(context_t *ctx, ivector_t *v, composite_term_t *or_);
 
 
 /*

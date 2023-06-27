@@ -163,7 +163,7 @@ static void print_decision_literals(smt_core_t *core) {
 
   n = v.size;
   k = 0;
-  printf("  %"PRIu32" decision literals:", n);
+  printf("  %" PRIu32 " decision literals:", n);
   for (i=0; i<n; i++) {
     printf(" ");
     print_literal(stdout, v.data[i]);
@@ -204,7 +204,7 @@ static void all_sat(smt_core_t *core) {
     collect_decision_literals(core, &v);
     n = v.size;
     for (i=0; i<n; i++) {
-      v.data[i] = not(v.data[i]);
+      v.data[i] = not_(v.data[i]);
     }
     smt_clear(core);
     add_clause(core, n, v.data);
@@ -309,7 +309,7 @@ static literal_t eval_and(literal_t l1, literal_t l2) {
   if (l1 == false_literal) return false_literal;
   if (l2 == false_literal) return false_literal;
   if (l1 == l2) return l1;
-  if (l1 == not(l2)) return false_literal;
+  if (l1 == not_(l2)) return false_literal;
   return null_literal;
 }
 
@@ -319,26 +319,26 @@ static literal_t eval_or(literal_t l1, literal_t l2) {
   if (l1 == true_literal) return true_literal;
   if (l2 == true_literal) return true_literal;
   if (l1 == l2) return l1;
-  if (l1 == not(l2)) return true_literal;
+  if (l1 == not_(l2)) return true_literal;
   return null_literal;
 }
 
 static literal_t eval_xor(literal_t l1, literal_t l2) {
   if (l1 == false_literal) return l2;
   if (l2 == false_literal) return l1;
-  if (l1 == true_literal) return not(l2);
-  if (l2 == true_literal) return not(l1);
+  if (l1 == true_literal) return not_(l2);
+  if (l2 == true_literal) return not_(l1);
   if (l1 == l2) return false_literal;
-  if (l1 == not(l2)) return true_literal;
+  if (l1 == not_(l2)) return true_literal;
   return null_literal;
 }
 
 static literal_t eval_iff(literal_t l1, literal_t l2) {
-  return eval_xor(not(l1), l2);
+  return eval_xor(not_(l1), l2);
 }
 
 static literal_t eval_implies(literal_t l1, literal_t l2) {
-  return eval_or(not(l1), l2);
+  return eval_or(not_(l1), l2);
 }
 
 static literal_t eval_ite(literal_t c, literal_t l1, literal_t l2) {
@@ -347,7 +347,7 @@ static literal_t eval_ite(literal_t c, literal_t l1, literal_t l2) {
   if (l1 == l2) return l1;
 
   aux1 = eval_implies(c, l1);
-  aux2 = eval_implies(not(c), l2);
+  aux2 = eval_implies(not_(c), l2);
 
   // like (and aux1 aux2)
   if (aux1 == true_literal) return aux2;
@@ -357,7 +357,7 @@ static literal_t eval_ite(literal_t c, literal_t l1, literal_t l2) {
   if (aux1 == null_literal) return null_literal;
   if (aux2 == null_literal) return null_literal;
   if (aux1 == aux2) return aux1;
-  if (aux1 == not(aux2)) return false_literal;
+  if (aux1 == not_(aux2)) return false_literal;
   return null_literal;
 }
 
@@ -543,9 +543,9 @@ static void test2(gate_manager_t *m) {
   print_clauses(stdout, core);
 
   printf("\n**** OR TEST ****\n");
-  a[0] = not(a[0]);
-  a[1] = not(a[1]);
-  a[2] = not(a[2]);
+  a[0] = not_(a[0]);
+  a[1] = not_(a[1]);
+  a[2] = not_(a[2]);
   l = mk_or_gate(m, 3, a);
   display_def(l, "OR", 3, a);
   printf("\n");
@@ -556,9 +556,9 @@ static void test2(gate_manager_t *m) {
   print_clauses(stdout, core);
 
   printf("\n**** XOR TEST ****\n");
-  a[0] = not(a[0]);
-  a[1] = not(a[1]);
-  a[2] = not(a[2]);
+  a[0] = not_(a[0]);
+  a[1] = not_(a[1]);
+  a[2] = not_(a[2]);
   l = mk_xor_gate(m, 3, a);
   display_def(l, "XOR", 3, a);
   printf("\n");
@@ -568,7 +568,7 @@ static void test2(gate_manager_t *m) {
   printf("Clauses\n");
   print_clauses(stdout, core);
 
-  a[0] = not(a[0]);
+  a[0] = not_(a[0]);
   l = mk_xor_gate(m, 3, a);
   display_def(l, "XOR", 3, a);
   printf("\n");
@@ -578,7 +578,7 @@ static void test2(gate_manager_t *m) {
   printf("Clauses\n");
   print_clauses(stdout, core);
 
-  a[1] = not(a[1]);
+  a[1] = not_(a[1]);
   l = mk_xor_gate(m, 3, a);
   display_def(l, "XOR", 3, a);
   printf("\n");
@@ -588,7 +588,7 @@ static void test2(gate_manager_t *m) {
   printf("Clauses\n");
   print_clauses(stdout, core);
 
-  a[2] = not(a[2]);
+  a[2] = not_(a[2]);
   l = mk_xor_gate(m, 3, a);
   display_def(l, "XOR", 3, a);
   printf("\n");
@@ -638,7 +638,7 @@ static void test3(gate_manager_t *m) {
 
   a[0] = true_literal;
   a[1] = l2;
-  a[2] = not(l2);
+  a[2] = not_(l2);
   a[3] = false_literal;
   for (i=0; i<=10; i++) {
     l = mk_xor_gate(m, i, a);
@@ -647,10 +647,10 @@ static void test3(gate_manager_t *m) {
   }
   printf("\n");
 
-  a[4] = not(l1);
+  a[4] = not_(l1);
   a[5] = l1;
-  a[6] = not(l3);
-  a[7] = not(l3);
+  a[6] = not_(l3);
+  a[7] = not_(l3);
   for (i=0; i<=10; i++) {
     l = mk_xor_gate(m, i, a);
     display_def(l, "XOR", i, a);
@@ -899,7 +899,7 @@ static void check_iff_assertion2(gate_manager_t *m) {
   reset_smt_core(core);
 
   l1 = pos_lit(create_boolean_variable(core));
-  l2 = not(l1);
+  l2 = not_(l1);
 
   assert_iff(m, l1, l2, true);
   printf("\nAssertion: ");

@@ -1264,7 +1264,7 @@ static inline uint32_t smt_base_level(smt_core_t *s) {
  * Read the status
  */
 static inline smt_status_t smt_status(smt_core_t *s) {
-  return s->status;
+  return (smt_status_t)s->status;
 }
 
 /*
@@ -1481,12 +1481,12 @@ static inline double get_bvar_activity(smt_core_t *s, bvar_t x) {
  */
 static inline bool bvar_is_assigned(const smt_core_t *s, bvar_t x) {
   assert(0 <= x && x < s->nvars);
-  return bval_is_def(s->value[x]);
+  return bval_is_def((bval_t)s->value[x]);
 }
 
 static inline bool bvar_is_unassigned(const smt_core_t *s, bvar_t x) {
   assert(0 <= x && x < s->nvars);
-  return bval_is_undef(s->value[x]);
+  return bval_is_undef((bval_t)s->value[x]);
 }
 
 /*
@@ -1507,7 +1507,7 @@ static inline bool literal_is_unassigned(const smt_core_t *s, literal_t l) {
  */
 static inline bval_t bvar_value(const smt_core_t *s, bvar_t x) {
   assert(0 <= x &&  x < s->nvars);
-  return s->value[x];
+  return (bval_t)s->value[x];
 }
 
 
@@ -1517,14 +1517,13 @@ static inline bval_t bvar_value(const smt_core_t *s, bvar_t x) {
  *   preferred value (either VAL_UNDEF_FALSE or VAL_UNDEF_TRUE)
  */
 static inline bval_t bvar_base_value(const smt_core_t *s, bvar_t x) {
-  bval_t v;
   assert(0 <= x && x < s->nvars);
-  v = s->value[x];
+  uint8_t v = s->value[x];
   if (s->level[x] > s->base_level) {
     v &= 1; // clear bit 1, keep bit 0
-    assert(bval_is_undef(v));
+    assert(bval_is_undef((bval_t)v));
   }
-  return v;
+  return (bval_t)v;
 }
 
 /*
@@ -1547,7 +1546,7 @@ static inline uint32_t bvar_polarity(const smt_core_t *s, bvar_t x) {
  */
 static inline bval_t literal_value(const smt_core_t *s, literal_t l) {
   assert(0 <= l && l < (int32_t) s->nlits);
-  return s->value[var_of(l)] ^ sign_of_lit(l);
+  return (bval_t)(s->value[var_of(l)] ^ sign_of_lit(l));
 }
 
 /*
@@ -1556,7 +1555,7 @@ static inline bval_t literal_value(const smt_core_t *s, literal_t l) {
  */
 static inline bval_t literal_base_value(const smt_core_t *s, literal_t l) {
   assert(0 <= l && l < s->nlits);
-  return bvar_base_value(s, var_of(l)) ^ sign_of_lit(l);
+  return (bval_t)(bvar_base_value(s, var_of(l)) ^ sign_of_lit(l));
 }
 
 

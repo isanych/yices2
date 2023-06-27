@@ -20,8 +20,9 @@
 #include <errno.h>
 #include <math.h>
 #include <string.h>
-#include <unistd.h>
+#include <stdint.h>
 
+#include "api/platform.h"
 #include "io/simple_printf.h"
 
 /*

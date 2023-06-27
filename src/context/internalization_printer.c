@@ -20,13 +20,6 @@
  * PRINT INTERNALIZATION TABLE
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include <assert.h>
 #include <inttypes.h>
 
@@ -44,7 +37,7 @@
  */
 static void print_intern_code(FILE *f, int32_t x, type_table_t *types, type_t tau) {
   if (! code_is_valid(x)) {
-    fprintf(f, "code %"PRId32, x);
+    fprintf(f, "code %" PRId32, x);
   } else if (code_is_eterm(x)) {
     print_occurrence(f, code2occ(x));
   } else {
@@ -52,12 +45,12 @@ static void print_intern_code(FILE *f, int32_t x, type_table_t *types, type_t ta
     if (is_boolean_type(tau)) {
       print_literal(f, code2literal(x));
     } else if (is_integer_type(tau)) {
-      fprintf(f, "i!%"PRId32, code2thvar(x));
+      fprintf(f, "i!%" PRId32, code2thvar(x));
     } else if (is_real_type(tau)) {
-      fprintf(f, "z!%"PRId32, code2thvar(x));
+      fprintf(f, "z!%" PRId32, code2thvar(x));
     } else {
       assert(is_bv_type(types, tau));
-      fprintf(f, "u!%"PRId32, code2thvar(x));
+      fprintf(f, "u!%" PRId32, code2thvar(x));
     }
   }
 }
@@ -65,12 +58,12 @@ static void print_intern_code(FILE *f, int32_t x, type_table_t *types, type_t ta
 
 static void print_opposite_code(FILE *f, int32_t x) {
   if (! code_is_valid(x)) {
-    fprintf(f, "code %"PRId32, x);
+    fprintf(f, "code %" PRId32, x);
   } else if (code_is_eterm(x)) {
     print_occurrence(f, opposite_occ(code2occ(x)));
   } else {
     assert(code_is_var(x));
-    print_literal(f, not(code2literal(x)));
+    print_literal(f, not_(code2literal(x)));
   }
 }
 
@@ -209,7 +202,7 @@ void print_intern_mapping(FILE *f, intern_tbl_t *tbl) {
       if (intern_tbl_root_is_mapped(tbl, r)) {
         tau = intern_tbl_type_of_root(tbl, r);
         code = intern_tbl_map_of_root(tbl, r);
-        fprintf(f, "t!%"PRIu32": ", i);
+        fprintf(f, "t!%" PRIu32 ": ", i);
         print_term_desc(f, terms, r);
         fputs(" mapped to ", f);
         print_intern_code(f, code, types, tau);

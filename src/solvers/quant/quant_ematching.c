@@ -22,11 +22,9 @@
 
 
 #include "solvers/quant/quant_ematching.h"
+#include "yices_config.h"
 
-
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 

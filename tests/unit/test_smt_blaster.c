@@ -319,7 +319,7 @@ static void test_blaster(smt_benchmark_t *bench) {
   } else {
     assert(context_has_bv_solver(&context));
     // test bit-blasting
-    if (bv_solver_bitblast(context.bv_solver)) {
+    if (bv_solver_bitblast((bv_solver_t*)context.bv_solver)) {
       printf("Bitblasting OK\n");
       fflush(stdout);
       print_internalization_code(code);
@@ -373,7 +373,7 @@ int main(int argc, char *argv[]) {
   code = parse_smt_benchmark(&parser, &bench);
   if (code == 0) {
     printf("No syntax error found\n");
-    printf("term table: %"PRIu32" elements\n", nterms(__yices_globals.terms));
+    printf("term table: %" PRIu32 " elements\n", nterms(__yices_globals.terms));
     fflush(stdout);
   } else {
     exit(YICES_EXIT_SYNTAX_ERROR);

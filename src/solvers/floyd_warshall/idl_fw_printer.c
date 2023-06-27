@@ -31,11 +31,11 @@
  */
 void print_idl_vertex(FILE *f, int32_t x) {
   if (x >= 0) {
-    fprintf(f, "n!%"PRId32, x);
+    fprintf(f, "n!%" PRId32, x);
   } else if (x == null_idl_vertex) {
     fputs("nil", f);
   } else {
-    fprintf(f, "<IDL-vertex%"PRId32">", x);
+    fprintf(f, "<IDL-vertex%" PRId32 ">", x);
   }
 }
 
@@ -62,7 +62,7 @@ void print_idl_vertex_value(FILE *f, idl_solver_t *idl, int32_t v) {
     cell = m->data + z * m->dim + v;
     if (cell->id >= 0) {
       // distance [z, x] is defined
-      fprintf(f, "%"PRId32, cell->dist);
+      fprintf(f, "%" PRId32, cell->dist);
       return;
     }
   }
@@ -81,7 +81,7 @@ void print_idl_atom(FILE *f, idl_atom_t *atom) {
   print_idl_vertex(f, atom->source);
   fputs(" - ", f);
   print_idl_vertex(f, atom->target);
-  fprintf(f, " <= %"PRId32")]", atom->cost);
+  fprintf(f, " <= %" PRId32 ")]", atom->cost);
 }
 
 
@@ -137,11 +137,11 @@ void print_idl_triple(FILE *f, dl_triple_t *triple) {
  */
 void print_idl_var_name(FILE *f, thvar_t u) {
   if (u >= 0) {
-    fprintf(f, "i!%"PRId32, u);
+    fprintf(f, "i!%" PRId32, u);
   } else if (u == null_thvar) {
     fputs("nil-var", f);
   } else {
-    fprintf(f, "<IDL-var%"PRId32">", u);
+    fprintf(f, "<IDL-var%" PRId32 ">", u);
   }
 }
 
@@ -212,7 +212,7 @@ static void print_idl_edge(FILE *f, idl_solver_t *solver, uint32_t i) {
   y = e->target;
   d = idl_dist(m, x, y);
 
-  fprintf(f, "edge[%"PRIu32"]: n!%"PRId32" - n!%"PRId32" <= %"PRId32, i, x, y, d);
+  fprintf(f, "edge[%" PRIu32 "]: n!%" PRId32 " - n!%" PRId32 " <= %" PRId32, i, x, y, d);
 }
 
 

@@ -22,22 +22,22 @@
 #include "context/assumption_stack.h"
 
 static void show_stack_elem(FILE *f, assumption_elem_t *e) {
-  fprintf(f, "{ term = t!%"PRId32", lit = l!%"PRId32", level = %"PRIu32" }", e->term, e->lit, e->level);
+  fprintf(f, "{ term = t!%" PRId32 ", lit = l!%" PRId32 ", level = %" PRIu32 " }", e->term, e->lit, e->level);
 }
 
 static void show_stack(FILE *f, assumption_stack_t *s) {
   uint32_t i, n;
 
   fprintf(f, "stack %p\n", s);
-  fprintf(f, "  size  = %"PRIu32"\n", s->size);
-  fprintf(f, "  top   = %"PRIu32"\n", s->top);
-  fprintf(f, "  level = %"PRIu32"\n", s->level);
+  fprintf(f, "  size  = %" PRIu32 "\n", s->size);
+  fprintf(f, "  top   = %" PRIu32 "\n", s->top);
+  fprintf(f, "  level = %" PRIu32 "\n", s->level);
   n = s->top;
   if (n == 0) {
     fprintf(f, "  empty stack\n\n");
   } else {
     for (i=0; i<n; i++) {
-      fprintf(f, "   data[%"PRIu32"] = ", i);
+      fprintf(f, "   data[%" PRIu32 "] = ", i);
       show_stack_elem(f, s->data + i);
       fprintf(f, "\n");
     }
@@ -50,15 +50,15 @@ static void check_literal_present(assumption_stack_t *s, literal_t l) {
 
   x = assumption_term_for_literal(s, l);
   if (x < 0) {
-    fprintf(stderr, "*** BUG: failed to find term for literal l!%"PRId32" ***\n", l);
+    fprintf(stderr, "*** BUG: failed to find term for literal l!%" PRId32 " ***\n", l);
     exit(1);
   }
   if (x + 50 != l) {
-    fprintf(stderr, "*** BUG: got term t!%"PRId32" for literal l!%"PRId32" (expected t!%"PRId32") ***\n",
+    fprintf(stderr, "*** BUG: got term t!%" PRId32 " for literal l!%" PRId32 " (expected t!%" PRId32 ") ***\n",
 	    x, l, l-50);
     exit(1);
   }
-  printf("term for literal l!%"PRId32" = t!%"PRId32"\n", l, x);
+  printf("term for literal l!%" PRId32 " = t!%" PRId32 "\n", l, x);
 }
 
 static void check_term_present(assumption_stack_t *s, term_t x) {
@@ -66,15 +66,15 @@ static void check_term_present(assumption_stack_t *s, term_t x) {
 
   l = assumption_literal_for_term(s, x);
   if (l < 0) {
-    fprintf(stderr, "*** BUG: failed to find literal for term t!%"PRId32" ***\n", x);
+    fprintf(stderr, "*** BUG: failed to find literal for term t!%" PRId32 " ***\n", x);
     exit(1);
   }
   if (l != x + 50) {
-    fprintf(stderr, "*** BUG: got literal l!%"PRId32" for term t!%"PRId32" (expected l!%"PRId32") ***\n",
+    fprintf(stderr, "*** BUG: got literal l!%" PRId32 " for term t!%" PRId32 " (expected l!%" PRId32 ") ***\n",
 	    l, x, x+50);
     exit(1);
   }
-  printf("literal for term t!%"PRId32" = l!%"PRId32"\n", x, l);
+  printf("literal for term t!%" PRId32 " = l!%" PRId32 "\n", x, l);
 }
 
 static void check_literal_absent(assumption_stack_t *s, literal_t l) {
@@ -82,11 +82,11 @@ static void check_literal_absent(assumption_stack_t *s, literal_t l) {
 
   x = assumption_term_for_literal(s, l);
   if (x >= 0) {
-    fprintf(stderr, "*** BUG: got term t!%"PRId32" for literal l!%"PRId32" (expected nothing) ***\n",
+    fprintf(stderr, "*** BUG: got term t!%" PRId32 " for literal l!%" PRId32 " (expected nothing) ***\n",
 	    x, l);
     exit(1);
   }
-  printf("literal l!%"PRId32" not in the stack\n", l);
+  printf("literal l!%" PRId32 " not in the stack\n", l);
 }
 
 static void check_term_absent(assumption_stack_t *s, term_t x) {
@@ -94,11 +94,11 @@ static void check_term_absent(assumption_stack_t *s, term_t x) {
 
   l = assumption_literal_for_term(s, x);
   if (l >= 0) {
-    fprintf(stderr, "*** BUG: got literal l!%"PRId32" for term t!%"PRId32" (expected nothing) ***\n",
+    fprintf(stderr, "*** BUG: got literal l!%" PRId32 " for term t!%" PRId32 " (expected nothing) ***\n",
 	    l, x);
     exit(1);
   }
-  printf("term t!%"PRId32" not in the stack\n", x);
+  printf("term t!%" PRId32 " not in the stack\n", x);
 }
 
 static void check_entry(assumption_stack_t *s, term_t x, literal_t l) {
@@ -109,12 +109,12 @@ static void check_entry(assumption_stack_t *s, term_t x, literal_t l) {
   l1 = assumption_literal_for_term(s, x);
 
   if (x1 != x) {
-    fprintf(stderr, "*** BUG: got term %"PRId32" for literal l!%"PRId32" (expected %"PRId32") ***\n",
+    fprintf(stderr, "*** BUG: got term %" PRId32 " for literal l!%" PRId32 " (expected %" PRId32 ") ***\n",
 	    x1, l, x);
     exit(1);
   }
   if (l1 != l) {
-    fprintf(stderr, "*** BUG: got literal %"PRId32" for term t!%"PRId32" (expected %"PRId32") ***\n",
+    fprintf(stderr, "*** BUG: got literal %" PRId32 " for term t!%" PRId32 " (expected %" PRId32 ") ***\n",
 	    l1, x, l);
     exit(1);
   }

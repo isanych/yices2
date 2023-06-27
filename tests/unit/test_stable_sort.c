@@ -24,7 +24,7 @@
 #include "utils/cputime.h"
 #include "utils/stable_sort.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -91,7 +91,7 @@ static void check_indices(pair_t **a, uint32_t n) {
     for (i=0; i<n; i++) {
       j = a[i]->idx;
       if (tag[j] != 0) {
-	fprintf(stderr, "*** BUG: found duplicate element in array (index %"PRIu32")\n", j);
+	fprintf(stderr, "*** BUG: found duplicate element in array (index %" PRIu32 ")\n", j);
 	exit(1);
       }
       tag[j] = 1;
@@ -110,7 +110,7 @@ static void show_array(pair_t **a, uint32_t n) {
       printf("\n    ");
       k = 0;
     }
-    printf(" %4"PRIu32, a[i]->key);
+    printf(" %4" PRIu32, a[i]->key);
   }
   printf("]\n");
 }
@@ -313,7 +313,7 @@ static uint32_t min_run(uint32_t n) {
 static void test_sorting(stable_sorter_t *sorter, pair_t **a, pair_t *base, uint32_t n) {
   uint32_t i;
 
-  printf("**** TEST SORT: ARRAY SIZE %"PRIu32" (min_run = %"PRIu32") ****\n", n, min_run(n));
+  printf("**** TEST SORT: ARRAY SIZE %" PRIu32 " (min_run = %" PRIu32 ") ****\n", n, min_run(n));
   fflush(stdout);
 
   for (i=0; i<n; i++) {
@@ -415,7 +415,7 @@ static void test_large_sort(stable_sorter_t *sorter, uint32_t n) {
   pair_t *aux;
   uint32_t i;
 
-  printf("**** TEST SORT: ARRAY SIZE %"PRIu32" (min_run = %"PRIu32") ****\n", n, min_run(n));
+  printf("**** TEST SORT: ARRAY SIZE %" PRIu32 " (min_run = %" PRIu32 ") ****\n", n, min_run(n));
   fflush(stdout);
 
   tmp = (pair_t **) malloc(n * sizeof(pair_t *));
@@ -427,7 +427,7 @@ static void test_large_sort(stable_sorter_t *sorter, uint32_t n) {
   for (i=0; i<n; i++) {
     aux = (pair_t *) malloc(sizeof(pair_t));
     if (aux == NULL) {
-      fprintf(stderr, "Failed to allocate element (after %"PRIu32" allocations)\n", i);
+      fprintf(stderr, "Failed to allocate element (after %" PRIu32 " allocations)\n", i);
       n = i;
       goto cleanup;
     }

@@ -39,22 +39,22 @@ static void print_varexp_array(FILE *f, varexp_t *a, uint32_t n) {
     return;
   }
   d = a[0].exp;
-  fprintf(f, "x_%"PRId32, a[0].var);
+  fprintf(f, "x_%" PRId32, a[0].var);
   if (d != 1) {
-    fprintf(f, "^%"PRIu32, d);
+    fprintf(f, "^%" PRIu32, d);
   }
   for (i=1; i<n; i++) {
     d = a[i].exp;
-    fprintf(f, " x_%"PRId32, a[i].var);
+    fprintf(f, " x_%" PRId32, a[i].var);
     if (d != 1) {
-      fprintf(f, "^%"PRIu32, d);
+      fprintf(f, "^%" PRIu32, d);
     }
   }
 }
 
 static void print_pprod0(FILE *f, pprod_t *p) {
   if (pp_is_var(p)) {
-    fprintf(f, "x_%"PRId32, var_of_pp(p));
+    fprintf(f, "x_%" PRId32, var_of_pp(p));
   } else if (pp_is_empty(p)) {
     fprintf(f, "1");
   } else {
@@ -119,10 +119,10 @@ static void test_buffer(bvarith_buffer_t *b) {
 
   test_buffer_pred("is_zero", b, bvarith_buffer_is_zero);
   test_buffer_pred("is_constant", b, bvarith_buffer_is_constant);
-  printf("  size: %"PRIu32"\n", bvarith_buffer_size(b));
-  printf("  bitsize: %"PRIu32"\n", bvarith_buffer_bitsize(b));
-  printf("  width: %"PRIu32"\n", bvarith_buffer_width(b));
-  printf("  degree: %"PRIu32"\n", bvarith_buffer_degree(b));
+  printf("  size: %" PRIu32 "\n", bvarith_buffer_size(b));
+  printf("  bitsize: %" PRIu32 "\n", bvarith_buffer_bitsize(b));
+  printf("  width: %" PRIu32 "\n", bvarith_buffer_width(b));
+  printf("  degree: %" PRIu32 "\n", bvarith_buffer_degree(b));
   if (! bvarith_buffer_is_zero(b)) {
     printf("  main term: ");
     print_pprod0(stdout, bvarith_buffer_main_term(b));

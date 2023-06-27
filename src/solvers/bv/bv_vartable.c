@@ -102,7 +102,7 @@ void delete_bv_vartable(bv_vartable_t *table) {
       break;
 
     case BVTAG_POLY:
-      free_bvpoly(table->def[i].ptr);
+      free_bvpoly((bvpoly_t*)table->def[i].ptr);
       break;
 
     default:
@@ -145,7 +145,7 @@ void reset_bv_vartable(bv_vartable_t *table) {
       break;
 
     case BVTAG_POLY:
-      free_bvpoly(table->def[i].ptr);
+      free_bvpoly((bvpoly_t*)table->def[i].ptr);
       break;
 
     default:
@@ -324,32 +324,32 @@ void bv_vartable_remove_vars(bv_vartable_t *table, uint32_t nv) {
       break;
 
     case BVTAG_CONST:
-      h = hash_bvconst(table->def[i].ptr, table->bit_size[i]);
+      h = hash_bvconst((uint32_t*)table->def[i].ptr, table->bit_size[i]);
       safe_free(table->def[i].ptr);
       break;
 
     case BVTAG_POLY64:
-      h = hash_bvpoly64(table->def[i].ptr);
+      h = hash_bvpoly64((bvpoly64_t*)table->def[i].ptr);
       safe_free(table->def[i].ptr);
       break;
 
     case BVTAG_POLY:
-      h = hash_bvpoly(table->def[i].ptr);
-      free_bvpoly(table->def[i].ptr);
+      h = hash_bvpoly((bvpoly_t*)table->def[i].ptr);
+      free_bvpoly((bvpoly_t*)table->def[i].ptr);
       break;
 
     case BVTAG_PPROD:
-      h = hash_bvpprod(table->def[i].ptr);
+      h = hash_bvpprod((pprod_t*)table->def[i].ptr);
       safe_free(table->def[i].ptr);
       break;
 
     case BVTAG_BIT_ARRAY:
-      h = hash_bvarray(table->def[i].ptr, table->bit_size[i]);
+      h = hash_bvarray((literal_t*)table->def[i].ptr, table->bit_size[i]);
       safe_free(table->def[i].ptr);
       break;
 
     case BVTAG_ITE:
-      h = hash_bvite_ptr(table->def[i].ptr);
+      h = hash_bvite_ptr((bv_ite_t*)table->def[i].ptr);
       safe_free(table->def[i].ptr);
       break;
 
@@ -722,7 +722,7 @@ static bool eq_bvconst_hobj(bvconst_hobj_t *p, thvar_t i) {
     return false;
  }
   w = (p->nbits + 31) >> 5;
-  return bvconst_eq(p->val, table->def[i].ptr, w);
+  return bvconst_eq(p->val, (uint32_t*)table->def[i].ptr, w);
 }
 
 static bool eq_bvpoly64_hobj(bvpoly_hobj_t *p, thvar_t i) {
@@ -730,7 +730,7 @@ static bool eq_bvpoly64_hobj(bvpoly_hobj_t *p, thvar_t i) {
 
   table = p->tbl;
   return bvvar_tag(table, i) == BVTAG_POLY64 &&
-    bvpoly_buffer_equal_poly64(p->buffer, table->def[i].ptr);
+    bvpoly_buffer_equal_poly64(p->buffer, (bvpoly64_t*)table->def[i].ptr);
 }
 
 static bool eq_bvpoly_hobj(bvpoly_hobj_t *p, thvar_t i) {
@@ -738,7 +738,7 @@ static bool eq_bvpoly_hobj(bvpoly_hobj_t *p, thvar_t i) {
 
   table = p->tbl;
   return bvvar_tag(table, i) == BVTAG_POLY &&
-    bvpoly_buffer_equal_poly(p->buffer, table->def[i].ptr);
+    bvpoly_buffer_equal_poly(p->buffer, (bvpoly_t*)table->def[i].ptr);
 }
 
 
@@ -755,7 +755,7 @@ static bool eq_bvpprod_hobj(bvpprod_hobj_t *p, thvar_t i) {
 
   table = p->tbl;
   return bvvar_tag(table, i) == BVTAG_PPROD &&
-    pp_buffer_eq_pprod(p->buffer, table->def[i].ptr);
+    pp_buffer_eq_pprod(p->buffer, (pprod_t*)table->def[i].ptr);
 }
 
 
@@ -770,7 +770,7 @@ static bool eq_bvarray_hobj(bvarray_hobj_t *p, thvar_t i) {
     return false;
   }
 
-  a = table->def[i].ptr;
+  a = (literal_t*)table->def[i].ptr;
   for (j=0; j<n; j++) {
     if (a[j] != p->val[j]) return false;
   }
@@ -784,7 +784,7 @@ static bool eq_bvite_hobj(bvite_hobj_t *p, thvar_t i) {
 
   table = p->tbl;
   if (bvvar_tag(table, i) == BVTAG_ITE) {
-    d = table->def[i].ptr;
+    d = (bv_ite_t*)table->def[i].ptr;
     return d->cond == p->cond && d->left == p->left && d->right == p->right;
   } else {
     return false;

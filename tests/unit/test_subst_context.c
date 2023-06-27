@@ -35,7 +35,7 @@
  * format: x<n> := t<m> for the binding n --> m.
  */
 static void show_binding(FILE *f, ctx_binding_t *b) {
-  fprintf(f, "x%-2"PRId32" := t%"PRId32, b->var, b->term);
+  fprintf(f, "x%-2" PRId32 " := t%" PRId32, b->var, b->term);
 }
 
 static void show_context(FILE *f, subst_ctx_t *ctx) {
@@ -85,7 +85,7 @@ static void test_add(subst_ctx_t *ctx, int32_t n, int32_t delta) {
   assert(n >= 0);
   printf("Test: Add mapping:\n");
   for (i=0; i<n; i++) {
-    printf("x%-2"PRId32" := t%"PRId32"\n", i, i+delta);
+    printf("x%-2" PRId32 " := t%" PRId32 "\n", i, i+delta);
   }
   printf("\n");
   show_context(stdout, ctx);
@@ -99,7 +99,7 @@ static void test_add(subst_ctx_t *ctx, int32_t n, int32_t delta) {
   printf("---> lookups:\n");
   for (i=0; i<n; i++) {
     t = subst_ctx_lookup(ctx, i);
-    printf("lookup(x%"PRId32") = t%"PRId32"\n", i, t);
+    printf("lookup(x%" PRId32 ") = t%" PRId32 "\n", i, t);
     if (t != i+delta) {
       printf("ERROR: LOOKUP IS INCORRECT\n");
       fflush(stdout);
@@ -117,7 +117,7 @@ static void test_add(subst_ctx_t *ctx, int32_t n, int32_t delta) {
 static void test_remove(subst_ctx_t *ctx, int32_t n) {
   assert(n >= 0);
 
-  printf("Test: remove last %"PRId32" bindings\n", n);
+  printf("Test: remove last %" PRId32 " bindings\n", n);
   show_context(stdout, ctx);
   subst_ctx_pop_bindings(ctx, n);
   printf("---> after removal:\n");
@@ -183,17 +183,17 @@ static void check_mapping(subst_ctx_t *ctx, int32_t n, int32_t *a) {
   int32_t i, t;
 
   assert(n > 0);
-  printf("Checking mapping for x%"PRId32" to x%"PRId32"\n", 0, n-1);
+  printf("Checking mapping for x%" PRId32 " to x%" PRId32 "\n", 0, n-1);
   for (i=0; i<n; i++) {
     t = subst_ctx_lookup(ctx, i);
     if (t >= 0) {
-      printf("lookup(x%"PRId32") = t%"PRId32"\n", i, t);
+      printf("lookup(x%" PRId32 ") = t%" PRId32 "\n", i, t);
     } else {
-      printf("lookup(x%"PRId32") = none\n", i);
+      printf("lookup(x%" PRId32 ") = none\n", i);
     }
 
     if (t != a[i]) {
-      printf("ERROR: UNEXPECTED MAPPING FOR x%"PRId32"\n", i);
+      printf("ERROR: UNEXPECTED MAPPING FOR x%" PRId32 "\n", i);
       fflush(stdout);
       exit(1);
     }
@@ -214,7 +214,7 @@ static void check_hash_content(harray_t *d, int32_t n, int32_t *a) {
     t = d->data[i+1];
     if (0 <= x && x < n && a[x] != t) {
       printf("ERROR: INVALID HARRAY CONTENT\n");
-      printf(" x%"PRId32" mapped to t%"PRId32" (t%"PRId32" expected)\n", x, t, a[x]);
+      printf(" x%" PRId32 " mapped to t%" PRId32 " (t%" PRId32 " expected)\n", x, t, a[x]);
       fflush(stdout);
       exit(1);
     }

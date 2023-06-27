@@ -363,7 +363,7 @@ void init_ugraph(update_graph_t *ugraph, egraph_t *egraph) {
 
   ugraph->size = 0;
   ugraph->nodes = 0;
-  ugraph->class = NULL;
+  ugraph->class_ = NULL;
   ugraph->edges = NULL;
   ugraph->tag  = NULL;
   ugraph->mark = NULL;
@@ -393,7 +393,7 @@ static void extend_ugraph_nodes(update_graph_t *ugraph) {
     n = DEF_UGRAPH_SIZE;
     assert(n <= MAX_UGRAPH_SIZE);
 
-    ugraph->class = (class_t *) safe_malloc(n * sizeof(class_t));
+    ugraph->class_ = (class_t *) safe_malloc(n * sizeof(class_t));
     ugraph->edges = (void ***) safe_malloc(n * sizeof(void **));
     ugraph->tag = (int32_t *) safe_malloc(n * sizeof(int32_t));
     ugraph->mark = allocate_bitvector(n);
@@ -407,7 +407,7 @@ static void extend_ugraph_nodes(update_graph_t *ugraph) {
       out_of_memory();
     }
 
-    ugraph->class = (class_t *) safe_realloc(ugraph->class, n * sizeof(class_t));
+    ugraph->class_ = (class_t *) safe_realloc(ugraph->class_, n * sizeof(class_t));
     ugraph->edges = (void ***) safe_realloc(ugraph->edges, n * sizeof(void **));
     ugraph->tag = (int32_t *) safe_realloc(ugraph->tag, n * sizeof(int32_t));
     ugraph->mark = extend_bitvector(ugraph->mark, n);
@@ -452,7 +452,7 @@ static int32_t ugraph_add_node(update_graph_t *ugraph, class_t c, int32_t tag) {
     extend_ugraph_nodes(ugraph);
   }
   assert(i < ugraph->size);
-  ugraph->class[i] = c;
+  ugraph->class_[i] = c;
   ugraph->edges[i] = NULL;
   ugraph->tag[i] = tag;
   clr_bit(ugraph->mark, i);
@@ -502,13 +502,13 @@ void delete_ugraph(update_graph_t *ugraph) {
   for (i=0; i<n; i++) {
     delete_ptr_vector(ugraph->edges[i]);
   }
-  safe_free(ugraph->class);
+  safe_free(ugraph->class_);
   safe_free(ugraph->edges);
   safe_free(ugraph->tag);
   delete_bitvector(ugraph->mark);
   safe_free(ugraph->class2node);
 
-  ugraph->class = NULL;
+  ugraph->class_ = NULL;
   ugraph->edges = NULL;
   ugraph->tag = NULL;
   ugraph->mark = NULL;
@@ -785,7 +785,7 @@ static composite_t *find_modified_application(update_graph_t *ugraph, int32_t y,
   egraph = ugraph->egraph;
   label = egraph->terms.label;
   sgn = &egraph->sgn;
-  signature_modified_apply2(c, pos_label(ugraph->class[y]), label, sgn);
+  signature_modified_apply2(c, pos_label(ugraph->class_[y]), label, sgn);
   return congruence_table_find(&egraph->ctable, sgn, label);
 }
 
@@ -808,7 +808,7 @@ static composite_t *find_lambda_term(update_graph_t *ugraph, int32_t y) {
 
   egraph= ugraph->egraph;
   d = NULL;
-  c = ugraph->class[y];
+  c = ugraph->class_[y];
   assert(egraph_class_is_function(egraph, c));
 
   lambda = egraph_class_thvar(egraph, c);
@@ -882,13 +882,13 @@ static void ugraph_push_transparent_successors(update_graph_t *ugraph, ugraph_qu
   if (edges != NULL) {
     n = pv_size(edges);
     for (i=0; i<n; i++) {
-      u = edges[i];
+      u = (composite_t*)edges[i];
       if (ptr_tag(u) == 0) {
         // direct edge of the form g := (update f ...) for f in class[x]
         y = node_of_term(ugraph, u->id);
       } else {
         // reverse edge: f := (update g ...) for f in class[x]
-        u = untag_ptr(u);
+        u = (composite_t*)untag_ptr(u);
         y = node_of_term(ugraph, term_of_occ(u->child[0]));
       }
 
@@ -1016,8 +1016,8 @@ static void ugraph_push_successors(update_graph_t *ugraph, ugraph_queue_t *queue
   if (edges != NULL) {
     n = pv_size(edges);
     for (i=0; i<n; i++) {
-      u = edges[i];
-      v = untag_ptr(u);
+      u = (composite_t*)edges[i];
+      v = (composite_t*)untag_ptr(u);
       if (ptr_tag(u) == 0) {
         // direct edge of the form g := (update f ...) for f in class[x]
         y = node_of_term(ugraph, u->id);

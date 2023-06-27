@@ -2510,9 +2510,9 @@ static void gaussian_elimination(matrix_t *matrix, markowitz_t *d, byte_t *i_fla
 
 #if 0
     if (tst_bit(i_flag, x)) {
-      printf("---> eliminating i!%"PRIu32" and row %"PRId32" (score = %"PRIu32")\n", x, r0, d->row_rec[r0]->score);
+      printf("---> eliminating i!%" PRIu32 " and row %" PRId32 " (score = %" PRIu32 ")\n", x, r0, d->row_rec[r0]->score);
     } else {
-      printf("---> eliminating z!%"PRIu32" and row %"PRId32" (score = %"PRIu32")\n", x, r0, d->row_rec[r0]->score);
+      printf("---> eliminating z!%" PRIu32 " and row %" PRId32 " (score = %" PRIu32 ")\n", x, r0, d->row_rec[r0]->score);
     }
 #endif
 
@@ -3159,7 +3159,7 @@ bool good_matrix(matrix_t *matrix) {
     n = matrix->nrows;
     for (i=0; i<n; i++) {
       if (! good_row(matrix, i)) {
-        printf("---> Bad row[%"PRIu32"]\n", i);
+        printf("---> Bad row[%" PRIu32 "]\n", i);
         fflush(stdout);
         return false;
       }
@@ -3168,7 +3168,7 @@ bool good_matrix(matrix_t *matrix) {
     n = matrix->ncolumns;
     for (i=0; i<n; i++) {
       if (! good_column(matrix, i)) {
-        printf("---> Bad column[%"PRIu32"]\n", i);
+        printf("---> Bad column[%" PRIu32 "]\n", i);
         fflush(stdout);
         return false;
       }

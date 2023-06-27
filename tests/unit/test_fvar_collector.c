@@ -172,7 +172,7 @@ static void show_terms(void) {
   n = all.size;
   v = all.data;
   for (i=0; i<n; i++) {
-    printf("term[%02"PRIu32"]:  ", i);
+    printf("term[%02" PRIu32 "]:  ", i);
     pp_term_full(&printer, __yices_globals.terms, v[i]);
     flush_yices_pp(&printer);
   }
@@ -211,7 +211,7 @@ static void test_collect(void) {
   v = all.data;
   for (i=0; i<n; i++) {
     a = get_free_vars_of_term(&collect, v[i]);
-    printf("term[%02"PRIu32"]:  ", i);
+    printf("term[%02" PRIu32 "]:  ", i);
     pp_term(&printer, __yices_globals.terms, v[i]);
     flush_yices_pp(&printer);
     printf("variables: ");

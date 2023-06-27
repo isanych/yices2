@@ -63,10 +63,10 @@ static void assert_ordef_clauses(smt_core_t *s, literal_t l, ivector_t *v) {
 
   n = v->size;
   for (i=0; i<n; i++) {
-    add_binary_clause(s, l, not(v->data[i]));
+    add_binary_clause(s, l, not_(v->data[i]));
   }
 
-  ivector_push(v, not(l));
+  ivector_push(v, not_(l));
   add_clause(s, n+1, v->data);
 }
 
@@ -97,7 +97,7 @@ static literal_t aux_or_constructor(gate_table_t *tbl, smt_core_t *s, ivector_t 
   for (i=1; i<n; i++) {
     aux = a[i];
     if (aux != l) {
-      if (aux == not(l)) return true_literal; // (or .. l not(l) ..)
+      if (aux == not_(l)) return true_literal; // (or .. l not_(l) ..)
       a[p++] = aux;
       l = aux;
     }
@@ -206,14 +206,14 @@ literal_t mk_and_gate(gate_manager_t *m, uint32_t n, literal_t *a) {
       return false_literal;
     case VAL_UNDEF_FALSE:
     case VAL_UNDEF_TRUE:
-      ivector_push(v, not(l));
+      ivector_push(v, not_(l));
       break;
     case VAL_TRUE:
       break;
     }
   }
 
-  return not(aux_or_constructor(m->htbl, s, v));
+  return not_(aux_or_constructor(m->htbl, s, v));
 }
 
 
@@ -248,10 +248,10 @@ static literal_t assert_xordef2(smt_core_t *s, literal_t l1, literal_t l2) {
   literal_t l;
 
   l = pos_lit(create_boolean_variable(s));
-  add_ternary_clause(s, not(l1), not(l2), not(l));
-  add_ternary_clause(s, not(l1), l2, l);
-  add_ternary_clause(s, l1, not(l2), l);
-  add_ternary_clause(s, l1, l2, not(l));
+  add_ternary_clause(s, not_(l1), not_(l2), not_(l));
+  add_ternary_clause(s, not_(l1), l2, l);
+  add_ternary_clause(s, l1, not_(l2), l);
+  add_ternary_clause(s, l1, l2, not_(l));
   return l;
 }
 
@@ -401,7 +401,7 @@ literal_t mk_xor_gate3(gate_manager_t *m, literal_t l1, literal_t l2, literal_t 
  */
 static void assert_xor2_clauses(smt_core_t *s, literal_t l1, literal_t l2) {
   add_binary_clause(s, l1, l2);
-  add_binary_clause(s, not(l1), not(l2));
+  add_binary_clause(s, not_(l1), not_(l2));
 }
 
 /*
@@ -409,9 +409,9 @@ static void assert_xor2_clauses(smt_core_t *s, literal_t l1, literal_t l2) {
  */
 static void assert_xor3_clauses(smt_core_t *s, literal_t l1, literal_t l2, literal_t l3) {
   add_ternary_clause(s, l1, l2, l3);
-  add_ternary_clause(s, l1, not(l2), not(l3));
-  add_ternary_clause(s, not(l1), l2, not(l3));
-  add_ternary_clause(s, not(l1), not(l2), l3);
+  add_ternary_clause(s, l1, not_(l2), not_(l3));
+  add_ternary_clause(s, not_(l1), l2, not_(l3));
+  add_ternary_clause(s, not_(l1), not_(l2), l3);
 }
 
 
@@ -442,7 +442,7 @@ void assert_xor(gate_manager_t *m, uint32_t n, literal_t *a, bool val) {
 
   // (not (XOR a[0] ... a[n-1])) <=> (XOR (not a[0]) ... a[n-1])
   if (! val) {
-    a[0] = not(a[0]);
+    a[0] = not_(a[0]);
   }
 
   if (n == 1) {
@@ -499,10 +499,10 @@ static literal_t mk_ite_aux(gate_manager_t *m, literal_t c, literal_t l1, litera
     s = m->core;
     l = pos_lit(create_boolean_variable(s));
     g->lit[3] = l;
-    add_ternary_clause(s, not(l), c, l2);
-    add_ternary_clause(s, not(l), not(c), l1);
-    add_ternary_clause(s, l, c, not(l2));
-    add_ternary_clause(s, l, not(c), not(l1));
+    add_ternary_clause(s, not_(l), c, l2);
+    add_ternary_clause(s, not_(l), not_(c), l1);
+    add_ternary_clause(s, l, c, not_(l2));
+    add_ternary_clause(s, l, not_(c), not_(l1));
 
     /*
      * Redundant clauses that may help propagation:
@@ -510,8 +510,8 @@ static literal_t mk_ite_aux(gate_manager_t *m, literal_t c, literal_t l1, litera
      * (not l1 and not l2 ==> not l)
      */
 #if 0
-    add_ternary_clause(s, not(l1), not(l2), l);
-    add_ternary_clause(s, l1, l2, not(l));
+    add_ternary_clause(s, not_(l1), not_(l2), l);
+    add_ternary_clause(s, l1, l2, not_(l));
 #endif
   }
   return l;
@@ -528,12 +528,12 @@ static literal_t mk_ite_aux2(gate_manager_t *m, literal_t c, literal_t l1, liter
   literal_t aux;
 
   if (is_neg(c)) {
-    c = not(c);
+    c = not_(c);
     aux = l1; l1 = l2; l2 = aux; // swap l1 and l2
   }
 
   if (is_neg(l1)) {
-    return not(mk_ite_aux(m, c, not(l1), not(l2)));
+    return not_(mk_ite_aux(m, c, not_(l1), not_(l2)));
   } else {
     return mk_ite_aux(m, c, l1, l2);
   }
@@ -570,8 +570,8 @@ literal_t mk_ite_gate(gate_manager_t *m, literal_t c, literal_t l1, literal_t l2
     v2 = literal_base_value(s, l2);
     if (c == l1 || v1 == VAL_TRUE)  return mk_or_gate2(m, c, l2);
     if (c == l2 || v2 == VAL_FALSE) return mk_and_gate2(m, c, l1);
-    if (c == not(l1) || v1 == VAL_FALSE) return mk_and_gate2(m, not(c), l2);
-    if (c == not(l2) || v2 == VAL_TRUE)  return mk_or_gate2(m, not(c), l1);
+    if (c == not_(l1) || v1 == VAL_FALSE) return mk_and_gate2(m, not_(c), l2);
+    if (c == not_(l2) || v2 == VAL_TRUE)  return mk_or_gate2(m, not_(c), l1);
 
     return mk_ite_aux2(m, c, l1, l2);
 
@@ -591,8 +591,8 @@ void assert_ite(gate_manager_t *m, literal_t c, literal_t l1, literal_t l2, bool
   bval_t v1, v2;
 
   if (! val) {
-    l1 = not(l1);
-    l2 = not(l2);
+    l1 = not_(l1);
+    l2 = not_(l2);
   }
 
   s = m->core;
@@ -623,17 +623,17 @@ void assert_ite(gate_manager_t *m, literal_t c, literal_t l1, literal_t l2, bool
         add_unit_clause(s, l1); // assert (and c l1)
         break;
       }
-      if (c == not(l1) || v1 == VAL_FALSE) {
-        add_unit_clause(s, not(c));
+      if (c == not_(l1) || v1 == VAL_FALSE) {
+        add_unit_clause(s, not_(c));
         add_unit_clause(s, l2); // assert (and (not c) l2)
         break;
       }
-      if (c == not(l2) || v2 == VAL_TRUE)  {
-        add_binary_clause(s, not(c), l1); // assert (or (not c) l1)
+      if (c == not_(l2) || v2 == VAL_TRUE)  {
+        add_binary_clause(s, not_(c), l1); // assert (or (not c) l1)
         break;
       }
 
-      add_binary_clause(s, not(c), l1);
+      add_binary_clause(s, not_(c), l1);
       add_binary_clause(s, c, l2);
 #if 0
       // redundant clause that may help ?

@@ -28,9 +28,9 @@ static void print_array(uint32_t n, int32_t *a) {
   if (n == 0) {
     printf("[]");
   } else {
-    printf("[%"PRId32, a[0]);
+    printf("[%" PRId32, a[0]);
     for (i=1; i<n; i++) {
-      printf(" %"PRId32, a[i]);
+      printf(" %" PRId32, a[i]);
     }
     printf("]");
   }
@@ -43,9 +43,9 @@ static void print_harray(harray_t *set) {
   if (n == 0) {
     printf("[]");
   } else {
-    printf("[%"PRId32, set->data[0]);
+    printf("[%" PRId32, set->data[0]);
     for (i=1; i<n; i++) {
-      printf(" %"PRId32, set->data[i]);
+      printf(" %" PRId32, set->data[i]);
     }
     printf("]");
   }
@@ -57,9 +57,9 @@ static void print_harray_set(int_array_hset_t *table) {
   harray_t *d;
 
   printf("table %p\n", table);
-  printf("  size = %"PRIu32"\n", table->size);
-  printf("  nelems = %"PRIu32"\n", table->nelems);
-  printf("  ndeleted = %"PRIu32"\n", table->ndeleted);
+  printf("  size = %" PRIu32 "\n", table->size);
+  printf("  nelems = %" PRIu32 "\n", table->nelems);
+  printf("  ndeleted = %" PRIu32 "\n", table->ndeleted);
   printf("  content:\n");
 
   for (i=0; i<table->size; i++) {

@@ -25,7 +25,7 @@
 #include "terms/types.h"
 #include "utils/refcount_strings.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }

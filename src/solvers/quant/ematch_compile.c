@@ -20,19 +20,10 @@
  * PATTERN COMPILER FOR E-MATCHING
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#define EXPORTED __declspec(dllexport)
-#define __YICES_DLLSPEC__ EXPORTED
-#else
-#define EXPORTED __attribute__((visibility("default")))
-#endif
-
 #include "solvers/quant/ematch_compile.h"
 #include "yices.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 
 #include <stdio.h>
 
@@ -104,7 +95,7 @@ void delete_ematch_compiler(ematch_compile_t *comp) {
  *   PATTERN COMPILER  *
  **********************/
 
-#if TRACE
+#if YICES_TRACE
 static void ematch_print_W(ematch_compile_t *comp, const char *comment) {
   int_hmap_t *W;
   int_hmap_pair_t *ip;
@@ -710,7 +701,7 @@ int32_t ematch_compile_pattern(ematch_compile_t *comp, term_t pat) {
   terms = comp->terms;
   kind = term_kind(terms, pat);
   if (kind == APP_TERM) {
-#if TRACE
+#if YICES_TRACE
     printf("  pattern: ");
     yices_pp_term(stdout, pat, 120, 1, 0);
     printf("    offset: %d\n", comp->o);
@@ -718,13 +709,13 @@ int32_t ematch_compile_pattern(ematch_compile_t *comp, term_t pat) {
 
     idx = ematch_compile_func(comp, app_term_desc(terms, pat));
 
-#if TRACE
+#if YICES_TRACE
     printf("    code: instr%d\n", idx);
     ematch_print_instr(stdout, comp->itbl, idx, true);
 //    printf("    offset (new): %d\n", comp->o);
 #endif
   } else if (kind == TUPLE_TERM) {
-#if TRACE
+#if YICES_TRACE
     printf("  pattern (multi): ");
     yices_pp_term(stdout, pat, 120, 1, 0);
     printf("    offset: %d\n", comp->o);
@@ -733,7 +724,7 @@ int32_t ematch_compile_pattern(ematch_compile_t *comp, term_t pat) {
     d = tuple_term_desc(terms, pat);
     idx = ematch_compile_multi(comp, d->arity, d->arg);
 
-#if TRACE
+#if YICES_TRACE
     printf("    code: instr%d\n", idx);
     ematch_print_instr(stdout, comp->itbl, idx, true);
 //    printf("    offset (new): %d\n", comp->o);

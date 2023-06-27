@@ -28,10 +28,13 @@
 
 #include <stdbool.h>
 #include <assert.h>
-
+#include <stdio.h>
+#include "yices_config.h"
 #include "io/reader.h"
 
-
+#ifdef _WIN32
+#define getc_unlocked _fgetc_nolock
+#endif
 
 /*
  * It seems that we need an explicit declaration of getc_unlocked on
@@ -61,11 +64,7 @@ static int file_reader_next_char(reader_t *reader) {
 
   // getc_unlocked is unsafe in multithreading applications
   // but it's much faster.
-#if defined(MINGW)
-  reader->current = getc(reader->input.stream);
-#else
   reader->current = getc_unlocked(reader->input.stream);
-#endif
   reader->pos ++;
   reader->column ++;
 
@@ -115,7 +114,7 @@ static int string_reader_next_char(reader_t *reader) {
  *   any subsequent attempt to read will return EOF
  * - if the file can be opened, current is set to '\n'
  */
-int32_t init_file_reader(reader_t *reader, const char *filename) {
+YICES_EXTERN int32_t init_file_reader(reader_t *reader, const char *filename) {
   FILE *f;
 
   f = fopen(filename, "r");
@@ -140,7 +139,7 @@ int32_t init_file_reader(reader_t *reader, const char *filename) {
  * Initialize reader for an already opened stream
  * - set filename to name
  */
-void init_stream_reader(reader_t *reader, FILE *f, const char *name) {
+YICES_EXTERN void init_stream_reader(reader_t *reader, FILE *f, const char *name) {
   reader->current = '\n';
   reader->input.stream = f;
   reader->pos = 0;
@@ -155,7 +154,7 @@ void init_stream_reader(reader_t *reader, FILE *f, const char *name) {
 /*
  * Initialize reader for string data
  */
-void init_string_reader(reader_t *reader, const char *data, const char *name) {
+YICES_EXTERN void init_string_reader(reader_t *reader, const char *data, const char *name) {
   reader->current = '\n';
   reader->input.data = data;
   reader->pos = 0;
@@ -170,7 +169,7 @@ void init_string_reader(reader_t *reader, const char *data, const char *name) {
 /*
  * Reset: change the input string
  */
-void reset_string_reader(reader_t *reader, const char *data) {
+YICES_EXTERN void reset_string_reader(reader_t *reader, const char *data) {
   assert(! reader->is_stream);
   assert(reader->read == string_reader_next_char);
 
@@ -186,7 +185,7 @@ void reset_string_reader(reader_t *reader, const char *data) {
 /*
  * Close reader: return EOF on error, 0 otherwise
  */
-int close_reader(reader_t *reader) {
+YICES_EXTERN int close_reader(reader_t *reader) {
   if (reader->is_stream) {
     return fclose(reader->input.stream);
   } else {
@@ -238,7 +237,7 @@ static int file_reader_next_wchar(reader_t *reader) {
 /*
  * Experimental: try to support wide characters (UTF-8)
  */
-int32_t init_wide_file_reader(reader_t *reader, const char *filename) {
+YICES_EXTERN int32_t init_wide_file_reader(reader_t *reader, const char *filename) {
     FILE *f;
 
   f = fopen(filename, "r");
@@ -259,7 +258,7 @@ int32_t init_wide_file_reader(reader_t *reader, const char *filename) {
   return 0;
 }
 
-void init_wide_stream_reader(reader_t *reader, FILE *f, const char *name) {
+YICES_EXTERN void init_wide_stream_reader(reader_t *reader, FILE *f, const char *name) {
   reader->current = '\n';
   reader->input.stream = f;
   reader->pos = 0;

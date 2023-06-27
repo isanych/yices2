@@ -20,13 +20,6 @@
  * Parse a file in DIMACS/CNF format then call the sat solver.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -89,7 +82,7 @@ static void finish_line(FILE *f) {
 
 static void alloc_buffer(uint32_t size) {
   assert(size <= MAX_CLAUSE_SIZE);
-  clause = malloc(size * sizeof(literal_t));
+  clause = (literal_t*)malloc(size * sizeof(literal_t));
   buffer_size = size;
   if (clause == NULL) {
     fprintf(stderr, "Out of memory\n");
@@ -108,7 +101,7 @@ static void expand_buffer(void) {
     buffer_size = MAX_CLAUSE_SIZE;
   }
 
-  clause = realloc(clause, buffer_size * sizeof(literal_t));
+  clause = (literal_t*)realloc(clause, buffer_size * sizeof(literal_t));
   if (clause == NULL) {
     fprintf(stderr, "Out of memory\n");
     exit(2);
@@ -433,20 +426,20 @@ static void parse_command_line(int argc, char *argv[]) {
  * STATISTICS AND RESULTS
  */
 static void show_stats(solver_stats_t *stat) {
-  fprintf(stderr, "starts                  : %"PRIu32"\n", stat->starts);
-  fprintf(stderr, "simplify db             : %"PRIu32"\n", stat->simplify_calls);
-  fprintf(stderr, "reduce db               : %"PRIu32"\n", stat->reduce_calls);
-  fprintf(stderr, "decisions               : %"PRIu64"\n", stat->decisions);
-  fprintf(stderr, "random decisions        : %"PRIu64"\n", stat->random_decisions);
-  fprintf(stderr, "propagations            : %"PRIu64"\n", stat->propagations);
-  fprintf(stderr, "conflicts               : %"PRIu64"\n", stat->conflicts);
-  fprintf(stderr, "lits in pb. clauses     : %"PRIu64"\n", stat->prob_literals);
-  fprintf(stderr, "lits in learned clauses : %"PRIu64"\n", stat->learned_literals);
-  fprintf(stderr, "total lits. in learned  : %"PRIu64"\n", stat->literals_before_simpl);
-  fprintf(stderr, "subsumed lits.          : %"PRIu64"\n", stat->subsumed_literals);
-  fprintf(stderr, "deleted pb. clauses     : %"PRIu64"\n", stat->prob_clauses_deleted);
-  fprintf(stderr, "deleted learned clauses : %"PRIu64"\n", stat->learned_clauses_deleted);
-  fprintf(stderr, "deleted binary clauses  : %"PRIu64"\n", stat->bin_clauses_deleted);
+  fprintf(stderr, "starts                  : %" PRIu32 "\n", stat->starts);
+  fprintf(stderr, "simplify db             : %" PRIu32 "\n", stat->simplify_calls);
+  fprintf(stderr, "reduce db               : %" PRIu32 "\n", stat->reduce_calls);
+  fprintf(stderr, "decisions               : %" PRIu64 "\n", stat->decisions);
+  fprintf(stderr, "random decisions        : %" PRIu64 "\n", stat->random_decisions);
+  fprintf(stderr, "propagations            : %" PRIu64 "\n", stat->propagations);
+  fprintf(stderr, "conflicts               : %" PRIu64 "\n", stat->conflicts);
+  fprintf(stderr, "lits in pb. clauses     : %" PRIu64 "\n", stat->prob_literals);
+  fprintf(stderr, "lits in learned clauses : %" PRIu64 "\n", stat->learned_literals);
+  fprintf(stderr, "total lits. in learned  : %" PRIu64 "\n", stat->literals_before_simpl);
+  fprintf(stderr, "subsumed lits.          : %" PRIu64 "\n", stat->subsumed_literals);
+  fprintf(stderr, "deleted pb. clauses     : %" PRIu64 "\n", stat->prob_clauses_deleted);
+  fprintf(stderr, "deleted learned clauses : %" PRIu64 "\n", stat->learned_clauses_deleted);
+  fprintf(stderr, "deleted binary clauses  : %" PRIu64 "\n", stat->bin_clauses_deleted);
   fprintf(stderr, "\n");
 }
 
@@ -490,11 +483,11 @@ static void print_results(void) {
  * Print initial size
  */
 void print_solver_size(FILE *f, sat_solver_t *sol) {
-  fprintf(f, "nb. of vars          : %"PRIu32"\n", sol->nb_vars);
-  fprintf(f, "nb. of unit clauses  : %"PRIu32"\n", sol->nb_unit_clauses);
-  fprintf(f, "nb. of bin clauses   : %"PRIu32"\n", sol->nb_bin_clauses);
-  fprintf(f, "nb. of big clauses   : %"PRIu32"\n", sol->nb_clauses);
-  fprintf(f, "nb. of assignments   : %"PRIu32"\n", sol->stack.top);
+  fprintf(f, "nb. of vars          : %" PRIu32 "\n", sol->nb_vars);
+  fprintf(f, "nb. of unit clauses  : %" PRIu32 "\n", sol->nb_unit_clauses);
+  fprintf(f, "nb. of bin clauses   : %" PRIu32 "\n", sol->nb_bin_clauses);
+  fprintf(f, "nb. of big clauses   : %" PRIu32 "\n", sol->nb_clauses);
+  fprintf(f, "nb. of assignments   : %" PRIu32 "\n", sol->stack.top);
   fprintf(f, "clause increment     : %g\n", sol->cla_inc);
   fprintf(f, "inverse clause decay : %g\n", sol->inv_cla_decay);
   fprintf(f, "var increment        : %g\n", sol->heap.act_increment);
@@ -556,7 +549,7 @@ static void handler(int signum) {
 static void init_handler(void) {
   signal(SIGINT, handler);
   signal(SIGABRT, handler);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, handler);
 #endif
 }

@@ -79,7 +79,7 @@ static void finish_line(FILE *f) {
 
 static void alloc_buffer(uint32_t size) {
   assert(size <= MAX_CLAUSE_SIZE);
-  clause = malloc(size * sizeof(literal_t));
+  clause = (literal_t*)malloc(size * sizeof(literal_t));
   buffer_size = size;
   if (clause == NULL) {
     fprintf(stderr, "Out of memory\n");
@@ -98,7 +98,7 @@ static void expand_buffer(void) {
     buffer_size = MAX_CLAUSE_SIZE;
   }
 
-  clause = realloc(clause, buffer_size * sizeof(literal_t));
+  clause = (literal_t*)realloc(clause, buffer_size * sizeof(literal_t));
   if (clause == NULL) {
     fprintf(stderr, "Out of memory\n");
     exit(2);
@@ -264,16 +264,16 @@ static int32_t build_instance(char *filename) {
 static void print_statistics(FILE *f) {
   fprintf(f, "\nConstruction time    : %.3f s\n", construction_time);
   fprintf(f, "Memory used          : %.2f MB\n", memory_size);
-  fprintf(f, "nb. of variables     : %"PRIu32"\n", nvars);
-  fprintf(f, "nb. of clauses       : %"PRIu32"\n", nclauses);
+  fprintf(f, "nb. of variables     : %" PRIu32 "\n", nvars);
+  fprintf(f, "nb. of clauses       : %" PRIu32 "\n", nclauses);
   fprintf(f, "clause pool\n");
-  fprintf(f, "    prob clauses     : %"PRIu32"\n", pool.num_prob_clauses);
-  fprintf(f, "    prob literals    : %"PRIu32"\n", pool.num_prob_literals);
-  fprintf(f, "    learned clauses  : %"PRIu32"\n", pool.num_learned_clauses);
-  fprintf(f, "    learned literals : %"PRIu32"\n", pool.num_learned_literals);
-  fprintf(f, "pool size            : %"PRIu32"\n", pool.size);
-  fprintf(f, "pool capacity        : %"PRIu32"\n", pool.capacity);
-  fprintf(f, "first learned clause : %"PRIu32"\n", pool.learned);
+  fprintf(f, "    prob clauses     : %" PRIu32 "\n", pool.num_prob_clauses);
+  fprintf(f, "    prob literals    : %" PRIu32 "\n", pool.num_prob_literals);
+  fprintf(f, "    learned clauses  : %" PRIu32 "\n", pool.num_learned_clauses);
+  fprintf(f, "    learned literals : %" PRIu32 "\n", pool.num_learned_literals);
+  fprintf(f, "pool size            : %" PRIu32 "\n", pool.size);
+  fprintf(f, "pool capacity        : %" PRIu32 "\n", pool.capacity);
+  fprintf(f, "first learned clause : %" PRIu32 "\n", pool.learned);
 }
 
 

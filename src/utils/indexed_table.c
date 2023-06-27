@@ -33,12 +33,15 @@ static void extend(indexed_table_t *t) {
 }
 
 void indexed_table_init(indexed_table_t *t, uindex_t n,
-			const indexed_table_vtbl_t *vtbl) {
-  *t = (indexed_table_t) {
-    .elems = safe_malloc(n * vtbl->elem_size),
-    .size = n,
-    .vtbl = vtbl
-  };
+                        const indexed_table_vtbl_t *vtbl) {
+#ifdef __cplusplus
+  *t = {};
+#else
+  *t = (indexed_table_t){0};
+#endif
+  t->elems = safe_malloc(n * vtbl->elem_size);
+  t->size = n;
+  t->vtbl = vtbl;
   check_nelems(t);
 
   indexed_table_clear(t);

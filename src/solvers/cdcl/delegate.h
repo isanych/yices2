@@ -87,12 +87,12 @@ typedef struct delegate_s {
   check_sat_fun_t check;
   get_value_fun_t get_value;
   set_verbosity_fun_t set_verbosity;
-  delete_fun_t delete;
+  delete_fun_t delete_;
   keep_var_fun_t keep_var;
   var_def2_fun_t var_def2;
   var_def3_fun_t var_def3;
   preprocess_fun_t preprocess;
-  export_fun_t export;
+  export_fun_t export_;
 } delegate_t;
 
 

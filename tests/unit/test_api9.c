@@ -39,7 +39,7 @@ static void test_pp_type(FILE *f, type_t tau, int32_t k, int32_t error) {
   error_code_t ecode;
   int saved_errno;
 
-  printf("Testing pp_type: tau = %"PRId32" (print area = 40 x 10)\n", tau);
+  printf("Testing pp_type: tau = %" PRId32 " (print area = 40 x 10)\n", tau);
   fflush(stdout);
 
   code = yices_pp_type(f, tau, 40, 10, 0);
@@ -60,14 +60,14 @@ static void test_pp_type(FILE *f, type_t tau, int32_t k, int32_t error) {
 
   if (code != k) {
     printf("TEST FAILED\n");
-    printf("--> Yices function returned %"PRId32"; %"PRId32" was expected\n", code, k);
+    printf("--> Yices function returned %" PRId32 "; %" PRId32 " was expected\n", code, k);
     fflush(stdout);
     exit(1);
   } else if (k < 0) {
     ecode = yices_error_code();
     if (ecode != error) {
       printf("TEST FAILED\n");
-      printf("--> Found error code %"PRId32"; %"PRId32" was expected\n", ecode, error);
+      printf("--> Found error code %" PRId32 "; %" PRId32 " was expected\n", ecode, error);
       fflush(stdout);
       exit(1);
     }
@@ -88,7 +88,7 @@ static void test_pp_term(FILE *f, term_t t, int32_t k, int32_t error) {
   error_code_t ecode;
   int saved_errno;
 
-  printf("Testing pp_term: t = %"PRId32" (print area = 100 x 60)\n", t);
+  printf("Testing pp_term: t = %" PRId32 " (print area = 100 x 60)\n", t);
   fflush(stdout);
 
   code = yices_pp_term(f, t, 100, 60, 0);
@@ -109,14 +109,14 @@ static void test_pp_term(FILE *f, term_t t, int32_t k, int32_t error) {
 
   if (code != k) {
     printf("TEST FAILED\n");
-    printf("--> Yices function returned %"PRId32"; %"PRId32" was expected\n", code, k);
+    printf("--> Yices function returned %" PRId32 "; %" PRId32 " was expected\n", code, k);
     fflush(stdout);
     exit(1);
   } else if (k < 0) {
     ecode = yices_error_code();
     if (ecode != error) {
       printf("TEST FAILED\n");
-      printf("--> Found error code %"PRId32"; %"PRId32" was expected\n", ecode, error);
+      printf("--> Found error code %" PRId32 "; %" PRId32 " was expected\n", ecode, error);
       fflush(stdout);
       exit(1);
     }

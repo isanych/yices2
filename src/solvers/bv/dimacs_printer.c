@@ -33,7 +33,7 @@
  * - we can't use 0 as a variable id, so we print (x+1)
  */
 void dimacs_print_bvar(FILE *f, bvar_t x) {
-  fprintf(f, "%"PRId32, x+1);
+  fprintf(f, "%" PRId32, x+1);
 }
 
 
@@ -48,7 +48,7 @@ void dimacs_print_literal(FILE *f, literal_t l) {
 
   v = var_of(l);
   if (is_neg(l)) fputc('-', f);
-  fprintf(f, "%"PRId32, v+1);
+  fprintf(f, "%" PRId32, v+1);
 }
 
 
@@ -166,7 +166,7 @@ static void dimacs_print_header(FILE *f, smt_core_t *core) {
   num_clauses = num_empty_clauses(core) + num_unit_clauses(core) + num_binary_clauses(core) +
     num_prob_clauses(core) + 1;
 
-  fprintf(f, "p cnf %"PRIu32" %"PRIu32"\n", core->nvars, num_clauses);
+  fprintf(f, "p cnf %" PRIu32 " %" PRIu32 "\n", core->nvars, num_clauses);
 }
 
 
@@ -179,7 +179,7 @@ static void dimacs_print_full_header(FILE *f, smt_core_t *core) {
   num_clauses = num_empty_clauses(core) + num_unit_clauses(core) + num_binary_clauses(core) +
     num_prob_clauses(core) + num_learned_clauses(core) + 1;
 
-  fprintf(f, "p cnf %"PRIu32" %"PRIu32"\n", core->nvars, num_clauses);
+  fprintf(f, "p cnf %" PRIu32 " %" PRIu32 "\n", core->nvars, num_clauses);
 }
 
 
@@ -306,7 +306,7 @@ static void dimacs_print_bv_code(FILE *f, context_t *ctx, int32_t code) {
   thvar_t x;
 
   x = code2thvar(code);
-  dimacs_print_bvvar(f, ctx->bv_solver, x);
+  dimacs_print_bvvar(f, (bv_solver_t*)ctx->bv_solver, x);
 }
 
 

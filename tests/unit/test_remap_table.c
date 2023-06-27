@@ -29,7 +29,7 @@
 #include "utils/memalloc.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -51,7 +51,7 @@ static void print_pseudo_literal(FILE *f, literal_t l) {
     } else {
       fputc(' ', f);
     }
-    fprintf(f, "s!%-4"PRId32, var_of(l));
+    fprintf(f, "s!%-4" PRId32, var_of(l));
   }
 }
 
@@ -72,7 +72,7 @@ static void print_literal(FILE *f, literal_t l) {
     } else {
       fputc(' ', f);
     }
-    fprintf(f, "p!%-4"PRId32, var_of(l));
+    fprintf(f, "p!%-4" PRId32, var_of(l));
   }
 }
 
@@ -201,7 +201,7 @@ static literal_t sample_literal(literal_t *v, uint32_t n) {
   i = random() % n;
   l = v[i];
   if (random() & 0x8000) {
-    l = not(l);
+    l = not_(l);
   }
   return l;
 }

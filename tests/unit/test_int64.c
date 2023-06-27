@@ -39,7 +39,7 @@ static void mpz_set_int64(mpz_t z, int64_t x) {
   mpz_mul_2exp(z, z, 32);
   mpz_add_ui(z, z, (uint32_t) x);
 
-  //  printf("mpz_set: x = %"PRId64", z = ", x);
+  //  printf("mpz_set: x = %" PRId64 ", z = ", x);
   //  mpz_out_str(stdout, 10, z);
   //  printf("\n");
 }
@@ -377,14 +377,14 @@ static void test_min_max(void) {
 
   for (i=1; i<=64; i++) {
     x = min_int(i);
-    printf("min_int(%"PRIu32") = %"PRId64"\n", i, x);
+    printf("min_int(%" PRIu32 ") = %" PRId64 "\n", i, x);
     mpz_set_min_int(tst, i);
     mpz_check_eq(tst, x);
   }
   printf("\n");
   for (i=1; i<=64; i++) {
     x = max_int(i);
-    printf("max_int(%"PRIu32") = %"PRId64"\n", i, x);
+    printf("max_int(%" PRIu32 ") = %" PRId64 "\n", i, x);
     mpz_set_max_int(tst, i);
     mpz_check_eq(tst, x);
   }
@@ -407,7 +407,7 @@ static void test_opp(int64_t x, uint32_t n) {
   mpz_init(tst);
 
   y = opposite(x, n, &overflow);
-  printf("opp(%"PRId64") = %"PRId64, x, y);
+  printf("opp(%" PRId64 ") = %" PRId64, x, y);
 
   if (overflow) {
     printf(" ---> overflow\n");
@@ -451,7 +451,7 @@ static void test_add(int64_t x, int64_t y, uint32_t n) {
   mpz_init(tst);
 
   z = sum(x, y, n, &overflow);
-  printf("sum(%"PRId64", %"PRId64") = %"PRId64, x, y, z);
+  printf("sum(%" PRId64 ", %" PRId64 ") = %" PRId64, x, y, z);
   if (overflow) {
     printf(" ---> overflow\n");
     if (n<64 && !fits_k_bits(z, n+1)) {
@@ -491,7 +491,7 @@ static void test_sub(int64_t x, int64_t y, uint32_t n) {
   mpz_init(tst);
 
   z = diff(x, y, n, &overflow);
-  printf("diff(%"PRId64", %"PRId64") = %"PRId64, x, y, z);
+  printf("diff(%" PRId64 ", %" PRId64 ") = %" PRId64, x, y, z);
   if (overflow) {
     printf(" ---> overflow\n");
     if (n<64 && !fits_k_bits(z, n+1)) {
@@ -534,7 +534,7 @@ static void test_mul(int64_t x, int64_t y, uint32_t n) {
   mpz_init(tst);
 
   z = mul(x, y, &overflow);
-  printf("mul(%"PRId64", %"PRId64") = %"PRId64, x, y, z);
+  printf("mul(%" PRId64 ", %" PRId64 ") = %" PRId64, x, y, z);
   if (overflow) {
     printf(" ---> overflow\n");
   } else {
@@ -567,7 +567,7 @@ static void test_power(int64_t x, uint32_t n, uint32_t d) {
   mpz_init(tst);
 
   z = power(x, d, &overflow);
-  printf("power(%"PRId64", %"PRId32") = %"PRId64, x, d, z);
+  printf("power(%" PRId64 ", %" PRId32 ") = %" PRId64, x, d, z);
   if (overflow) {
     printf(" ---> overflow\n");
   } else {
@@ -595,10 +595,10 @@ static void test_opposite(uint32_t n) {
   int64_t min, max;
   int64_t x;
 
-  printf("\nTesting opposite: %"PRIu32" bits\n", n);
+  printf("\nTesting opposite: %" PRIu32 " bits\n", n);
   min = min_int(n);
   max = max_int(n);
-  printf("min = %"PRId64", max = %"PRId64"\n", min, max);
+  printf("min = %" PRId64 ", max = %" PRId64 "\n", min, max);
 
   if (n <= 6) {
     for (x=min; x<= max; x++) {
@@ -658,10 +658,10 @@ static void test_add_subs(uint32_t n) {
   int64_t min, max;
   int64_t x,  y;
 
-  printf("\nTesting add and sub: %"PRIu32" bits\n", n);
+  printf("\nTesting add and sub: %" PRIu32 " bits\n", n);
   min = min_int(n);
   max = max_int(n);
-  printf("min = %"PRId64", max = %"PRId64"\n", min, max);
+  printf("min = %" PRId64 ", max = %" PRId64 "\n", min, max);
 
   if (n <= 4) {
     for (x=min; x<=max; x++) {
@@ -717,7 +717,7 @@ static void test_product(uint32_t n) {
   int64_t min, max;
   int64_t x,  y;
 
-  printf("\nTesting mul: %"PRIu32" bits\n", n);
+  printf("\nTesting mul: %" PRIu32 " bits\n", n);
   min = min_int(n);
   max = max_int(n);
 
@@ -765,7 +765,7 @@ static void test_powers(uint32_t n) {
   int64_t min, max;
   int64_t x;
 
-  printf("\nTesting powers: %"PRIu32" bits\n\n", n);
+  printf("\nTesting powers: %" PRIu32 " bits\n\n", n);
 
   min = min_int(n);
   max = max_int(n);

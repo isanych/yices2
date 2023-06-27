@@ -96,7 +96,7 @@ void print_context_subst_eqs(FILE *f, context_t *ctx) {
   v = &ctx->subst_eqs;
   n = v->size;
   for (i=0; i<n; i++) {
-    fprintf(f, "subst[%"PRIu32"]: ", i);
+    fprintf(f, "subst[%" PRIu32 "]: ", i);
     print_subst_eq(f, ctx, v->data[i]);
     fputs("\n\n", f);
   }
@@ -111,7 +111,7 @@ static void print_term_vector(FILE *f, term_table_t *tbl, char *name, ivector_t 
 
   n = v->size;
   for (i=0; i<n; i++) {
-    fprintf(f, "%s[%"PRIu32"]: ", name, i);
+    fprintf(f, "%s[%" PRIu32 "]: ", name, i);
     print_term_desc(f, tbl, v->data[i]);
     fputs("\n", f);
   }

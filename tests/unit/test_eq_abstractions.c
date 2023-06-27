@@ -24,7 +24,7 @@
 
 #include "context/eq_abstraction.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -84,7 +84,7 @@ static void print_partition(epartition_t *p) {
     printf(" {");
     t = *q ++;
     while (t >= 0) {
-      printf(" %"PRId32, t);
+      printf(" %" PRId32, t);
       t = *q ++;
     }
     printf(" }");
@@ -101,23 +101,23 @@ static void print_manager(void) {
   term_t r, t;
 
   printf("emanager: %p\n", &mngr);
-  printf("  e_size = %"PRIu32"\n", mngr.e_size);
-  printf("  c_size = %"PRIu32"\n", mngr.c_size);
-  printf("  sc_size = %"PRIu32"\n", mngr.sc_size);
-  printf("  nterms = %"PRIu32"\n", mngr.nterms);
-  printf("  nclasses = %"PRIu32"\n", mngr.nclasses);
-  printf("  order = %"PRIu32"\n", mngr.order);
+  printf("  e_size = %" PRIu32 "\n", mngr.e_size);
+  printf("  c_size = %" PRIu32 "\n", mngr.c_size);
+  printf("  sc_size = %" PRIu32 "\n", mngr.sc_size);
+  printf("  nterms = %" PRIu32 "\n", mngr.nterms);
+  printf("  nclasses = %" PRIu32 "\n", mngr.nclasses);
+  printf("  order = %" PRIu32 "\n", mngr.order);
 
   n = mngr.nclasses;
   for (i=0; i<n; i++) {
-    printf("  class %"PRIu32":", i);
+    printf("  class %" PRIu32 ":", i);
     r = mngr.root[i];
     if (r < 0) {
       printf(" removed\n");
     } else {
       t = r;
       do {
-	printf(" %"PRId32, t);
+	printf(" %" PRId32, t);
 	t = mngr.next[t];
       } while (t != r);
       printf("\n");
@@ -127,7 +127,7 @@ static void print_manager(void) {
   n = mngr.e_size;
   for (i=0; i<n; i++) {
     if (mngr.label[i] >= 0) {
-      printf("  label[%"PRIu32"] = %"PRId32"\n", i, mngr.label[i]);
+      printf("  label[%" PRIu32 "] = %" PRId32 "\n", i, mngr.label[i]);
     }
   }
 }
@@ -215,7 +215,7 @@ static epartition_t *test_meet(epartition_t **p, uint32_t n) {
 
   printf("--- Test meet ---\n");
   for (i=0; i<n; i++) {
-    printf("p[%"PRId32"] = ", i);
+    printf("p[%" PRId32 "] = ", i);
     print_partition(p[i]);
   }
 
@@ -276,7 +276,7 @@ static epartition_t *test_join(epartition_t **p, uint32_t n) {
 
   printf("--- Test join ---\n");
   for (i=0; i<n; i++) {
-    printf("p[%"PRId32"] = ", i);
+    printf("p[%" PRId32 "] = ", i);
     print_partition(p[i]);
   }
 

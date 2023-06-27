@@ -668,7 +668,7 @@ static smt_token_t smt_read_attribute(lexer_t *lex) {
     tk = SMT_TK_ATTRIBUTE;
     kw = in_smt_kw(current_token_value(lex), current_token_length(lex));
     if (kw != NULL) {
-      tk = kw->tk;
+      tk = (smt_token_t)kw->tk;
     }
 
   } else {
@@ -795,7 +795,7 @@ static smt_token_t smt_read_symbol(lexer_t *lex) {
   if (kw == NULL || !smt_token_active[kw->tk]) {
     tk = symbol_type(buffer);
   } else {
-    tk = kw->tk;
+    tk = (smt_token_t)kw->tk;
   }
 
   return tk;

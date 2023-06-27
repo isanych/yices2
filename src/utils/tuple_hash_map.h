@@ -121,7 +121,7 @@ extern tuple_hmap_rec_t *tuple_hmap_find(tuple_hmap_t *hmap, uint32_t n, int32_t
  *   and the new record is returned.
  *   The value field of the new record is not initialized.
  */
-extern tuple_hmap_rec_t *tuple_hmap_get(tuple_hmap_t *hmap, uint32_t n, int32_t key[], bool *new);
+extern tuple_hmap_rec_t *tuple_hmap_get(tuple_hmap_t *hmap, uint32_t n, int32_t key[], bool *new_);
 
 
 /*

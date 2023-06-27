@@ -47,7 +47,7 @@ static void dump_egraph(FILE *f, egraph_t *egraph) {
   print_egraph_terms(f, egraph);
   fprintf(f, "\n--- Egraph Atoms ---\n");
   print_egraph_atoms(f, egraph);
-#ifndef DEBUG
+#ifndef YICES_DEBUG
   fprintf(f, "\n--- Egraph Classes ---\n");
   print_egraph_root_classes(f, egraph);
 #endif
@@ -139,17 +139,17 @@ void dump_context(FILE *f, context_t *context) {
 
   if (context_has_arith_solver(context)) {
     if (context_has_idl_solver(context)) {
-      dump_idl_solver(f, context->arith_solver);
+      dump_idl_solver(f, (idl_solver_t*)context->arith_solver);
     } else if (context_has_rdl_solver(context)) {
-      dump_rdl_solver(f, context->arith_solver);
+      dump_rdl_solver(f, (rdl_solver_t*)context->arith_solver);
     } else {
       assert(context_has_simplex_solver(context));
-      dump_simplex_solver(f, context->arith_solver);
+      dump_simplex_solver(f, (simplex_solver_t*)context->arith_solver);
     }
   }
 
   if (context_has_bv_solver(context)) {
-    dump_bv_solver(f, context->bv_solver);
+    dump_bv_solver(f, (bv_solver_t*)context->bv_solver);
   }
 
   fprintf(f, "--- Clauses ---\n");

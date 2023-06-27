@@ -23,10 +23,9 @@
 
 #include "model/presburger.h"
 #include "terms/rba_buffer_terms.h"
+#include "yices_config.h"
 
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 #include <inttypes.h>
 #include "io/term_printer.h"
 #endif
@@ -118,7 +117,7 @@ static void delete_cooper(cooper_t *cooper) {
 /*
  * CONSTRAINT DESCRIPTORS
  */
-#if TRACE
+#if YICES_TRACE
 static void print_presburger_monomial(FILE *f, rational_t *coeff, int32_t x, bool first) {
   bool negative;
   bool abs_one;
@@ -148,7 +147,7 @@ static void print_presburger_monomial(FILE *f, rational_t *coeff, int32_t x, boo
       q_print_abs(f, coeff);
       fprintf(f, "*");
     }
-    fprintf(f, "x!%"PRId32, x);
+    fprintf(f, "x!%" PRId32, x);
   }
 }
 
@@ -168,7 +167,7 @@ static void print_mon_array(FILE *f, uint32_t n, monomial_t *mono) {
 }
 
 static void print_presburger_constraint(FILE *f, presburger_constraint_t *c) {
-  fprintf(f, "constraint[%"PRIu32"]: (", c->id);
+  fprintf(f, "constraint[%" PRIu32 "]: (", c->id);
   print_mon_array(f, c->nterms, c->mono);
 
   switch (c->tag) {
@@ -221,7 +220,7 @@ static void show_values(presburger_t *pres) {
   vtbl = &pres->vtbl;
   n = vtbl->nvars;
   for (i=0; i<n; i++) {
-    printf("  val[x!%"PRId32"] = ", vtbl->variables[i]);
+    printf("  val[x!%" PRId32 "] = ", vtbl->variables[i]);
     q_print(stdout, vtbl->values + i);
     printf("\n");
   }
@@ -234,7 +233,7 @@ static void show_vars_to_eliminate(presburger_t *pres) {
   v = &pres->vtbl.eliminables;
   n = v->size;
   for (i=0; i<n; i++) {
-    printf(" x!%"PRId32, v->data[i]);
+    printf(" x!%" PRId32, v->data[i]);
   }
   printf("\n");
 }
@@ -716,7 +715,7 @@ static void add_constraint_from_buffer(presburger_t *pres, poly_buffer_t *buffer
 
     presburger_add_cnstr(pres, c);
 
-#if TRACE
+#if YICES_TRACE
     printf("--> adding constraint\n");
     print_presburger_constraint(stdout, c);
     printf("\n");
@@ -1515,7 +1514,7 @@ void presburger_eliminate(presburger_t *pres) {
   vtbl = &pres->vtbl;
   eliminables = &vtbl->eliminables;
 
-#if TRACE
+#if YICES_TRACE
   printf("=== Presburger eliminate ===\n\n");
 
   printf("input constraints\n");
@@ -1531,13 +1530,13 @@ void presburger_eliminate(presburger_t *pres) {
   while (eliminables->size > 0) {
     y = ivector_pop2(eliminables);
 
-#if TRACE
-    printf("--- Elimimating variable x!%"PRId32" ---\n", y);;
+#if YICES_TRACE
+    printf("--- Elimimating variable x!%" PRId32 " ---\n", y);;
 #endif
 
     // normalize the coefficient of y to be 1
     presburger_normalize(pres, y);
-#if TRACE
+#if YICES_TRACE
     printf("After normalization\n");
     show_constraints(pres);
 #endif
@@ -1549,8 +1548,8 @@ void presburger_eliminate(presburger_t *pres) {
     // apply dejan's lemma to obtain a solution
     solution = presburger_solve(pres, y, &cooper);
 
-#if TRACE
-    printf("Substitution:  x!%"PRId32" := ", y);
+#if YICES_TRACE
+    printf("Substitution:  x!%" PRId32 " := ", y);
     show_poly(solution);
     printf("\n\n");
 #endif
@@ -1558,7 +1557,7 @@ void presburger_eliminate(presburger_t *pres) {
     // eliminate y in favor of the above solution
     presburger_subst(pres, y, solution);
 
-#if TRACE
+#if YICES_TRACE
     printf("After substitution\n");
     show_constraints(pres);
     printf("----\n");

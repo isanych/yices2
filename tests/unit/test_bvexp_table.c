@@ -41,9 +41,9 @@ static void print_def(FILE *f, bvexp_table_t *table, thvar_t x) {
   if (def == NULL) {
     fputs("<none>", f);
   } else if (n <= 64) {
-    print_bvexp64(f, def, n);
+    print_bvexp64(f, (bvmlist64_t*)def, n);
   } else {
-    print_bvexp(f, def, n);
+    print_bvexp(f, (bvmlist_t*)def, n);
   }
   fputc('\n', f);
 }
@@ -58,7 +58,7 @@ static void print_bvexp_table(FILE *f, bvexp_table_t *table) {
 
 
   n = table->nvars;
-  fprintf(f, "Table %p: %"PRIu32" variables\n", table, n);
+  fprintf(f, "Table %p: %" PRIu32 " variables\n", table, n);
   for (i=1; i<n; i++) {
     print_def(f, table, i);
   }
@@ -85,7 +85,7 @@ static void test_buffer64(bvexp_table_t *table, bvarith64_buffer_t *b) {
   printf("\n");
 
   h = hash_bvmlist64(b->list, n);
-  printf("hash code = %"PRIu32"\n", h);
+  printf("hash code = %" PRIu32 "\n", h);
 
   x = bvexp_table_find64(table, b, h);
   if (x < 0) {
@@ -120,7 +120,7 @@ static void test_buffer(bvexp_table_t *table, bvarith_buffer_t *b) {
   printf("\n");
 
   h = hash_bvmlist(b->list, n);
-  printf("hash code = %"PRIu32"\n", h);
+  printf("hash code = %" PRIu32 "\n", h);
 
   x = bvexp_table_find(table, b, h);
   if (x < 0) {

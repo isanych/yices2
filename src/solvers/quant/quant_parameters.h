@@ -29,6 +29,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include <yices_config.h>
+
 /*
  * Tags identifying the iteration order
  */
@@ -108,7 +110,7 @@ typedef enum {
  * - return mode (as positive integer) if this mode is supported.
  * - return -1 otherwise.
  */
-extern int32_t supported_ematch_mode(const char *mode);
+YICES_EXTERN int32_t supported_ematch_mode(const char *mode);
 
 
 

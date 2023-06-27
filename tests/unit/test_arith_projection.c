@@ -27,7 +27,7 @@
 #include "utils/memalloc.h"
 #include "yices.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -113,7 +113,7 @@ static void print_proj_constraint(FILE *f, aproj_vtbl_t *vtbl, aproj_constraint_
     fputs(" = 0", f);
     break;
   default:
-    fprintf(stderr, "BUG: invalid constraint tag (%"PRId32")\n", (int32_t) c->tag);
+    fprintf(stderr, "BUG: invalid constraint tag (%" PRId32 ")\n", (int32_t) c->tag);
     exit(1);
     break;
   }
@@ -161,7 +161,7 @@ static void show_proj_var_score(FILE *f, aproj_vtbl_t *vtbl, int32_t k) {
 
   fputs("  score[", f);
   print_proj_var(f, vtbl, k);
-  fprintf(f, "]: eq: %"PRIu32", pos: %"PRIu32", neg: %"PRIu32"\n",
+  fprintf(f, "]: eq: %" PRIu32 ", pos: %" PRIu32 ", neg: %" PRIu32 "\n",
 	  score->eq_count, score->pos_count, score->neg_count);
 }
 
@@ -213,7 +213,7 @@ static void show_constraint_set(FILE *f, aproj_vtbl_t *vtbl, ptr_set2_t *s) {
   } else {
     n = s->size;
     for (i=0; i<n; i++) {
-      c = s->data[i];
+      c = (aproj_constraint_t*)s->data[i];
       if (c != NULL && c != DELETED_PTR_ELEM) {
 	fputs("\n    ", f);
 	print_proj_constraint(f, vtbl, c);
@@ -531,7 +531,7 @@ static void test_add_poly_constraint(arith_projector_t *proj, poly_desc_t *p) {
   code = aproj_add_constraint(proj, u);
 
   if (code < 0) {
-    fprintf(stderr, "error in test_add_poly_constraint: code = %"PRId32"\n", code);
+    fprintf(stderr, "error in test_add_poly_constraint: code = %" PRId32 "\n", code);
     fflush(stderr);
     exit(1);
   }
@@ -557,7 +557,7 @@ static void test_add_bineq(arith_projector_t *proj) {
   code = aproj_add_constraint(proj, u);
 
   if (code < 0) {
-    fprintf(stderr, "error in test_add_bineq: code = %"PRId32"\n", code);
+    fprintf(stderr, "error in test_add_bineq: code = %" PRId32 "\n", code);
     fflush(stderr);
     exit(1);
   }
@@ -575,7 +575,7 @@ static void test_vars(void) {
   n = NUM_VARS;
 
   test_addvars(&proj, 0, n, false);
-  printf("*** After addvar 0/%"PRIu32" ***\n", n);
+  printf("*** After addvar 0/%" PRIu32 " ***\n", n);
   show_projector(stdout, &proj);
   printf("\n");
 
@@ -585,7 +585,7 @@ static void test_vars(void) {
   printf("\n");
 
   test_addvars(&proj, 0, n, true);
-  printf("*** After addvar %"PRIu32"/0 ***\n", n);
+  printf("*** After addvar %" PRIu32 "/0 ***\n", n);
   show_projector(stdout, &proj);
   printf("\n");
 

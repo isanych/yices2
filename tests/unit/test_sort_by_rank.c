@@ -107,7 +107,7 @@ static void print_vars(bddvar_t *a, uint32_t n, uint32_t *rank) {
   uint32_t i;
 
   for (i=0; i<n; i++) {
-    printf("  %3"PRIu32" (r=%"PRIu32")\n", a[i], rank[a[i]]);
+    printf("  %3" PRIu32 " (r=%" PRIu32 ")\n", a[i], rank[a[i]]);
   }
   printf("\n");
 }

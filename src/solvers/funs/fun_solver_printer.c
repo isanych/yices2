@@ -41,7 +41,7 @@ void print_fsolver_edge(FILE *f, fun_solver_t *solver, uint32_t edge_id) {
   assert(0 <= edge_id && edge_id < etbl->nedges);
   e = etbl->data[edge_id];
 
-  fprintf(f, "edge[%"PRIu32"] : f!%"PRIu32" ---> f!%"PRIu32" [", edge_id, e->source, e->target);
+  fprintf(f, "edge[%" PRIu32 "] : f!%" PRIu32 " ---> f!%" PRIu32 " [", edge_id, e->source, e->target);
   n = solver->vtbl.arity[e->source];
   assert(solver->vtbl.arity[e->target] == n);
   for (i=0; i<n; i++) {
@@ -79,7 +79,7 @@ void print_fsolver_vars(FILE *f, fun_solver_t *solver) {
   vtbl = &solver->vtbl;
   n = vtbl->nvars;
   for (i=0; i<n; i++) {
-    fprintf(f, "var f!%"PRId32": eterm = ", i);
+    fprintf(f, "var f!%" PRId32 ": eterm = ", i);
     print_eterm_id(f, vtbl->eterm[i]);
     if (tst_bit(vtbl->fdom, i)) {
       fprintf(f, ", finite domain");
@@ -102,7 +102,7 @@ void print_fsolver_roots(FILE *f, fun_solver_t *solver) {
   vtbl = &solver->vtbl;
   n = vtbl->nvars;
   for (i=0; i<n; i++) {
-    fprintf(f, "root[f!%"PRIu32"] = f!%"PRIu32", eterm[f!%"PRIu32"] = ", i, vtbl->root[i], i);
+    fprintf(f, "root[f!%" PRIu32 "] = f!%" PRIu32 ", eterm[f!%" PRIu32 "] = ", i, vtbl->root[i], i);
     print_eterm_id(f, vtbl->eterm[i]);
     fputc('\n', f);
   }
@@ -123,10 +123,10 @@ void print_fsolver_classes(FILE *f, fun_solver_t *solver) {
   for (i=0; i<n; i++) {
     if (vtbl->root[i] == i) {
       // i is a root:
-      fprintf(f, "class of f!%"PRIu32" = {", i);
+      fprintf(f, "class of f!%" PRIu32 " = {", i);
       x = i;
       do {
-        fprintf(f, " f!%"PRId32, x);
+        fprintf(f, " f!%" PRId32, x);
         x = vtbl->next[x];
       } while (x != null_thvar);
       fprintf(f, " }\n");
@@ -149,7 +149,7 @@ void print_fsolver_apps(FILE *f, fun_solver_t *solver) {
     if (vtbl->root[i] == i) {
       p = (composite_t **) vtbl->app[i];
       if (p != NULL) {
-        fprintf(f, "--- Apps for f!%"PRIu32" ---\n", i);
+        fprintf(f, "--- Apps for f!%" PRIu32 " ---\n", i);
         m = pv_size((void **) p);
         for (j=0; j<m; j++) {
           print_composite(f, p[j]);
@@ -158,7 +158,7 @@ void print_fsolver_apps(FILE *f, fun_solver_t *solver) {
           fputc('\n', f);
         }
       } else {
-        fprintf(f, "--- No apps for f!%"PRIu32" ---\n", i);
+        fprintf(f, "--- No apps for f!%" PRIu32 " ---\n", i);
       }
     }
   }
@@ -202,8 +202,8 @@ void print_fsolver_maps(FILE *f, fun_solver_t *solver) {
   n = vtbl->nvars;
   for (i=0; i<n; i++) {
     if (vtbl->root[i] == i) {
-      fprintf(f, "--- Map for f!%"PRIu32" ---\n", i);
-      fprintf(f, "base = %"PRId32"\n", vtbl->base[i]);
+      fprintf(f, "--- Map for f!%" PRIu32 " ---\n", i);
+      fprintf(f, "base = %" PRId32 "\n", vtbl->base[i]);
       p = (composite_t **) vtbl->app[i];
       if (p != NULL) {
         m = pv_size((void **) p);
@@ -236,9 +236,9 @@ void print_fsolver_base_values(FILE *f, fun_solver_t *solver) {
     if (vtbl->root[i] == i) {
       c = vtbl->base[i];
       k = solver->base_value[c];
-      fprintf(f, "base value for f!%"PRIu32": ", i);
+      fprintf(f, "base value for f!%" PRIu32 ": ", i);
       if (k < 0) {
-        fprintf(f, "fresh(%"PRId32")\n", - (k + 1));
+        fprintf(f, "fresh(%" PRId32 ")\n", - (k + 1));
       } else if (k == INT32_MAX) {
         fputs("unknown\n", f);
       } else {
@@ -265,7 +265,7 @@ static void print_particle_index(FILE *f, egraph_t *egraph, particle_t x) {
     print_label(f, particle_label(store, x));
     break;
   case FRESH_PARTICLE:
-    fprintf(f, "fresh!%"PRId32, x);
+    fprintf(f, "fresh!%" PRId32, x);
     break;
   case TUPLE_PARTICLE:
     tup = tuple_particle_desc(store, x);
@@ -292,7 +292,7 @@ static void print_particle_value(FILE *f, egraph_t *egraph, particle_t x) {
     print_label(f, particle_label(store, x));
     break;
   case FRESH_PARTICLE:
-    fprintf(f, "fresh!%"PRId32, x);
+    fprintf(f, "fresh!%" PRId32, x);
     break;
   case TUPLE_PARTICLE:
     tup = tuple_particle_desc(store, x);
@@ -333,7 +333,7 @@ void print_fsolver_values(FILE *f, fun_solver_t *solver) {
   n = vtbl->nvars;
   for (i=0; i<n; i++) {
     if (vtbl->root[i] == i) {
-      fprintf(f, "--- Value for f!%"PRIu32" ---\n", i);
+      fprintf(f, "--- Value for f!%" PRIu32 " ---\n", i);
       map = solver->value[i];
       if (map != NULL) {
         for (j=0; j<map->nelems; j++) {
@@ -361,7 +361,7 @@ void print_fsolver_diseqs(FILE *f, fun_solver_t *solver) {
   dstack = &solver->dstack;
   n = dstack->top;
   for (i=0; i<n; i++) {
-    fprintf(f, "diseq[%"PRIu32"]: f!%"PRIu32" != f%"PRIu32"\n", i, dstack->data[i].left, dstack->data[i].right);
+    fprintf(f, "diseq[%" PRIu32 "]: f!%" PRIu32 " != f%" PRIu32 "\n", i, dstack->data[i].left, dstack->data[i].right);
   }
 
 }
@@ -379,7 +379,7 @@ void print_fsolver_stratification(FILE *f, stratification_t *s, fun_solver_t *so
   for (k=0; k<n; k++) {
     m = num_vars_in_stratum(s, k);
     for (j=0; j<m; j++) {
-      fprintf(f, "f!%"PRId32": level = %"PRIu32"\n", s->vars[i], k);
+      fprintf(f, "f!%" PRId32 ": level = %" PRIu32 "\n", s->vars[i], k);
       i ++;
     }
   }
@@ -391,7 +391,7 @@ void print_fsolver_stratification(FILE *f, stratification_t *s, fun_solver_t *so
     m = num_diseqs_in_stratum(s, k);
     for (j=0; j<m; j++) {
       d = s->diseqs[i];
-      fprintf(f, "diseq[%"PRIu32"]: level = %"PRIu32": f!%"PRId32" != f!%"PRId32"\n",
+      fprintf(f, "diseq[%" PRIu32 "]: level = %" PRIu32 ": f!%" PRId32 " != f!%" PRId32 "\n",
 	      d, k, dstack->data[d].left, dstack->data[d].right);
       i ++;
     }

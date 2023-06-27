@@ -28,15 +28,15 @@ static void print_map(int_hmap_t *map) {
   int_hmap_pair_t *d;
 
   printf("map %p\n", map);
-  printf("  size = %"PRIu32"\n", map->size);
-  printf("  nelems = %"PRIu32"\n", map->nelems);
-  printf("  ndeleted = %"PRIu32"\n", map->ndeleted);
+  printf("  size = %" PRIu32 "\n", map->size);
+  printf("  nelems = %" PRIu32 "\n", map->nelems);
+  printf("  ndeleted = %" PRIu32 "\n", map->ndeleted);
   printf("  content:\n");
 
   d = map->data;
   for (i=0; i<map->size; i++) {
     if (d->key >= 0) {
-      printf("    [key = %"PRId32", val = %"PRId32"]\n", d->key, d->val);
+      printf("    [key = %" PRId32 ", val = %" PRId32 "]\n", d->key, d->val);
     }
     d ++;
   }
@@ -57,9 +57,9 @@ int main(void) {
     d = int_hmap_get(&map, i);
     if (d->val == -1) {
       d->val = 3 * i;
-      printf("added new record %p: [key = %"PRId32", val = %"PRId32"]\n", d, i, d->val);
+      printf("added new record %p: [key = %" PRId32 ", val = %" PRId32 "]\n", d, i, d->val);
     } else {
-      printf("found record %p: [key = %"PRId32", val = %"PRId32"]\n", d, i, d->val);
+      printf("found record %p: [key = %" PRId32 ", val = %" PRId32 "]\n", d, i, d->val);
     }
   }
 
@@ -68,13 +68,13 @@ int main(void) {
 
   // search
   for (i=0; i<20; i++) {
-    printf("searching: key = %"PRId32": ", i);
+    printf("searching: key = %" PRId32 ": ", i);
     fflush(stdout);
     d = int_hmap_find(&map, i);
     if (d == NULL) {
       printf("not found\n");
     } else {
-      printf("found: val = %"PRId32"\n", d->val);
+      printf("found: val = %" PRId32 "\n", d->val);
     }
   }
 
@@ -82,7 +82,7 @@ int main(void) {
   for (i=0; i<9; i+=3) {
     d = int_hmap_find(&map, i);
     if (d != NULL) {
-      printf("erasing record %p: key = %"PRId32"\n", d, i);
+      printf("erasing record %p: key = %" PRId32 "\n", d, i);
       int_hmap_erase(&map, d);
     } else {
       printf("*** BUG ***\n");
@@ -94,13 +94,13 @@ int main(void) {
 
   // search
   for (i=0; i<9; i++) {
-    printf("searching: key = %"PRId32": ", i);
+    printf("searching: key = %" PRId32 ": ", i);
     fflush(stdout);
     d = int_hmap_find(&map, i);
     if (d == NULL) {
       printf("not found\n");
     } else {
-      printf("found: val = %"PRId32"\n", d->val);
+      printf("found: val = %" PRId32 "\n", d->val);
     }
   }
 

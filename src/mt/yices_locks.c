@@ -16,12 +16,13 @@
  * along with Yices.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <yices_config.h>
 #ifdef THREAD_SAFE
 
 #ifdef PER_THREAD_STATE
 #include "yices_locks_dummy.c"
 #else 
-#ifndef MINGW
+#ifndef _WIN32
 #include "yices_locks_posix.c"
 #else
 #include "yices_locks_win.c"

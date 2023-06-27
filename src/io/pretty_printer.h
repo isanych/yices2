@@ -368,12 +368,12 @@ static inline void *tag_separator(pp_atomic_token_t *p) {
 // check and untag
 static inline pp_open_token_t *untag_open(void *p) {
   assert(ptr_has_open_tag(p));
-  return untag_ptr(p);
+  return (pp_open_token_t *)untag_ptr(p);
 }
 
 static inline pp_atomic_token_t *untag_atomic(void *p) {
   assert(ptr_has_atomic_tag(p));
-  return untag_ptr(p);
+  return (pp_atomic_token_t *)untag_ptr(p);
 }
 
 static inline void *untag_close(void *p) {
@@ -383,7 +383,7 @@ static inline void *untag_close(void *p) {
 
 static inline pp_atomic_token_t *untag_separator(void *p) {
   assert(ptr_has_separator_tag(p));
-  return untag_ptr(p);
+  return (pp_atomic_token_t *)untag_ptr(p);
 }
 
 

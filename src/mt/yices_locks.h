@@ -19,6 +19,7 @@
 #ifndef __YICES_LOCKS_H
 #define __YICES_LOCKS_H
 
+#include "yices_config.h"
 /*
  * We only need locks in THREAD_SAFE mode.
  *
@@ -28,8 +29,8 @@
 #include <stdint.h>
 
 
-#ifdef MINGW
-#include <synchapi.h>
+#ifdef _WIN32
+#include <windows.h>
 typedef CRITICAL_SECTION yices_lock_t;
 #else
 #include <pthread.h>

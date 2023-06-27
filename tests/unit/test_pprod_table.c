@@ -39,15 +39,15 @@ static void print_varexp_array(FILE *f, varexp_t *a, uint32_t n) {
     return;
   }
   d = a[0].exp;
-  fprintf(f, "[x_%"PRId32, a[0].var);
+  fprintf(f, "[x_%" PRId32, a[0].var);
   if (d != 1) {
-    fprintf(f, "^%"PRIu32, d);
+    fprintf(f, "^%" PRIu32, d);
   }
   for (i=1; i<n; i++) {
     d = a[i].exp;
-    fprintf(f, " x_%"PRId32, a[i].var);
+    fprintf(f, " x_%" PRId32, a[i].var);
     if (d != 1) {
-      fprintf(f, "^%"PRIu32, d);
+      fprintf(f, "^%" PRIu32, d);
     }
   }
   fprintf(f, "]");
@@ -60,7 +60,7 @@ static void print_pp_buffer0(FILE *f, pp_buffer_t *b) {
 
 static void print_pprod0(FILE *f, pprod_t *p) {
   if (pp_is_var(p)) {
-    fprintf(f, "[x_%"PRId32"]", var_of_pp(p));
+    fprintf(f, "[x_%" PRId32 "]", var_of_pp(p));
   } else if (pp_is_empty(p)) {
     fprintf(f, "[]");
   } else {
@@ -78,15 +78,15 @@ static void print_pprod_table(FILE *f, pprod_table_t *table) {
   int32_t l;
 
   fprintf(f, "pprod_table %p\n", table);
-  fprintf(f, "  size = %"PRIu32"\n", table->pprods.size);
-  fprintf(f, "  nelems = %"PRIu32"\n", indexed_table_nelems(&table->pprods));
-  fprintf(f, "  free_idx = %"PRId32"\n", table->pprods.free_idx);
+  fprintf(f, "  size = %" PRIu32 "\n", table->pprods.size);
+  fprintf(f, "  nelems = %" PRIu32 "\n", indexed_table_nelems(&table->pprods));
+  fprintf(f, "  free_idx = %" PRId32 "\n", table->pprods.free_idx);
   fprintf(f, "  content:\n");
   n = indexed_table_nelems(&table->pprods);
   for (i=0; i<n; i++) {
     p = indexed_table_elem(pprod_table_elem_t, &table->pprods, i)->pprod;
     if (!has_int_tag(p)) {
-      fprintf(f, "  data[%"PRIu32"] = ", i);
+      fprintf(f, "  data[%" PRIu32 "] = ", i);
       print_varexp_array(f, p->prod, p->len);
       fprintf(f, "\n");
     }
@@ -95,7 +95,7 @@ static void print_pprod_table(FILE *f, pprod_table_t *table) {
     fprintf(f, "  free list:");
     l = table->pprods.free_idx;
     do {
-      fprintf(f, " %"PRId32, l);
+      fprintf(f, " %" PRId32, l);
       l = untag_i32(indexed_table_elem(pprod_table_elem_t, &table->pprods, l)->pprod);
     } while (l >= 0);
     fprintf(f, "\n");
@@ -132,14 +132,14 @@ static void check_product(pprod_t *q) {
   }
 
   if (k < num_prods) {
-    printf("--> equal to p[%"PRIu32"]\n", k);
+    printf("--> equal to p[%" PRIu32 "]\n", k);
     if (p[k] != q) {
       printf("BUG: HASH CONSING FAILED\n");
       fflush(stdout);
       abort();
     }
   } else if (num_prods < NUM_PRODS) {
-    printf("--> stored as p[%"PRIu32"]\n", k);
+    printf("--> stored as p[%" PRIu32 "]\n", k);
     p[k] = q;
     num_prods ++;
   }
@@ -191,7 +191,7 @@ int main(void) {
 
   for (i=0; i<num_prods; i++) {
     pp_buffer_set_pprod(&buffer, p[i]);
-    printf("p[%"PRIu32"] = %p = ", i, p[i]);
+    printf("p[%" PRIu32 "] = %p = ", i, p[i]);
     print_pprod0(stdout, p[i]);
     printf("\n");
     printf("buffer: ");
@@ -212,7 +212,7 @@ int main(void) {
   for (i=5; i<num_prods; i++) {
     q = p[i];
     assert(q != empty_pp && q != end_pp && !pp_is_var(q));
-    printf("deleting p[%"PRIu32"] = %p = ", i, q);
+    printf("deleting p[%" PRIu32 "] = %p = ", i, q);
     print_pprod0(stdout, q);
     printf("\n");
     delete_pprod(&ptbl, q);

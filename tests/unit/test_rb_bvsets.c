@@ -22,7 +22,7 @@
 #include "model/rb_bvsets.h"
 #include "utils/bitvectors.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -37,7 +37,7 @@ static inline long int random(void) {
 static void recur_print_tree(rbtree_t *tree, uint32_t i) {
   if (i > 0) {
     recur_print_tree(tree, rbtree_node_left_child(tree, i));
-    printf(" %"PRIu32, rbtree_node_value(tree, i));
+    printf(" %" PRIu32, rbtree_node_value(tree, i));
     recur_print_tree(tree, rbtree_node_right_child(tree, i));
   }
 }
@@ -48,8 +48,8 @@ static void recur_print_tree(rbtree_t *tree, uint32_t i) {
  */
 static void print_bvset(rb_bvset_t *s) {
   printf("set %p\n", s);
-  printf("  max_val = %"PRIu32"\n", s->max_val);
-  printf("  ptr = %"PRIu32"\n", s->ptr);
+  printf("  max_val = %" PRIu32 "\n", s->max_val);
+  printf("  ptr = %" PRIu32 "\n", s->ptr);
   printf("  content:");
   recur_print_tree(&s->tree, s->tree.root);
   printf("\n");
@@ -115,7 +115,7 @@ static void test1(void) {
 
   while (! rb_bvset_full(&set)) {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
   }
 
   printf("\n=== Final set ===\n");
@@ -135,7 +135,7 @@ static void test1(void) {
 
   while (! rb_bvset_full(&set)) {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
   }
 
   printf("\n=== Final set ===\n");
@@ -151,7 +151,7 @@ static void test1(void) {
 
   while (! rb_bvset_full(&set)) {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
   }
 
   printf("\n=== Final set ===\n");
@@ -182,7 +182,7 @@ static void test2(void) {
 
   while (! rb_bvset_full(&set)) {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
   }
 
   printf("\n=== Final set ===\n");
@@ -202,7 +202,7 @@ static void test2(void) {
 
   while (! rb_bvset_full(&set)) {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
   }
 
   printf("\n=== Final set ===\n");
@@ -218,7 +218,7 @@ static void test2(void) {
 
   while (! rb_bvset_full(&set)) {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
   }
 
   printf("\n=== Final set ===\n");
@@ -251,7 +251,7 @@ static void test3(void) {
   n = 50;
   do {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
     n --;
   } while (n > 0);
 
@@ -274,7 +274,7 @@ static void test3(void) {
   n = 2000000;
   do {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
     n --;
   } while (n > 0);
 
@@ -293,7 +293,7 @@ static void test3(void) {
   n = 200000;
   do {
     x = rb_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, rbtree_card(&set.tree));
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, rbtree_card(&set.tree));
     n --;
   } while (n > 0);
 

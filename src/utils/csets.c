@@ -39,7 +39,7 @@ static inline uint32_t *alloc_word_array(uint32_t n) {
   uint32_t w;
 
   w = (n + 31) >> 5; // ceil(n/32)
-  return safe_malloc(w * sizeof(uint32_t));
+  return (uint32_t*)safe_malloc(w * sizeof(uint32_t));
 }
 
 

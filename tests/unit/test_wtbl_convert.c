@@ -146,7 +146,7 @@ static void print_table(wide_ttbl_t *table) {
     printf("constant function: %d\n", (int) table->val[0]);
   } else {
     for (i=0; i<n; i++) {
-      printf("  x%"PRId32, table->var[i]);
+      printf("  x%" PRId32, table->var[i]);
     }
     printf("\n");
 
@@ -280,7 +280,7 @@ static void test_import_export(wide_ttbl_t *table, uint32_t f) {
     print_table(&normal);
     printf("Export: var = [");
     for (i=0; i<4; i++) {
-      printf(" %"PRId32, u[i]);
+      printf(" %" PRId32, u[i]);
     }
     printf(" ] ttbl = 0x%04x\n\n", ttbl);
   }

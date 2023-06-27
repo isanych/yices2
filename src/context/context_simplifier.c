@@ -35,15 +35,9 @@
 #include "terms/power_products.h"
 #include "terms/rba_buffer_terms.h"
 #include "terms/term_utils.h"
+#include "yices_config.h"
 
-
-#define TRACE_SUBST  0
-#define TRACE_EQ_ABS 0
-#define TRACE_DL     0
-
-#define TRACE_SYM_BREAKING 0
-
-#if TRACE_SUBST || TRACE_EQ_ABS || TRACE_DL || TRACE_SYM_BREAKING
+#if YICES_TRACE_SUBST || YICES_TRACE_EQ_ABS || YICES_TRACE_DL || YICES_TRACE_SYM_BREAKING
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -337,14 +331,14 @@ static void show_bvfactoring(bvfactoring_t *r) {
 
   printf("\n--- reduced 1 ---\n");
   for (i=0; i<r->n1; i++) {
-    printf("reduced1[%"PRIu32"]\n", i);
+    printf("reduced1[%" PRIu32 "]\n", i);
     show_factors(r->reduced1 + i);
     printf("\n");
   }
 
   printf("--- reduced 2 ---\n");
   for (i=0; i<r->n2; i++) {
-    printf("reduced2[%"PRIu32"]\n", i);
+    printf("reduced2[%" PRIu32 "]\n", i);
     show_factors(r->reduced2 + i);
     printf("\n");
   }
@@ -1036,8 +1030,8 @@ bool equal_bitvector_factors(context_t *ctx, term_t t1, term_t t2) {
   bvfactoring_t *factoring;
   bool eq;
 
-  factoring = objstack_alloc(&ctx->ostack, sizeof(bvfactoring_t),
-			     (cleaner_t) delete_bvfactoring);
+  factoring = (bvfactoring_t *)objstack_alloc(&ctx->ostack, sizeof(bvfactoring_t),
+    (cleaner_t)delete_bvfactoring);
   init_bvfactoring(factoring);
   try_bitvector_factoring(ctx, factoring, t1, t2);
   eq = factoring->code == BVFACTOR_EQUAL;
@@ -1123,7 +1117,7 @@ static void process_candidate_subst(context_t *ctx, term_t t1, term_t t2, term_t
   intern = &ctx->intern;
   if (is_constant_term(ctx->terms, t2)) {
     if (intern_tbl_valid_const_subst(intern, t1, t2)) {
-#if TRACE_SUBST
+#if YICES_TRACE_SUBST
       printf("Eager substitution: ");
       print_term_desc(stdout, ctx->terms, t1);
       printf(" := ");;
@@ -1252,7 +1246,7 @@ static void try_pseudo_subst(context_t *ctx, pseudo_subst_t *subst, term_t x, te
     s->map = t;
     s->eq = e;
 
-#if TRACE_SUBST
+#if YICES_TRACE_SUBST
     printf("Add subst candidate ");
     print_term_desc(stdout, ctx->terms, x);
     printf(" := ");;
@@ -1411,7 +1405,7 @@ static void remove_subst_candidate(context_t *ctx, term_t t) {
   s = pseudo_subst_find(ctx->subst, t);
   assert(s != NULL && s->var == t && s->map != NULL_TERM);
 
-#if TRACE_SUBST
+#if YICES_TRACE_SUBST
   printf("Removing subst candidate ");
   print_term_desc(stdout, ctx->terms, t);
   printf(" := ");;
@@ -1779,7 +1773,7 @@ static void flatten_distinct(context_t *ctx, term_t r, bool tt) {
     ivector_push(&ctx->top_atoms, r);
   } else {
     // not (distinct ...) expands to an or
-    ivector_push(&ctx->top_formulas, not(r));
+    ivector_push(&ctx->top_formulas, not_(r));
   }
 }
 
@@ -2001,13 +1995,13 @@ static void show_common_factors(context_t *ctx, term_t r, ivector_t *v) {
 
   n = v->size;
   if (n > 0) {
-    printf("--- common factors of r = %"PRId32" ---\n", r);
+    printf("--- common factors of r = %" PRId32 " ---\n", r);
     init_yices_pp(&printer, stdout, NULL, PP_VMODE, 0);
     pp_term_full(&printer, ctx->terms, r);
     flush_yices_pp(&printer);
 
     for (i=0; i<n; i++) {
-      printf("factor[%"PRIu32"]: ", i);
+      printf("factor[%" PRIu32 "]: ", i);
       pp_term_full(&printer, ctx->terms, v->data[i]);
       flush_yices_pp(&printer);
     }
@@ -2591,7 +2585,7 @@ static void flatten_or_add_term(context_t *ctx, ivector_t *v, term_t t) {
  */
 static void flatten_or_process_queue(context_t *ctx, ivector_t *v) {
   term_table_t *terms;
-  composite_term_t *or;
+  composite_term_t *or_;
   composite_term_t *eq;
   uint32_t i, n;
   term_kind_t kind;
@@ -2612,10 +2606,10 @@ static void flatten_or_process_queue(context_t *ctx, ivector_t *v) {
       kind = term_kind(terms, t);
       if (is_pos_term(t) && kind == OR_TERM) {
 	// add t's children to the queue
-	or = or_term_desc(terms, t);
-	n = or->arity;
+	or_ = or_term_desc(terms, t);
+	n = or_->arity;
 	for (i=0; i<n; i++) {
-	  flatten_or_push_term(ctx, or->arg[i]);
+	  flatten_or_push_term(ctx, or_->arg[i]);
 	}
       } else if (is_neg_term(t) && context_flatten_diseq_enabled(ctx)) {
 	switch (kind) {
@@ -2678,7 +2672,7 @@ static void flatten_or_process_queue(context_t *ctx, ivector_t *v) {
  * - initialize the small_cache, then calls the recursive function
  * - the result is stored in v
  */
-void flatten_or_term(context_t *ctx, ivector_t *v, composite_term_t *or) {
+void flatten_or_term(context_t *ctx, ivector_t *v, composite_term_t *or_) {
   uint32_t i, n;
 
   assert(v->size == 0 && int_queue_is_empty(&ctx->queue));
@@ -2688,9 +2682,9 @@ void flatten_or_term(context_t *ctx, ivector_t *v, composite_term_t *or) {
     (void) context_get_arith_buffer(ctx);  // allocate the internal buffer
   }
 
-  n = or->arity;
+  n = or_->arity;
   for (i=0; i<n; i++) {
-    flatten_or_push_term(ctx, or->arg[i]);
+    flatten_or_push_term(ctx, or_->arg[i]);
   }
 
   flatten_or_process_queue(ctx, v);
@@ -2738,7 +2732,7 @@ void analyze_uf(context_t *ctx) {
   eq_learner_t *eql;
   epartition_t *p;
 
-  eql = objstack_alloc(&ctx->ostack, sizeof(eq_learner_t), (cleaner_t) delete_eq_learner);
+  eql = (eq_learner_t*)objstack_alloc(&ctx->ostack, sizeof(eq_learner_t), (cleaner_t) delete_eq_learner);
   init_eq_learner(eql, ctx->terms);
   v = &ctx->top_formulas;
   n = v->size;
@@ -3002,12 +2996,12 @@ static bool dl_convert_term(context_t *ctx, dl_term_t *triple, term_t t) {
  * Increment the number of variables if t has not been seen before
  */
 static void count_dl_var(context_t *ctx, term_t t) {
-  bool new;
+  bool new_;
 
   assert(is_pos_term(t) && intern_tbl_is_root(&ctx->intern, t));
 
-  (void) int_rat_hmap_get(ctx->edge_map, t, &new);
-  ctx->dl_profile->num_vars += new;
+  (void) int_rat_hmap_get(ctx->edge_map, t, &new_);
+  ctx->dl_profile->num_vars += new_;
 }
 
 /*
@@ -3017,13 +3011,13 @@ static void count_dl_var(context_t *ctx, term_t t) {
  */
 static void count_dl_var_and_edge(context_t *ctx, term_t t, rational_t *a) {
   int_rat_hmap_rec_t *d;
-  bool new;
+  bool new_;
 
   assert(q_is_nonneg(a));
   assert(is_pos_term(t) && intern_tbl_is_root(&ctx->intern, t));
 
-  d = int_rat_hmap_get(ctx->edge_map, t, &new);
-  ctx->dl_profile->num_vars += new;
+  d = int_rat_hmap_get(ctx->edge_map, t, &new_);
+  ctx->dl_profile->num_vars += new_;
   if (q_gt(a, &d->value)) {
     // increase bound on edges of source t
     q_set(&d->value, a);
@@ -3084,7 +3078,7 @@ static bool check_dl_eq0_atom(context_t *ctx, term_t t, bool idl) {
   dl_term_t *triple;
   bool result;
 
-  triple = objstack_alloc(&ctx->ostack, sizeof(dl_term_t), (cleaner_t) delete_dl_term);
+  triple = (dl_term_t*)objstack_alloc(&ctx->ostack, sizeof(dl_term_t), (cleaner_t) delete_dl_term);
   init_dl_term(triple);
   result = dl_convert_term(ctx, triple, t) && check_dl_fragment(ctx, triple, idl);
   if (result) {
@@ -3104,7 +3098,7 @@ static bool check_dl_geq0_atom(context_t *ctx, term_t t, bool idl) {
   dl_term_t *triple;
   bool result;
 
-  triple = objstack_alloc(&ctx->ostack, sizeof(dl_term_t), (cleaner_t) delete_dl_term);
+  triple = (dl_term_t*)objstack_alloc(&ctx->ostack, sizeof(dl_term_t), (cleaner_t) delete_dl_term);
   init_dl_term(triple);
   result = dl_convert_term(ctx, triple, t) && check_dl_fragment(ctx, triple, idl);
   if (result) {
@@ -3125,7 +3119,7 @@ static bool check_dl_eq_atom(context_t *ctx, term_t t1, term_t t2, bool idl) {
   dl_term_t *triple;
   bool result;
 
-  triple = objstack_alloc(&ctx->ostack, sizeof(dl_term_t), (cleaner_t) delete_dl_term);
+  triple = (dl_term_t*)objstack_alloc(&ctx->ostack, sizeof(dl_term_t), (cleaner_t) delete_dl_term);
   init_dl_term(triple);
   result = dl_convert_diff(ctx, triple, t1, t2) && check_dl_fragment(ctx, triple, idl);
   if (result) {
@@ -3311,16 +3305,16 @@ void analyze_diff_logic(context_t *ctx, bool idl) {
   // compute the bound on path length
   int_rat_hmap_sum(edges, &stats->path_bound);
 
-#if (TRACE || TRACE_DL)
+#if (YICES_TRACE || YICES_TRACE_DL)
   printf("==== Difference logic ====\n");
   if (idl) {
     printf("---> IDL\n");
   } else {
     printf("---> RDL\n");
   }
-  printf("---> %"PRIu32" variables\n", stats->num_vars);
-  printf("---> %"PRIu32" atoms\n", stats->num_atoms);
-  printf("---> %"PRIu32" equalities\n", stats->num_eqs);
+  printf("---> %" PRIu32 " variables\n", stats->num_vars);
+  printf("---> %" PRIu32 " atoms\n", stats->num_atoms);
+  printf("---> %" PRIu32 " equalities\n", stats->num_eqs);
   printf("---> path bound = ");
   q_print(stdout, &stats->path_bound);
   printf("\n");
@@ -3342,7 +3336,7 @@ void analyze_diff_logic(context_t *ctx, bool idl) {
 static conditional_t *new_conditional(context_t *ctx) {
   conditional_t *d;
 
-  d = objstore_alloc(&ctx->cstore);
+  d = (conditional_t*)objstore_alloc(&ctx->cstore);
   init_conditional(d, ctx->terms);
   return d;
 }
@@ -3546,7 +3540,7 @@ term_t flatten_ite_equality(context_t *ctx, ivector_t *v, term_t t, term_t k) {
  *  SYMMETRY BREAKING  *
  **********************/
 
-#if TRACE_SYM_BREAKING
+#if YICES_TRACE_SYM_BREAKING
 
 static void show_constant_set(yices_pp_t *pp, term_table_t *terms, rng_record_t *r) {
   uint32_t i, n;
@@ -3645,11 +3639,11 @@ void break_uf_symmetries(context_t *ctx) {
   rng_record_t **v;
   uint32_t i, j, n;
 
-  breaker = objstack_alloc(&ctx->ostack, sizeof(sym_breaker_t), (cleaner_t) delete_sym_breaker);
+  breaker = (sym_breaker_t*)objstack_alloc(&ctx->ostack, sizeof(sym_breaker_t), (cleaner_t) delete_sym_breaker);
   init_sym_breaker(breaker, ctx);
   collect_range_constraints(breaker);
 
-#if TRACE_SYM_BREAKING
+#if YICES_TRACE_SYM_BREAKING
   show_range_constraints(breaker);
 #endif
 
@@ -3660,30 +3654,30 @@ void break_uf_symmetries(context_t *ctx) {
     sets = &breaker->sets;
     for (i=0; i<n; i++) {
       if (check_assertion_invariance(breaker, v[i])) {
-#if TRACE_SYM_BREAKING
-	printf("Breaking symmetries using set[%"PRIu32"]:", i);
+#if YICES_TRACE_SYM_BREAKING
+	printf("Breaking symmetries using set[%" PRIu32 "]:", i);
 	print_constant_set(breaker, v[i]);
 	printf("\n");
 #endif
 	breaker_sets_copy_record(sets, v[i]);
 	for (j=i+1; j<n; j++) {
 	  if (range_record_subset(v[j], v[i])) {
-#if TRACE_SYM_BREAKING
-	    printf("Adding set[%"PRIu32"]:", j);
+#if YICES_TRACE_SYM_BREAKING
+	    printf("Adding set[%" PRIu32 "]:", j);
 	    print_constant_set(breaker, v[j]);
 	    printf("\n");
 #endif
 	    breaker_sets_add_record(sets, v[j]);
 	  }
 	}
-#if TRACE_SYM_BREAKING
+#if YICES_TRACE_SYM_BREAKING
 	print_candidates(breaker, sets);
 	printf("\n");
 #endif
 	break_symmetries(breaker, sets);
       } else {
-#if TRACE_SYM_BREAKING
-	printf("Set[%"PRIu32"]:", i);
+#if YICES_TRACE_SYM_BREAKING
+	printf("Set[%" PRIu32 "]:", i);
 	print_constant_set(breaker, v[i]);
 	printf(" not symmetrical\n\n");
 #endif
@@ -3691,7 +3685,7 @@ void break_uf_symmetries(context_t *ctx) {
     }
 
   } else {
-#if TRACE_SYM_BREAKING
+#if YICES_TRACE_SYM_BREAKING
     printf("\n*** NO SYMMETRY CANDIDATES ***\n\n");
 #endif
   }
@@ -3715,8 +3709,8 @@ void process_conditional_definitions(context_t *ctx) {
   v = &ctx->top_formulas;
   n = v->size;
   if (n > 0) {
-    collect = objstack_alloc(&ctx->ostack, sizeof(cond_def_collector_t),
-			     (cleaner_t) delete_cond_def_collector);
+    collect = (cond_def_collector_t*)objstack_alloc(&ctx->ostack, sizeof(cond_def_collector_t),
+      (cleaner_t) delete_cond_def_collector);
     init_cond_def_collector(collect, ctx);
     for (i=0; i<n; i++) {
       extract_conditional_definitions(collect, v->data[i]);

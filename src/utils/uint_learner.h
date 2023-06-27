@@ -179,7 +179,7 @@ static inline void uint_learner_updateQ(uint_learner_t *learner, uint32_t i, dou
   pv = &learner->stats;
   assert(i < pv->size);
 
-  s = pv->data[i];
+  s = (uint_learner_stats_t *)pv->data[i];
   s->Q += learner->alpha * (reward - s->Q);
 }
 

@@ -470,7 +470,7 @@ void get_term_children(term_table_t *table, term_t t, ivector_t *v) {
   assert(term_is_composite(table, t));
 
   if (is_neg_term(t)) {
-    ivector_push(v, opposite_term(t)); // not(t)
+    ivector_push(v, opposite_term(t)); // not_(t)
   } else {
     switch (term_kind(table, t)) {
     case ARITH_EQ_ATOM:

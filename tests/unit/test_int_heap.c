@@ -24,7 +24,7 @@
 #include "utils/int_heap.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -54,7 +54,7 @@ static void add_random(int_heap_t *heap, uint32_t n) {
   for (i=0; i<n; i++) {
     x = random() % 100;
     int_heap_add(heap, x);
-    printf(" %2"PRId32, x);
+    printf(" %2" PRId32, x);
     k ++;
     if (k >= 20) {
       printf("\n");
@@ -78,7 +78,7 @@ static void remove_random(int_heap_t *heap, uint32_t n) {
   for (i=0; i<n; i++) {
     x = random() % 100;
     int_heap_remove(heap, x);
-    printf(" %2"PRId32, x);
+    printf(" %2" PRId32, x);
     k ++;
     if (k >= 20) {
       printf("\n");
@@ -102,7 +102,7 @@ static void print_heap(int_heap_t *heap) {
   k = 0;
   n = heap->nelems;
   for (i=1; i<=n; i++) {
-    printf(" %2"PRId32, heap->heap[i]);
+    printf(" %2" PRId32, heap->heap[i]);
     k ++;
     if (k >= 20) {
       printf("\n");
@@ -125,7 +125,7 @@ static void test_heap(int_heap_t *heap) {
   for (;;) {
     x = int_heap_get_min(heap);
     if (x < 0) break;
-    printf(" %2"PRId32, x);
+    printf(" %2" PRId32, x);
     k ++;
     if (k >= 20) {
       printf("\n");
@@ -147,7 +147,7 @@ int main(void) {
 
   for (n = 10; n<200; n += 20) {
     for (i=0; i<100; i++) {
-      printf("\n=== Test %"PRIu32" size %"PRIu32" ===\n", i, n);
+      printf("\n=== Test %" PRIu32 " size %" PRIu32 " ===\n", i, n);
       printf("--- Random add ---\n");
       add_random(&heap, n);
       printf("--- Random remove ---\n");

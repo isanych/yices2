@@ -28,14 +28,9 @@
 #include "utils/int_bags.h"
 #include "utils/memalloc.h"
 #include "utils/ptr_queues.h"
+#include "yices_config.h"
 
-
-/*
- * Set TRACE to 1 to enable tracing
- */
-#define TRACE 0
-
-#if TRACE
+#if YICES_TRACE
 #include <stdio.h>
 #include <inttypes.h>
 
@@ -353,7 +348,7 @@ static void column_reduce_factor(rational_t *a, dcolumn_t *c1, dcolumn_t *c2) {
   q_integer_div(a, active_coeff(c2));
 
 #if 0
-  printf("---> column_reduce_factor: (row = %"PRIu32")\n", active_row(c1));
+  printf("---> column_reduce_factor: (row = %" PRIu32 ")\n", active_row(c1));
   printf("   act[c1] = ");
   q_print(stdout, active_coeff(c1));
   printf("\n");
@@ -751,7 +746,7 @@ static void flush_column_heap(ptr_heap_t *heap) {
   dcolumn_t *c;
 
   while (! ptr_heap_is_empty(heap)) {
-    c = ptr_heap_get_elem(heap);
+    c = (dcolumn_t*)ptr_heap_get_elem(heap);
     delete_column(c);
   }
 }
@@ -1665,7 +1660,7 @@ void dsolver_simplify(dsolver_t *solver) {
    * process the queue
    */
   while (! ptr_queue_is_empty(&queue)) {
-    c = ptr_queue_pop(&queue);
+    c = (dcolumn_t*)ptr_queue_pop(&queue);
     eliminate_column(solver, c, &queue);
   }
 
@@ -1898,7 +1893,7 @@ static void flush_active_columns(dsolver_t *solver) {
   dcolumn_t *c;
 
   for (;;) {
-    c = ptr_heap_get_elem(&solver->active_columns);
+    c = (dcolumn_t*)ptr_heap_get_elem(&solver->active_columns);
     if (c == NULL) break;
     dsolver_deactivate_column(solver, c);
   }
@@ -1924,7 +1919,7 @@ static bool dsolver_should_stop(dsolver_t *solver) {
     tmp = (uint64_t) solver->max_coeff_size * solver->max_column_size;
     if (tmp > (uint64_t) 64000) {
 #if 0
-      printf("stopped dsolver: coeff size = %"PRIu32", column size = %"PRIu32", reduce_ops = %"PRIu32"\n",
+      printf("stopped dsolver: coeff size = %" PRIu32 ", column size = %" PRIu32 ", reduce_ops = %" PRIu32 "\n",
 	     solver->max_coeff_size, solver->max_column_size, solver->num_reduce_ops);
       fflush(stdout);
 #endif
@@ -1934,7 +1929,7 @@ static bool dsolver_should_stop(dsolver_t *solver) {
 
 #if 0
     if ((solver->num_reduce_ops & 0x3FFF) == 0) {
-      printf("dsolver: nrows = %"PRIu32", ncolumns = %"PRIu32", coeff size = %"PRIu32", column size = %"PRIu32", reduce_ops = %"PRIu32"\n",
+      printf("dsolver: nrows = %" PRIu32 ", ncolumns = %" PRIu32 ", coeff size = %" PRIu32 ", column size = %" PRIu32 ", reduce_ops = %" PRIu32 "\n",
 	     solver->nrows, solver->ncolumns, solver->max_coeff_size, solver->max_column_size, solver->num_reduce_ops);
       fflush(stdout);
     }
@@ -1963,7 +1958,7 @@ static void dsolver_reduce_columns(dsolver_t *solver, int32_t r) {
   f = &solver->reduce_factor;
   heap = &solver->active_columns;
 
-  c1 = ptr_heap_get_min(heap);
+  c1 = (dcolumn_t*)ptr_heap_get_min(heap);
   assert(active_row(c1) == r);
 
   while (! ptr_heap_is_empty(heap)) {
@@ -1990,7 +1985,7 @@ static void dsolver_reduce_columns(dsolver_t *solver, int32_t r) {
 
     solver->num_reduce_ops ++;
 
-    c2 = ptr_heap_get_min(heap);
+    c2 = (dcolumn_t*)ptr_heap_get_min(heap);
     assert(active_row(c2) == r);
     column_reduce_factor(f, c1, c2);
     assert(q_is_pos(f));
@@ -2069,8 +2064,8 @@ static bool dsolver_process_row(dsolver_t *solver, int32_t r) {
   int32_t k;
   uint32_t i, n;
 
-#if TRACE
-  printf("---> Rosser: process row %"PRId32"\n", r);
+#if YICES_TRACE
+  printf("---> Rosser: process row %" PRId32 "\n", r);
 #endif
 
   row = solver->row[r];
@@ -2109,8 +2104,8 @@ static bool dsolver_process_row(dsolver_t *solver, int32_t r) {
     }
   }
 
-#if TRACE
-  printf("After processing row %"PRId32"\n", r);
+#if YICES_TRACE
+  printf("After processing row %" PRId32 "\n", r);
   //  dsolver_print_main_rows(stdout, solver);
   //  dsolver_print_sol_rows(stdout, solver);
   //  dsolver_print_elim_rows(stdout, solver);
@@ -2142,12 +2137,12 @@ dsolver_status_t dsolver_is_feasible(dsolver_t *solver) {
   assert(solver->status == DSOLVER_READY || solver->status == DSOLVER_SIMPLIFIED);
   dsolver_rosser_init(solver);
 
-#if TRACE
+#if YICES_TRACE
   printf("After Rosser-Init\n");
   dsolver_print_status(stdout, solver);
-  printf("nvars = %"PRIu32"\n", solver->nvars);
-  printf("ncolumns = %"PRIu32"\n", solver->ncolumns);
-  printf("number of eliminated rows = %"PRIu32"\n", solver->elim.nelems);
+  printf("nvars = %" PRIu32 "\n", solver->nvars);
+  printf("ncolumns = %" PRIu32 "\n", solver->ncolumns);
+  printf("number of eliminated rows = %" PRIu32 "\n", solver->elim.nelems);
   dsolver_print_main_rows(stdout, solver);
   dsolver_print_sol_rows(stdout, solver);
   dsolver_print_elim_rows(stdout, solver);
@@ -2170,12 +2165,12 @@ dsolver_status_t dsolver_is_feasible(dsolver_t *solver) {
       solver->unsat_row = i;
       reset_generic_heap(to_process);
 
-#if TRACE
+#if YICES_TRACE
       dsolver_print_status(stdout, solver);
 #endif
 
 #if 0
-      printf("dsolver done: nrows = %"PRIu32", ncolumns = %"PRIu32", coeff size = %"PRIu32", column size = %"PRIu32", reduce_ops = %"PRIu32"\n",
+      printf("dsolver done: nrows = %" PRIu32 ", ncolumns = %" PRIu32 ", coeff size = %" PRIu32 ", column size = %" PRIu32 ", reduce_ops = %" PRIu32 "\n",
 	     solver->nrows, solver->ncolumns, solver->max_coeff_size, solver->max_column_size, solver->num_reduce_ops);
       fflush(stdout);
 #endif
@@ -2190,7 +2185,7 @@ dsolver_status_t dsolver_is_feasible(dsolver_t *solver) {
   }
 
 #if 0
-  printf("dsolver done: nrows = %"PRIu32", ncolumns = %"PRIu32", coeff size = %"PRIu32", column size = %"PRIu32", reduce_ops = %"PRIu32"\n",
+  printf("dsolver done: nrows = %" PRIu32 ", ncolumns = %" PRIu32 ", coeff size = %" PRIu32 ", column size = %" PRIu32 ", reduce_ops = %" PRIu32 "\n",
 	 solver->nrows, solver->ncolumns, solver->max_coeff_size, solver->max_column_size, solver->num_reduce_ops);
   fflush(stdout);
 #endif

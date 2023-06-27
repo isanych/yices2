@@ -28,7 +28,7 @@
 #include "utils/object_stack.h"
 
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -58,7 +58,7 @@ static uint32_t print_block(FILE *f, objstack_block_t *b, uint32_t i,  size_t s)
     m = (objstack_meta_t *) (b->data + s);
     o = b->data + (s + round_up(sizeof(objstack_meta_t)));
 
-    fprintf(f, "    obj[%"PRIu32"]: size = %zu, cleaner = %p, addr = %p\n", i, m->size, m->cleaner, o);
+    fprintf(f, "    obj[%" PRIu32 "]: size = %zu, cleaner = %p, addr = %p\n", i, m->size, m->cleaner, o);
     assert(o + m->size <= b->data + OBJSTACK_BLOCK_SIZE);
 
     s += m->size + round_up(sizeof(objstack_meta_t));
@@ -140,7 +140,7 @@ typedef struct test_obj_s {
 } test_obj_t;
 
 static void cleaner(void *o) {
-  printf("  deleting obj %"PRIu32" at addr %p\n", ((test_obj_t *) o)->id, o);
+  printf("  deleting obj %" PRIu32 " at addr %p\n", ((test_obj_t *) o)->id, o);
 }
 
 // random size between 4 and MAX_OBJSTACK_SIZE
@@ -164,10 +164,10 @@ static void alloc(objstack_t *stack, uint32_t id) {
   size_t s;
 
   s = random_size();
-  o = objstack_alloc(stack, s, cleaner);
+  o = (test_obj_t*)objstack_alloc(stack, s, cleaner);
   o->id = id;
 
-  printf("  allocating obj %"PRIu32": size = %zu, addr = %p\n", id, s, o);
+  printf("  allocating obj %" PRIu32 ": size = %zu, addr = %p\n", id, s, o);
 }
 
 static void test2(void) {
@@ -196,7 +196,7 @@ static void test2(void) {
     }
 
     if (i % 100 == 99) {
-      printf("\nAfter %"PRIu32" operations\n", i+1);
+      printf("\nAfter %" PRIu32 " operations\n", i+1);
       print_stack(stdout, &stack);
     }
   }

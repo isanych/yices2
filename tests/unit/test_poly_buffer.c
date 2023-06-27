@@ -24,7 +24,7 @@
 #include "terms/poly_buffer.h"
 #include "terms/rationals.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -67,7 +67,7 @@ static void print_monomial(int32_t v, rational_t *coeff, bool first) {
       q_print_abs(stdout, coeff);
       printf(" * ");
     }
-    printf("x!%"PRId32, v);
+    printf("x!%" PRId32, v);
   }
 }
 
@@ -96,16 +96,16 @@ static void print_poly_buffer_details(poly_buffer_t *b) {
   int32_t i, n;
 
   printf("poly buffer %p\n", b);
-  printf("  i_size = %"PRIu32"\n", b->i_size);
-  printf("  m_size = %"PRIu32"\n", b->m_size);
-  printf("  nterms = %"PRIu32"\n", b->nterms);
+  printf("  i_size = %" PRIu32 "\n", b->i_size);
+  printf("  m_size = %" PRIu32 "\n", b->m_size);
+  printf("  nterms = %" PRIu32 "\n", b->nterms);
   printf("  poly: ");
   print_polynomial(b->mono, b->nterms);
   printf("\n");
   n = b->i_size;
   for (i=0; i<n; i++) {
     if (b->index[i] >= 0) {
-      printf("  index[x!%"PRId32"] = %"PRId32"\n", i, b->index[i]);
+      printf("  index[x!%" PRId32 "] = %" PRId32 "\n", i, b->index[i]);
     }
   }
   printf("\n");

@@ -77,7 +77,7 @@ typedef enum uv_tag {
  * Get the tag of p
  */
 static inline uv_tag_t entry_tag(void *p) {
-  return ((uintptr_t) p) & TAG_MASK;
+  return (uv_tag_t) ((uintptr_t) p & TAG_MASK);
 }
 
 /*

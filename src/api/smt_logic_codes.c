@@ -746,7 +746,7 @@ bool logic_has_uf(smt_logic_t code) {
 
 arith_fragment_t arith_fragment(smt_logic_t code) {
   assert(code != SMT_UNKNOWN);
-  return arith_frag[code];
+  return (arith_fragment_t)arith_frag[code];
 }
 
 

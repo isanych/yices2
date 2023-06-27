@@ -22,7 +22,7 @@
 #include "utils/bitvectors.h"
 #include "model/large_bvsets.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 static inline long int random(void) {
   return rand();
@@ -38,18 +38,18 @@ static void print_bvset(large_bvset_t *s) {
   uint32_t i, n;
 
   printf("set %p\n", s);
-  printf("  size = %"PRIu32"\n", s->size);
-  printf("  nelems = %"PRIu32"\n", s->nelems);
-  printf("  max_val = %"PRIu32"\n", s->max_val);
-  printf("  fsize = %"PRIu32"\n", s->fsize);
-  printf("  nfresh = %"PRIu32"\n", s->nfresh);
+  printf("  size = %" PRIu32 "\n", s->size);
+  printf("  nelems = %" PRIu32 "\n", s->nelems);
+  printf("  max_val = %" PRIu32 "\n", s->max_val);
+  printf("  fsize = %" PRIu32 "\n", s->fsize);
+  printf("  nfresh = %" PRIu32 "\n", s->nfresh);
 
   if (s->nelems > 0) {
     printf("  bits:");
     n = s->size;
     for (i=0; i<n; i++) {
       if (tst_bit(s->set, i)) {
-	printf(" %"PRIu32, i);
+	printf(" %" PRIu32, i);
       }
     }
     printf("\n");
@@ -59,7 +59,7 @@ static void print_bvset(large_bvset_t *s) {
   if (n > 0) {
     printf("  fresh elements:");
     for (i=0; i<n; i++) {
-      printf(" %"PRIu32, s->fresh_vals[i]);
+      printf(" %" PRIu32, s->fresh_vals[i]);
     }
     printf("\n");
   }
@@ -121,7 +121,7 @@ static void test1(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -141,7 +141,7 @@ static void test1(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -157,7 +157,7 @@ static void test1(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -188,7 +188,7 @@ static void test2(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -208,7 +208,7 @@ static void test2(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -224,7 +224,7 @@ static void test2(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -255,7 +255,7 @@ static void test3(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -275,7 +275,7 @@ static void test3(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");
@@ -291,7 +291,7 @@ static void test3(void) {
 
   do {
     x = large_bvset_get_fresh(&set);
-    printf("get fresh: %"PRIu32", nelems = %"PRIu32"\n", x, set.nelems);
+    printf("get fresh: %" PRIu32 ", nelems = %" PRIu32 "\n", x, set.nelems);
   } while (x != 0);
 
   printf("\n=== Final set ===\n");

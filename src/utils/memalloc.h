@@ -26,7 +26,7 @@
 #define __MEMALLOC_H
 
 #include <stdlib.h>
-
+#include <yices_config.h>
 
 /*
  * Pointer to a callback function:
@@ -41,20 +41,20 @@
  *   
  */
 typedef void (*out_of_mem_callback_t)(void);
-extern out_of_mem_callback_t __out_of_mem_callback;
+YICES_EXTERN out_of_mem_callback_t __out_of_mem_callback;
 
 /*
  * Either calls longjmp(out_of_mem, -1) or prints an error message then
  * calls exit(YICES_EXIT_OUT_OF_MEMORY)
  * - this exit code is defined in yices_exit_codes.h
  */
-extern void out_of_memory(void) __attribute__ ((noreturn));
+YICES_EXTERN ATTRIBUTE_NORETURN void out_of_memory(void);
 
 /*
  * Wrappers for malloc/realloc.
  */
-extern void *safe_malloc(size_t size) __attribute__ ((malloc));
-extern void *safe_realloc(void *ptr, size_t size) __attribute__ ((malloc));
+YICES_EXTERN ATTRIBUTE_MALLOC void *safe_malloc(size_t size);
+YICES_EXTERN ATTRIBUTE_MALLOC void *safe_realloc(void *ptr, size_t size);
 
 
 /*
@@ -74,6 +74,6 @@ static inline void safe_free(void *ptr)  {
 /*
  * Wrapper for strdup
  */
-extern char *safe_strdup(const char *s);
+YICES_EXTERN char *safe_strdup(const char *s);
 
 #endif

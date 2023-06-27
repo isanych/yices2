@@ -20,13 +20,7 @@
  * Parse a file in DIMACS/CNF format then call the (new) sat solver.
  */
 
-#if defined(CYGWIN) || defined(MINGW)
-#ifndef __YICES_DLLSPEC__
-#define __YICES_DLLSPEC__ __declspec(dllexport)
-#endif
-#endif
-
-#include <unistd.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,8 +28,8 @@
 #include <signal.h>
 #include <inttypes.h>
 #include <errno.h>
-#include <math.h>
 
+#include "api/platform.h"
 #include "io/reader.h"
 #include "solvers/cdcl/new_sat_solver.h"
 #include "utils/command_line.h"
@@ -45,7 +39,6 @@
 
 #include "yices.h"
 #include "yices_exit_codes.h"
-
 
 /*
  * GLOBAL OBJECTS
@@ -74,7 +67,7 @@ static uint32_t buffer_size;
 
 static void alloc_buffer(uint32_t size) {
   assert(size <= MAX_BUFFER);
-  clause = malloc(size * sizeof(literal_t));
+  clause = (literal_t*)malloc(size * sizeof(literal_t));
   buffer_size = size;
   if (clause == NULL) {
     fprintf(stderr, "Out of memory\n");
@@ -93,7 +86,7 @@ static void expand_buffer(void) {
     buffer_size = MAX_BUFFER;
   }
 
-  clause = realloc(clause, buffer_size * sizeof(literal_t));
+  clause = (literal_t*)realloc(clause, buffer_size * sizeof(literal_t));
   if (clause == NULL) {
     fprintf(stderr, "Out of memory\n");
     exit(2);
@@ -237,7 +230,7 @@ static int build_instance(const char *filename, bool pp) {
   }
 
   if (x == EOF) {
-    fprintf(stderr, "file %s: line %"PRIu32": unexpected end of file\n", filename, reader_line(&reader));
+    fprintf(stderr, "file %s: line %" PRIu32 ": unexpected end of file\n", filename, reader_line(&reader));
     close_reader(&reader);
     return FORMAT_ERROR;
   }
@@ -246,7 +239,7 @@ static int build_instance(const char *filename, bool pp) {
   read_line(&reader, 200, pline);
   n = sscanf(pline, "p cnf %d %d", &nvars, &nclauses);
   if (n != 2 || nvars < 0 || nclauses < 0) {
-    fprintf(stderr, "file %s, line %"PRIu32": expected 'p cnf <nvars> <nclauses>\n", filename, reader_line(&reader));
+    fprintf(stderr, "file %s, line %" PRIu32 ": expected 'p cnf <nvars> <nclauses>\n", filename, reader_line(&reader));
     close_reader(&reader);
     return FORMAT_ERROR;
   }
@@ -275,7 +268,7 @@ static int build_instance(const char *filename, bool pp) {
       }
 
       if (literal != END_OF_CLAUSE) {
-	fprintf(stderr, "file %s: line %"PRIu32": invalid format\n", filename, reader_line(&reader));
+	fprintf(stderr, "file %s: line %" PRIu32 ": invalid format\n", filename, reader_line(&reader));
 	close_reader(&reader);
 	return FORMAT_ERROR;
       }
@@ -303,7 +296,7 @@ static bool clause_is_true(uint32_t n, literal_t *a) {
       return true;
     }
     if (lit_value(&solver, a[i]) != VAL_FALSE) {
-      fprintf(stderr, "BUG: the model does not assign a value to literal %"PRId32"\n", a[i]);
+      fprintf(stderr, "BUG: the model does not assign a value to literal %" PRId32 "\n", a[i]);
       exit(1);
     }
   }
@@ -336,7 +329,7 @@ static void check_model(const char *filename) {
   }
 
   if (x == EOF) {
-    fprintf(stderr, "can't check model: file %s: line %"PRIu32": unexpected end of file\n", filename, reader_line(&reader));
+    fprintf(stderr, "can't check model: file %s: line %" PRIu32 ": unexpected end of file\n", filename, reader_line(&reader));
     goto done;
   }
 
@@ -344,7 +337,7 @@ static void check_model(const char *filename) {
   read_line(&reader, 200, pline);
   n = sscanf(pline, "p cnf %d %d", &nvars, &nclauses);
   if (n != 2 || nvars < 0 || nclauses < 0) {
-    fprintf(stderr, "can't check model: file %s: line %"PRIu32": expected 'p cnf <nvars> <nclauses>\n", filename, reader_line(&reader));
+    fprintf(stderr, "can't check model: file %s: line %" PRIu32 ": expected 'p cnf <nvars> <nclauses>\n", filename, reader_line(&reader));
     goto done;
   }
 
@@ -368,12 +361,12 @@ static void check_model(const char *filename) {
       }
 
       if (literal != END_OF_CLAUSE) {
-	fprintf(stderr, "error in check model: file %s: line %"PRIu32": invalid format\n", filename, reader_line(&reader));
+	fprintf(stderr, "error in check model: file %s: line %" PRIu32 ": invalid format\n", filename, reader_line(&reader));
 	goto done;
       }
 
       if (!clause_is_true(l_idx, clause)) {
-	fprintf(stderr, "error in check model: clause %"PRIu32" is false (line %"PRIu32")\n", c_idx, reader_line(&reader));
+	fprintf(stderr, "error in check model: clause %" PRIu32 " is false (line %" PRIu32 ")\n", c_idx, reader_line(&reader));
 	goto done;
       }
       c_idx ++;
@@ -1012,10 +1005,10 @@ static void print_results(void) {
  * Print initial size
  */
 void print_solver_size(FILE *f, sat_solver_t *sol) {
-  fprintf(f, "c  vars                 : %"PRIu32"\n", sol->nvars);
-  fprintf(f, "c  unit clauses         : %"PRIu32"\n", sol->units);
-  fprintf(f, "c  binary clauses       : %"PRIu32"\n", sol->binaries);
-  fprintf(f, "c  other clauses        : %"PRIu32"\n", sol->pool.num_prob_clauses);
+  fprintf(f, "c  vars                 : %" PRIu32 "\n", sol->nvars);
+  fprintf(f, "c  unit clauses         : %" PRIu32 "\n", sol->units);
+  fprintf(f, "c  binary clauses       : %" PRIu32 "\n", sol->binaries);
+  fprintf(f, "c  other clauses        : %" PRIu32 "\n", sol->pool.num_prob_clauses);
   fprintf(f, "c\n");
 }
 
@@ -1084,7 +1077,7 @@ static void handler(int signum) {
 static void init_handler(void) {
   signal(SIGINT, handler);
   signal(SIGABRT, handler);
-#ifndef MINGW
+#ifndef _WIN32
   signal(SIGXCPU, handler);
 #endif
 }

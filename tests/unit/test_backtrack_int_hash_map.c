@@ -30,19 +30,19 @@ static void show_mapping(FILE *f, back_hmap_t *map) {
   uint32_t i, n;
 
   fprintf(f, "hmap %p\n", map);
-  fprintf(f, "  size = %"PRIu32"\n", map->size);
-  fprintf(f, "  nelems = %"PRIu32"\n", map->nelems);
-  fprintf(f, "  ndeleted = %"PRIu32"\n", map->ndeleted);
-  fprintf(f, "  resize threshold = %"PRIu32"\n", map->resize_threshold);
-  fprintf(f, "  cleanup threshold = %"PRIu32"\n", map->cleanup_threshold);
-  fprintf(f, "  level = %"PRIu32"\n", map->level);
+  fprintf(f, "  size = %" PRIu32 "\n", map->size);
+  fprintf(f, "  nelems = %" PRIu32 "\n", map->nelems);
+  fprintf(f, "  ndeleted = %" PRIu32 "\n", map->ndeleted);
+  fprintf(f, "  resize threshold = %" PRIu32 "\n", map->resize_threshold);
+  fprintf(f, "  cleanup threshold = %" PRIu32 "\n", map->cleanup_threshold);
+  fprintf(f, "  level = %" PRIu32 "\n", map->level);
   fprintf(f, "  content:\n");
 
   n = map->size;
   d = &map->data;
   for (i=0; i<n; i++) {
     if (d->pair[i].key >= 0) {
-      fprintf(f, "   entry[%"PRIu32"]: %"PRId32" --> %"PRId32" (level = %"PRIu32")\n",
+      fprintf(f, "   entry[%" PRIu32 "]: %" PRId32 " --> %" PRId32 " (level = %" PRIu32 ")\n",
 	      i, d->pair[i].key, d->pair[i].val, d->level[i]);
     }
   }
@@ -66,7 +66,7 @@ static void check_map(back_hmap_t *map) {
     if (d->pair[i].key >= 0) {
       count ++;
       if (d->level[i] > map->level) {
-	fprintf(stderr, "*** BUG: inconsistent map: level[%"PRIu32"] = %"PRIu32" but map->level is %"PRIu32" ***\n",
+	fprintf(stderr, "*** BUG: inconsistent map: level[%" PRIu32 "] = %" PRIu32 " but map->level is %" PRIu32 " ***\n",
 		i, d->level[i], map->level);
 	exit(1);
       }
@@ -105,11 +105,11 @@ static void check_map_content(back_hmap_t *map, uint32_t n) {
   for (i=0; i<n; i++) {
     b = back_hmap_find(map, i);
     if (b == NULL) {
-      fprintf(stderr, "*** BUG: expected entry for key %"PRId32", got NULL ***\n", i);
+      fprintf(stderr, "*** BUG: expected entry for key %" PRId32 ", got NULL ***\n", i);
       exit(1);
     }
     if (b->val != (i % 5)) {
-      fprintf(stderr, "*** BUG: bad value for key %"PRId32", got %"PRId32" instead of %"PRId32" ***\n",
+      fprintf(stderr, "*** BUG: bad value for key %" PRId32 ", got %" PRId32 " instead of %" PRId32 " ***\n",
 	      i, b->val, i % 5);
       exit(1);
     }    
@@ -119,7 +119,7 @@ static void check_map_content(back_hmap_t *map, uint32_t n) {
   for (i=n; i<n+10; i++) {
     b = back_hmap_find(map, n);
     if (b != NULL) {
-      fprintf(stderr, "*** BUG: got an entry for key %"PRId32", expected none ***\n", i);
+      fprintf(stderr, "*** BUG: got an entry for key %" PRId32 ", expected none ***\n", i);
       exit(1);
     }
   }
@@ -143,7 +143,7 @@ static void add_level(back_hmap_t *map, uint32_t n) {
     for (i=n/2; i<n; i++) {
       d = back_hmap_find(map, i);
       if (d != NULL) {
-	fprintf(stderr, "*** BUG in add_level: key %"PRId32" is already present ***\n", i);
+	fprintf(stderr, "*** BUG in add_level: key %" PRId32 " is already present ***\n", i);
 	exit(1);
       }
       d = back_hmap_get(map, i);
@@ -166,7 +166,7 @@ int main(void) {
   show_mapping(stdout, &hmap);
 
   for (n=0; n<20; n++) {
-    printf("--- After level %"PRIu32" ---\n", n);
+    printf("--- After level %" PRIu32 " ---\n", n);
     add_level(&hmap, n);
     show_mapping(stdout, &hmap);
     check_map_content(&hmap, n);
@@ -174,13 +174,13 @@ int main(void) {
     back_hmap_push(&hmap);
   }
 
-  printf("--- At level %"PRIu32" ---\n", n);
+  printf("--- At level %" PRIu32 " ---\n", n);
   show_mapping(stdout, &hmap);
   check_map_content(&hmap, n);
 
   while (n > 4) {
     n --;
-    printf("--- Backtracking to level %"PRIu32" ---\n", n);
+    printf("--- Backtracking to level %" PRIu32 " ---\n", n);
     back_hmap_pop(&hmap);
     show_mapping(stdout, &hmap);
     check_map_content(&hmap, n);
@@ -189,7 +189,7 @@ int main(void) {
 
   while (n < 100) {
     n ++;
-    printf("---- Adding level %"PRIu32" ---\n", n);
+    printf("---- Adding level %" PRIu32 " ---\n", n);
     back_hmap_push(&hmap);
     add_level(&hmap, n);
     show_mapping(stdout, &hmap);

@@ -83,7 +83,7 @@ static inline int32_t sign_of(literal_t l) {
 }
 
 // negation of literal l
-static inline literal_t not(literal_t l) {
+static inline literal_t not_(literal_t l) {
   return l ^ 1;
 }
 
@@ -601,7 +601,7 @@ typedef struct sat_solver_s {
  */
 static inline bval_t lit_val(sat_solver_t *solver, literal_t l) {
   assert(-2 <= l && l < (int32_t) solver->nb_lits);
-  return solver->value[l];
+  return (bval_t)solver->value[l];
 }
 
 static inline bool lit_is_unassigned(sat_solver_t *solver, literal_t l) {
@@ -634,49 +634,49 @@ static inline bool lit_prefers_true(sat_solver_t *solver, literal_t l) {
  * Solver initialization
  * - size = initial size of the variable arrays
  */
-extern void init_sat_solver(sat_solver_t *solver, uint32_t size);
+YICES_EXTERN void init_sat_solver(sat_solver_t *solver, uint32_t size);
 
 /*
  * Set the prng seed
  */
-extern void sat_solver_set_seed(sat_solver_t *solver, uint32_t seed);
+YICES_EXTERN void sat_solver_set_seed(sat_solver_t *solver, uint32_t seed);
 
 
 /*
  * Delete solver
  */
-extern void delete_sat_solver(sat_solver_t *solver);
+YICES_EXTERN void delete_sat_solver(sat_solver_t *solver);
 
 /*
  * Add n fresh variables
  */
-extern void sat_solver_add_vars(sat_solver_t *solver, uint32_t n);
+YICES_EXTERN void sat_solver_add_vars(sat_solver_t *solver, uint32_t n);
 
 /*
  * Allocate a fresh boolean variable and return its index
  */
-extern bvar_t sat_solver_new_var(sat_solver_t *solver);
+YICES_EXTERN bvar_t sat_solver_new_var(sat_solver_t *solver);
 
 /*
  * Addition of simplified clause
  * - each clause is an array of literals (integers between 0 and 2nvars - 1)
  *   that does not contain twice the same literals or complementary literals
  */
-extern void sat_solver_add_empty_clause(sat_solver_t *solver);
-extern void sat_solver_add_unit_clause(sat_solver_t *solver, literal_t l);
-extern void sat_solver_add_binary_clause(sat_solver_t *solver, literal_t l0, literal_t l1);
-extern void sat_solver_add_ternary_clause(sat_solver_t *solver, literal_t l0, literal_t l1,
+YICES_EXTERN void sat_solver_add_empty_clause(sat_solver_t *solver);
+YICES_EXTERN void sat_solver_add_unit_clause(sat_solver_t *solver, literal_t l);
+YICES_EXTERN void sat_solver_add_binary_clause(sat_solver_t *solver, literal_t l0, literal_t l1);
+YICES_EXTERN void sat_solver_add_ternary_clause(sat_solver_t *solver, literal_t l0, literal_t l1,
                                           literal_t l2);
 
 // clause l[0] ... l[n-1]
-extern void sat_solver_add_clause(sat_solver_t *solver, uint32_t n, literal_t *l);
+YICES_EXTERN void sat_solver_add_clause(sat_solver_t *solver, uint32_t n, literal_t *l);
 
 
 /*
  * Simplify then add a clause: remove duplicate literals, and already
  * assigned literals, and simplify
  */
-extern void sat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, literal_t *l);
+YICES_EXTERN void sat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n, literal_t *l);
 
 
 
@@ -688,7 +688,7 @@ extern void sat_solver_simplify_and_add_clause(sat_solver_t *solver, uint32_t n,
  *
  * The return value is also kept as solver->status.
  */
-extern solver_status_t search(sat_solver_t *solver, uint32_t conflict_bound);
+YICES_EXTERN solver_status_t search(sat_solver_t *solver, uint32_t conflict_bound);
 
 
 /*
@@ -698,14 +698,14 @@ extern solver_status_t search(sat_solver_t *solver, uint32_t conflict_bound);
  * - at every iteration, conflict_bound is increased by 50% and del_threshold by 10%
  * - if verbose is true, print statistics on stderr during the search
  */
-extern solver_status_t solve(sat_solver_t *solver, bool verbose);
+YICES_EXTERN solver_status_t solve(sat_solver_t *solver, bool verbose);
 
 
 /*
  * Access to solver fields
  */
 static inline solver_status_t solver_status(sat_solver_t *solver) {
-  return solver->status;
+  return (solver_status_t)solver->status;
 }
 
 static inline uint32_t solver_nvars(sat_solver_t *solver) {
@@ -738,7 +738,7 @@ static inline bval_t get_variable_assignment(sat_solver_t *solver, bvar_t x) {
  * Copy the full variable assignment in array val.
  * - val must have size >= solver->nb_vars
  */
-extern void get_allvars_assignment(sat_solver_t *solver, bval_t *val);
+YICES_EXTERN void get_allvars_assignment(sat_solver_t *solver, bval_t *val);
 
 
 /*
@@ -746,7 +746,7 @@ extern void get_allvars_assignment(sat_solver_t *solver, bval_t *val);
  * - return the number of literals copied.
  * - a must be have size >= solver->nb_vars
  */
-extern uint32_t get_true_literals(sat_solver_t *solver, literal_t *a);
+YICES_EXTERN uint32_t get_true_literals(sat_solver_t *solver, literal_t *a);
 
 
 #if INSTRUMENT_CLAUSES
@@ -757,13 +757,13 @@ extern uint32_t get_true_literals(sat_solver_t *solver, literal_t *a);
  * - f must be open and writeable. It will be use to
  *   store the statistics data.
  */
-extern void init_learned_clauses_stats(FILE *f);
+YICES_EXTERN void init_learned_clauses_stats(FILE *f);
 
 
 /*
  * Save all statistics into the statistics file
  */
-extern void flush_learned_clauses_stats(void);
+YICES_EXTERN void flush_learned_clauses_stats(void);
 
 #endif
 

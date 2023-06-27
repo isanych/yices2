@@ -63,7 +63,7 @@ static void resize_int_bvset(int_bvset_t *set, uint32_t x) {
 
   assert(x >= set->nbits);
 
-  //  printf("--> resize_bvset: x = %"PRIu32", nbits = %"PRIu32"\n", x, set->nbits);
+  //  printf("--> resize_bvset: x = %" PRIu32 ", nbits = %" PRIu32 "\n", x, set->nbits);
   // we need at least x+1 elements, rounded up to the next multiple of 8
   x = (x + 8) & ~((uint32_t) 7);
 
@@ -74,7 +74,7 @@ static void resize_int_bvset(int_bvset_t *set, uint32_t x) {
     if (x > n) n = x;
     set->size = n;
     //    set->data = extend_bitvector(set->data, n);
-    set->data = safe_realloc(set->data, n>>3);
+    set->data = (byte_t*)safe_realloc(set->data, n>>3);
   }
 
   // clear all bits from set->nbits to x

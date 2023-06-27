@@ -34,7 +34,7 @@
 
 #include "yices.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 static inline long int random(void) {
   return rand();
 }
@@ -44,7 +44,7 @@ static inline long int random(void) {
 /*
  * Print the type table
  */
-static void __attribute__((unused)) show_types(void) {
+ATTRIBUTE_UNUSED static void show_types(void) {
   printf("\n---- Type table ----\n");
   //  print_type_table(stdout, __yices_globals.types);
   pp_type_table(stdout, __yices_globals.types);
@@ -54,7 +54,7 @@ static void __attribute__((unused)) show_types(void) {
 /*
  * Print the term table
  */
-static void  __attribute__((unused)) show_terms(void) {
+ATTRIBUTE_UNUSED static void show_terms(void) {
   printf("\n---- Term table -----\n");
   //  print_term_table(stdout, __yices_globals.terms);
   pp_term_table(stdout, __yices_globals.terms);
@@ -1432,7 +1432,7 @@ static void test_map(intern_tbl_t *tbl, int32_t x) {
 
   printf("\ntesting map: ");
   print_term_name(stdout, __yices_globals.terms, t);
-  printf(" --> %"PRId32"\n", x);
+  printf(" --> %" PRId32 "\n", x);
 
   t = intern_tbl_get_root(tbl, t);
   if (is_neg_term(t)) {
@@ -1442,7 +1442,7 @@ static void test_map(intern_tbl_t *tbl, int32_t x) {
   } else if (intern_tbl_root_is_mapped(tbl, t)) {
     printf("invalid map: root ");
     print_term_name(stdout, __yices_globals.terms, t);
-    printf(" is already mapped to %"PRId32"\n", intern_tbl_map_of_root(tbl, t));
+    printf(" is already mapped to %" PRId32 "\n", intern_tbl_map_of_root(tbl, t));
   } else {
     printf("good map\n");
     intern_tbl_map_root(tbl, t, x);

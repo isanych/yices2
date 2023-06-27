@@ -93,7 +93,7 @@ typedef struct bv64_abs_s {
  *  sign = true_literal (i.e.,  0) means that the sign bit is '1'
  *  sign = false_literal (i.e., 1) means that the sign bit is '0'
  * Otherwise
- *  sign = some non-negative integer l and we have not(l) = l^1
+ *  sign = some non-negative integer l and we have not_(l) = l^1
  */
 enum {
   sign_undef = -1,

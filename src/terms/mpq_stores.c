@@ -58,7 +58,7 @@ static mpq_ptr _o_mpqstore_alloc(mpq_store_t *s) {
   obj = s->free_list;
 
   if (obj != NULL) {
-    s->free_list = obj->next;
+    s->free_list = (mpq_link_t*)obj->next;
     obj->next = NULL;  //sanity check: when returned it should still be NULL
     return (mpq_ptr) &obj->mpq;
   }

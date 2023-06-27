@@ -906,7 +906,7 @@ static smt2_token_t smt2_read_symbol(lexer_t *lex) {
   tk = SMT2_TK_SYMBOL;
   kw = in_smt2_tk(buffer->data, buffer->index);
   if (kw != NULL) {
-    tk = kw->tk;
+    tk = (smt2_token_t)kw->tk;
   }
 
   return tk;
@@ -1098,7 +1098,7 @@ smt2_keyword_t smt2_string_to_keyword(const char *s, uint32_t n) {
   k = SMT2_KW_UNKNOWN;
   kw = in_smt2_kw(s, n);
   if (kw != NULL) {
-    k = kw->tk;
+    k = (smt2_keyword_t)kw->tk;
   }
 
   return k;
@@ -1170,7 +1170,7 @@ smt2_symbol_t smt2_string_to_symbol(const char *s, uint32_t n) {
       sym = string_to_bv_constant(s, n);
     }
   } else if (active_symbol[kw->tk]) {
-    sym = kw->tk;
+    sym = (smt2_symbol_t)kw->tk;
   }
 
   return sym;

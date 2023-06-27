@@ -29,7 +29,7 @@
 #include "terms/bv_constants.h"
 #include "utils/memalloc.h"
 
-#ifdef MINGW
+#ifdef _WIN32
 
 /*
  * Need some version of random()
@@ -121,26 +121,26 @@ static void test_set_extend(uint32_t size1, uint32_t size2) {
   bv1 = bvconst_alloc(w1);
   bv2 = bvconst_alloc(w2);
 
-  printf("=== test_set_extend: size1 = %"PRIu32", size2 = %"PRIu32" ===\n", size1, size2);
+  printf("=== test_set_extend: size1 = %" PRIu32 ", size2 = %" PRIu32 " ===\n", size1, size2);
 
   for (i=0; i<20; i++) {
     random_vector(vector, size2);
     bvconst_set_array(bv2, vector, size2);
 
-    printf("%"PRIu32" to %"PRIu32" bits\n", size2, size1);
+    printf("%" PRIu32 " to %" PRIu32 " bits\n", size2, size1);
     printf("bv2            = ");
     bvconst_print(stdout, bv2, size2);
     printf("\n");
     bvconst_set_extend(bv1, size1, bv2, size2, 0);
-    printf("ext(bv2, %"PRIu32", 0) = ", size1);
+    printf("ext(bv2, %" PRIu32 ", 0) = ", size1);
     bvconst_print(stdout, bv1, size1);
     printf("\n");
     bvconst_set_extend(bv1, size1, bv2, size2, 1);
-    printf("ext(bv2, %"PRIu32", 1) = ", size1);
+    printf("ext(bv2, %" PRIu32 ", 1) = ", size1);
     bvconst_print(stdout, bv1, size1);
     printf("\n");
     bvconst_set_extend(bv1, size1, bv2, size2, -1);
-    printf("sgnext(bv2, %"PRIu32", 0) = ", size1);
+    printf("sgnext(bv2, %" PRIu32 ", 0) = ", size1);
     bvconst_print(stdout, bv1, size1);
     printf("\n\n");
   }
@@ -251,7 +251,7 @@ int main(void) {
   bvconst_clear(b, 4);
   for (n=2; n<=128; n++) {
     for (i=1; i<n; i++) {
-      printf("--- n = %"PRId32", i = %"PRId32" ---\n", n, i);
+      printf("--- n = %" PRId32 ", i = %" PRId32 " ---\n", n, i);
       printf("a          = ");
       bvconst_print(stdout, a, i);
       printf("\n");
@@ -279,7 +279,7 @@ int main(void) {
 
     for (i=0; i<=20-n; i++) {
       bvconst_extract(b, a, i, i+n);
-      printf("a[%2"PRId32", %2"PRId32")     = ", i, i+n);
+      printf("a[%2" PRId32 ", %2" PRId32 ")     = ", i, i+n);
       print_spaces(stdout, 20-n-i);
       bvconst_print(stdout, b, n);
       printf("\n");
@@ -296,7 +296,7 @@ int main(void) {
 
     for (i=0; i<=62-n; i++) {
       bvconst_extract(b, a, i, i+n);
-      printf("a[%2"PRId32", %2"PRId32")     = ", i, i+n);
+      printf("a[%2" PRId32 ", %2" PRId32 ")     = ", i, i+n);
       print_spaces(stdout, 62-n-i);
       bvconst_print(stdout, b, n);
       printf("\n");
@@ -314,7 +314,7 @@ int main(void) {
 
     for (i=0; i<=64-n; i++) {
       bvconst_extract(b, a, i, i+n);
-      printf("a[%2"PRId32", %2"PRId32")     = ", i, i+n);
+      printf("a[%2" PRId32 ", %2" PRId32 ")     = ", i, i+n);
       print_spaces(stdout, 64-n-i);
       bvconst_print(stdout, b, n);
       printf("\n");
@@ -407,15 +407,15 @@ int main(void) {
     bvconst_print(stdout, a, 20);
     printf("\n");
     bvconst_set_extend(b, i, a, 20, 0);
-    printf("ext(a, %2"PRId32", 0) = ", i);
+    printf("ext(a, %2" PRId32 ", 0) = ", i);
     bvconst_print(stdout, b, i);
     printf("\n");
     bvconst_set_extend(b, i, a, 20, 1);
-    printf("ext(a, %2"PRId32", 1) = ", i);
+    printf("ext(a, %2" PRId32 ", 1) = ", i);
     bvconst_print(stdout, b, i);
     printf("\n");
     bvconst_set_extend(b, i, a, 20, -1);
-    printf("sgnext(a, %2"PRId32") = ", i);
+    printf("sgnext(a, %2" PRId32 ") = ", i);
     bvconst_print(stdout, b, i);
     printf("\n\n");
   }
@@ -428,15 +428,15 @@ int main(void) {
     bvconst_print(stdout, a, 32);
     printf("\n");
     bvconst_set_extend(b, i, a, 32, 0);
-    printf("ext(a, %2"PRId32", 0) = ", i);
+    printf("ext(a, %2" PRId32 ", 0) = ", i);
     bvconst_print(stdout, b, i);
     printf("\n");
     bvconst_set_extend(b, i, a, 32, 1);
-    printf("ext(a, %2"PRId32", 1) = ", i);
+    printf("ext(a, %2" PRId32 ", 1) = ", i);
     bvconst_print(stdout, b, i);
     printf("\n");
     bvconst_set_extend(b, i, a, 32, -1);
-    printf("sgnext(a, %2"PRId32") = ", i);
+    printf("sgnext(a, %2" PRId32 ") = ", i);
     bvconst_print(stdout, b, i);
     printf("\n\n");
   }
@@ -448,7 +448,7 @@ int main(void) {
   bvconst_print(stdout, a, 120);
   printf("\n");
   for (i=0; i<=120; i++) {
-    printf("rshift %3"PRId32": ", i);
+    printf("rshift %3" PRId32 ": ", i);
     bvconst_shift_right(a, 120, i, 0);
     bvconst_print(stdout, a, 120);
     printf("\n");
@@ -462,7 +462,7 @@ int main(void) {
   bvconst_print(stdout, a, 120);
   printf("\n");
   for (i=0; i<=120; i++) {
-    printf("rshift %3"PRId32": ", i);
+    printf("rshift %3" PRId32 ": ", i);
     bvconst_shift_right(a, 120, i, 1);
     bvconst_print(stdout, a, 120);
     printf("\n");
@@ -477,7 +477,7 @@ int main(void) {
   bvconst_print(stdout, a, 120);
   printf("\n");
   for (i=0; i<=120; i++) {
-    printf("lshift %3"PRId32": ", i);
+    printf("lshift %3" PRId32 ": ", i);
     bvconst_shift_left(a, 120, i, 0);
     bvconst_print(stdout, a, 120);
     printf("\n");
@@ -491,7 +491,7 @@ int main(void) {
   bvconst_print(stdout, a, 120);
   printf("\n");
   for (i=0; i<=120; i++) {
-    printf("lshift %3"PRId32": ", i);
+    printf("lshift %3" PRId32 ": ", i);
     bvconst_shift_left(a, 120, i, 1);
     bvconst_print(stdout, a, 120);
     printf("\n");
@@ -582,7 +582,7 @@ int main(void) {
   printf("\n\n");
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32": e *= a\n", i);
+    printf("test %" PRId32 ": e *= a\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     random_vector(vector, 128);
@@ -621,7 +621,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32", a := - a\n", i);
+    printf("test %" PRId32 ", a := - a\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     bvconst_get_mpz(a, 4, z0);
@@ -651,7 +651,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32": e := - a\n", i);
+    printf("test %" PRId32 ": e := - a\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     printf("a = ");
@@ -680,7 +680,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32", e = a * b\n", i);
+    printf("test %" PRId32 ", e = a * b\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     random_vector(vector, 128);
@@ -719,7 +719,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32": e = - (a * b)\n", i);
+    printf("test %" PRId32 ": e = - (a * b)\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     random_vector(vector, 128);
@@ -764,7 +764,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32": e = a + b\n", i);
+    printf("test %" PRId32 ": e = a + b\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     random_vector(vector, 128);
@@ -803,7 +803,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32": e = a - b\n", i);
+    printf("test %" PRId32 ": e = a - b\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
     random_vector(vector, 128);
@@ -842,7 +842,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("\ntest %"PRId32": comparisons\n", i);
+    printf("\ntest %" PRId32 ": comparisons\n", i);
     random_vector(vector, 25);
     bvconst_set_array(a, vector, 25);
     random_vector(vector, 25);
@@ -872,7 +872,7 @@ int main(void) {
 
 
   for (i=0; i<10; i++) {
-    printf("\ntest %"PRId32": comparisons\n", i);
+    printf("\ntest %" PRId32 ": comparisons\n", i);
     random_vector(vector, 32);
     bvconst_set_array(a, vector, 32);
     random_vector(vector, 32);
@@ -901,7 +901,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("\ntest %"PRId32": comparisons\n", i);
+    printf("\ntest %" PRId32 ": comparisons\n", i);
     random_vector(vector, 33);
     bvconst_set_array(a, vector, 33);
     random_vector(vector, 33);
@@ -930,7 +930,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("\ntest %"PRId32": comparisons\n", i);
+    printf("\ntest %" PRId32 ": comparisons\n", i);
     random_vector(vector, 63);
     bvconst_set_array(a, vector, 63);
     random_vector(vector, 63);
@@ -959,7 +959,7 @@ int main(void) {
   }
 
   for (i=0; i<10; i++) {
-    printf("\ntest %"PRId32": comparisons\n", i);
+    printf("\ntest %" PRId32 ": comparisons\n", i);
     random_vector(vector, 64);
     bvconst_set_array(a, vector, 64);
     random_vector(vector, 64);
@@ -1076,7 +1076,7 @@ int main(void) {
     if (n < 0) {
       printf("--> not a power of 2\n\n");
     } else {
-      printf("--> a = 2^%"PRId32"\n\n", n);
+      printf("--> a = 2^%" PRId32 "\n\n", n);
     }
     mpz_add(z0, z0, z0);
   }
@@ -1093,7 +1093,7 @@ int main(void) {
   if (n < 0) {
     printf("--> not a power of 2\n\n");
   } else {
-    printf("--> a = 2^%"PRId32"\n\n", n);
+    printf("--> a = 2^%" PRId32 "\n\n", n);
   }
 
   a[0] = 0;
@@ -1107,7 +1107,7 @@ int main(void) {
   if (n < 0) {
     printf("--> not a power of 2\n\n");
   } else {
-    printf("--> a = 2^%"PRId32"\n\n", n);
+    printf("--> a = 2^%" PRId32 "\n\n", n);
   }
 
 
@@ -1122,7 +1122,7 @@ int main(void) {
   if (n < 0) {
     printf("--> not a power of 2\n\n");
   } else {
-    printf("--> a = 2^%"PRId32"\n\n", n);
+    printf("--> a = 2^%" PRId32 "\n\n", n);
   }
 
 
@@ -1137,7 +1137,7 @@ int main(void) {
   if (n < 0) {
     printf("--> not a power of 2\n\n");
   } else {
-    printf("--> a = 2^%"PRId32"\n\n", n);
+    printf("--> a = 2^%" PRId32 "\n\n", n);
   }
 
 
@@ -1153,13 +1153,13 @@ int main(void) {
     if (n < 0) {
       printf("--> not a power of 2\n\n");
     } else {
-      printf("--> a = 2^%"PRId32"\n\n", n);
+      printf("--> a = 2^%" PRId32 "\n\n", n);
     }
     bvconst_add_one(a, 4);
   }
 
   for (i=0; i<10; i++) {
-    printf("test %"PRId32": power of two\n", i);
+    printf("test %" PRId32 ": power of two\n", i);
     random_vector(vector, 128);
     bvconst_set_array(a, vector, 128);
 
@@ -1171,7 +1171,7 @@ int main(void) {
       if (n < 0) {
 	printf("--> not a power of 2\n\n");
       } else {
-	printf("--> a = 2^%"PRId32"\n\n", n);
+	printf("--> a = 2^%" PRId32 "\n\n", n);
       }
       bvconst_clr_bit(a, j);
       bvconst_clr_bit(a, 127 - j);
@@ -1185,7 +1185,7 @@ int main(void) {
     bvconst_set32(b, 4, 2);   // b = 2
     // compute a * b^i = 2^i
     bvconst_mulpower(a, 4, b, i);
-    printf("---> mulpower: a = b^%"PRIu32" = 2^%"PRIu32"\n", i, i);
+    printf("---> mulpower: a = b^%" PRIu32 " = 2^%" PRIu32 "\n", i, i);
     printf("     b = ");
     bvconst_print(stdout, b, 128);
     printf("\n");
@@ -1200,7 +1200,7 @@ int main(void) {
     bvconst_set_minus_one(b, 4);  // b = 0b11..1111
     // compute a * b^i = -4 or +4
     bvconst_mulpower(a, 4, b, i);
-    printf("---> mulpower: a = 4 * b^%"PRIu32" = 4 * (-1)^%"PRIu32"\n", i, i);
+    printf("---> mulpower: a = 4 * b^%" PRIu32 " = 4 * (-1)^%" PRIu32 "\n", i, i);
     printf("     b = ");
     bvconst_print(stdout, b, 128);
     printf("\n");
@@ -1215,7 +1215,7 @@ int main(void) {
     bvconst_clear(b, 4);        // b = 0
     // compute a * b^i = 0
     bvconst_mulpower(a, 4, b, i);
-    printf("---> mulpower: a = 4 * b^%"PRIu32"\n", i);
+    printf("---> mulpower: a = 4 * b^%" PRIu32 "\n", i);
     printf("     b = ");
     bvconst_print(stdout, b, 128);
     printf("\n");
@@ -1241,7 +1241,7 @@ int main(void) {
     bvconst_normalize(d, i);
 
     n = (i+31) >> 5;  // number of words
-    printf("---> %"PRIu32" bits\n", i);
+    printf("---> %" PRIu32 " bits\n", i);
     printf("a = ");
     bvconst_print(stdout, a, i);
     printf(": is_one = %s, is_minus_one = %s\n", b2str(bvconst_is_one(a, n)), b2str(bvconst_is_minus_one(a, i)));
@@ -1281,7 +1281,7 @@ int main(void) {
     bvconst_normalize(d, i);
     bvconst_normalize(e, i);
 
-    printf("---> %"PRIu32" bits\n", i);
+    printf("---> %" PRIu32 " bits\n", i);
     printf("a = ");
     bvconst_print(stdout, a, i);
     printf(": is_min_signed = %s, is_max_signed = %s\n", b2str(bvconst_is_min_signed(a, i)), b2str(bvconst_is_max_signed(a, i)));
