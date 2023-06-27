@@ -66,7 +66,7 @@ add_custom_command(
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   VERBATIM)
 
-add_library(yices
+add_library(yices SHARED
 version.cmake
 api/context_config.c
 api/search_parameters.c
