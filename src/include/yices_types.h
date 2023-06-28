@@ -80,7 +80,7 @@ typedef enum smt_status {
   STATUS_UNKNOWN,
   STATUS_SAT,
   STATUS_UNSAT,
-  STATUS_INTERRUPTED,
+  YICES_STATUS_INTERRUPTED,
   STATUS_ERROR
 } smt_status_t;
 
@@ -297,7 +297,7 @@ typedef enum yices_gen_mode {
  *   that depends on the error code.
  */
 typedef enum error_code {
-  NO_ERROR = 0,
+  YICES_NO_ERROR = 0,
 
   /*
    * Errors in type or term construction

@@ -822,18 +822,6 @@ typedef struct dpll_stats_s {
  * - if status is UNSAT, reset or pop must be called before any
  *   other operation. This also restores the state to idle.
  */
-#if 0
-// this type is now imported from yices_types.h
-typedef enum smt_status {
-  STATUS_IDLE,
-  STATUS_SEARCHING,
-  STATUS_UNKNOWN,
-  STATUS_SAT,
-  STATUS_UNSAT,
-  STATUS_INTERRUPTED,
-  STATUS_ERROR, // not used by the context operations/only by yices_api
-} smt_status_t;
-#endif
 
 #define NUM_SMT_STATUSES (STATUS_ERROR+1)
 
@@ -1890,12 +1878,12 @@ extern void record_ternary_theory_conflict(smt_core_t *s, literal_t l1, literal_
  * Close the search: mark s as either SAT or UNKNOWN
  */
 static inline void end_search_sat(smt_core_t *s) {
-  assert(s->status == STATUS_SEARCHING || s->status == STATUS_INTERRUPTED);
+  assert(s->status == STATUS_SEARCHING || s->status == YICES_STATUS_INTERRUPTED);
   s->status = STATUS_SAT;
 }
 
 static inline void end_search_unknown(smt_core_t *s) {
-  assert(s->status == STATUS_SEARCHING || s->status == STATUS_INTERRUPTED);
+  assert(s->status == STATUS_SEARCHING || s->status == YICES_STATUS_INTERRUPTED);
   s->status = STATUS_UNKNOWN;
 }
 

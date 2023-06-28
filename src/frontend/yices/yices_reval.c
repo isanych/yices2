@@ -1170,7 +1170,7 @@ static void cleanup_context(void) {
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
   default:
     // should not happen
     freport_bug(stderr, "unexpected context status");
@@ -2738,7 +2738,7 @@ static void yices_check_cmd(void) {
       stat = do_check();
       print_status(stat);
       // force exit if the check was interrupted
-      done = (stat == STATUS_INTERRUPTED);
+      done = (stat == YICES_STATUS_INTERRUPTED);
 
     } else {
       if (code == TRIVIALLY_UNSAT) {
@@ -2780,7 +2780,7 @@ static void yices_check_cmd(void) {
 	// if the search was interrupted, cleanup
 	stat = do_check();
 	print_status(stat);
-	if (stat == STATUS_INTERRUPTED) {
+	if (stat == YICES_STATUS_INTERRUPTED) {
 	  if (mode == CTX_MODE_INTERACTIVE) {
 	    context_cleanup(context);
 	    assert(context_status(context) == STATUS_IDLE);
@@ -2798,7 +2798,7 @@ static void yices_check_cmd(void) {
 	if (stat != STATUS_ERROR) {
 	  print_status(stat);
 	}
-	if (stat == STATUS_INTERRUPTED) {
+	if (stat == YICES_STATUS_INTERRUPTED) {
 	  // try to cleanup if we're in interactive mode
 	  if (mode == CTX_MODE_INTERACTIVE) {
 	    context_cleanup(context);
@@ -2816,7 +2816,7 @@ static void yices_check_cmd(void) {
       break;
 
     case STATUS_SEARCHING:
-    case STATUS_INTERRUPTED:
+    case YICES_STATUS_INTERRUPTED:
     default:
       // this should not happen
       freport_bug(stderr,"unexpected context status in 'check'");
@@ -2850,7 +2850,7 @@ static void yices_check_assuming_cmd(uint32_t n, const signed_symbol_t *a) {
     if (status != STATUS_ERROR) {
       print_status(status);
     }
-    if (status == STATUS_INTERRUPTED) {
+    if (status == YICES_STATUS_INTERRUPTED) {
       if (mode == CTX_MODE_INTERACTIVE) {
 	// recover
 	context_cleanup(context);
@@ -2923,7 +2923,7 @@ static void yices_show_unsat_core_cmd(void) {
 
       case STATUS_IDLE:
       case STATUS_SEARCHING:
-      case STATUS_INTERRUPTED:
+      case STATUS_INTERRYICES_STATUS_INTERRUPTEDUPTED:
       default:
 	freport_bug(stderr, "unexpected context status in 'show-unsat-core'");
 	break;
@@ -2959,7 +2959,7 @@ static void yices_show_unsat_assumptions_cmd(void) {
 
       case STATUS_IDLE:
       case STATUS_SEARCHING:
-      case STATUS_INTERRUPTED:
+      case YICES_STATUS_INTERRUPTED:
       default:
 	freport_bug(stderr, "unexpected context status in 'show-unsat-assumptions'");
 	break;
@@ -3004,7 +3004,7 @@ static bool context_has_model(const char *cmd_name) {
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
   default:
     // this should not happen
     freport_bug(stderr,"unexpected context status in '%s'", cmd_name);
@@ -3303,7 +3303,7 @@ static void bitblast_then_export(context_t *ctx, const char *s) {
     do_export(ctx, s);
     break;
 
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     if (context_supports_cleaninterrupt(ctx)) {
       context_cleanup(ctx);
       assert(context_status(ctx) == STATUS_IDLE);

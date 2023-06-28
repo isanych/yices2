@@ -798,10 +798,10 @@ static void proj_subst_vector(projector_t *proj, ivector_t *v) {
 
 static void proj_elim_by_model_value(projector_t *proj) {
   proj_build_val_subst(proj);
-  if (proj->flag == NO_ERROR) {
+  if (proj->flag == YICES_NO_ERROR) {
     proj_subst_vector(proj, &proj->gen_literals);
   }
-  if (proj->flag == NO_ERROR) {
+  if (proj->flag == YICES_NO_ERROR) {
     proj_subst_vector(proj, &proj->arith_literals);
   }
   proj_delete_val_subst(proj);

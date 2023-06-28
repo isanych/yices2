@@ -118,9 +118,9 @@ static void export_syntax_error(lexer_t *lex, int32_t expected_token) {
  * (NO_ERROR means a bug)
  */
 static error_code_t const tstack_error2yices_error[NUM_TSTACK_ERRORS] = {
-  NO_ERROR,                     //  TSTACK_NO_ERROR
-  NO_ERROR,                     //  TSTACK_INTERNAL_ERROR
-  NO_ERROR,                     //  TSTACK_OP_NOT_IMPLEMENTED
+  YICES_NO_ERROR,                     //  TSTACK_NO_ERROR
+  YICES_NO_ERROR,                     //  TSTACK_INTERNAL_ERROR
+  YICES_NO_ERROR,                     //  TSTACK_OP_NOT_IMPLEMENTED
   UNDEFINED_TERM_NAME,          //  TSTACK_UNDEF_TERM
   UNDEFINED_TYPE_NAME,          //  TSTACK_UNDEF_TYPE
   INVALID_RATIONAL_FORMAT,      //  TSTACK_RATIONAL_FORMAT

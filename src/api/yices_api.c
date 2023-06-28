@@ -56,7 +56,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 
 #include "api/context_config.h"
 #include "api/search_parameters.h"
@@ -1067,7 +1066,7 @@ EXPORTED void yices_per_thread_init(void){
   // setup the TLS and error report structure
   init_yices_error();
   error = get_yices_error();
-  error->code = NO_ERROR;
+  error->code = YICES_NO_ERROR;
 
   // prepare the global table
   init_globals(&__yices_globals);
@@ -1238,7 +1237,7 @@ static void set_error_code(error_code_t code) {
  * Clear the last error report
  */
 EXPORTED void yices_clear_error(void) {
-  set_error_code(NO_ERROR);
+  set_error_code(YICES_NO_ERROR);
 }
 
 
@@ -8538,7 +8537,7 @@ EXPORTED int32_t yices_push(context_t *ctx) {
     }
     assert(context_status(ctx) == STATUS_UNSAT);
     // fall through
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
   case STATUS_SEARCHING:
     set_error_code(CTX_INVALID_OPERATION);
     return -1;
@@ -8583,7 +8582,7 @@ EXPORTED int32_t yices_pop(context_t *ctx) {
   switch (context_status(ctx)) {
   case STATUS_UNKNOWN:
   case STATUS_SAT:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     context_clear(ctx);
     break;
 
@@ -8618,7 +8617,7 @@ EXPORTED int32_t yices_pop(context_t *ctx) {
  * into the corresponding yices_error value.
  */
 static const error_code_t intern_code2error[NUM_INTERNALIZATION_ERRORS] = {
-  NO_ERROR,                  // CTX_NO_ERROR
+  YICES_NO_ERROR,            // CTX_NO_ERROR
   INTERNAL_EXCEPTION,        // INTERNAL_ERROR
   INTERNAL_EXCEPTION,        // TYPE_ERROR. Should not happen if the assertions are type correct
   CTX_FREE_VAR_IN_FORMULA,
@@ -8727,7 +8726,7 @@ EXPORTED int32_t yices_assert_formula(context_t *ctx, term_t t) {
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     set_error_code(CTX_INVALID_OPERATION);
     return -1;
 
@@ -8797,7 +8796,7 @@ EXPORTED int32_t yices_assert_formulas(context_t *ctx, uint32_t n, const term_t 
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     set_error_code(CTX_INVALID_OPERATION);
     return -1;
 
@@ -8852,7 +8851,7 @@ EXPORTED int32_t yices_assert_blocking_clause(context_t *ctx) {
   case STATUS_UNSAT:
   case STATUS_IDLE:
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     set_error_code(CTX_INVALID_OPERATION);
     return -1;
 
@@ -9053,13 +9052,13 @@ EXPORTED smt_status_t yices_check_context(context_t *ctx, const param_t *params)
       params = &default_params;
     }
     stat = check_context(ctx, params);
-    if (stat == STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
+    if (stat == YICES_STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
       context_cleanup(ctx);
     }
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     set_error_code(CTX_INVALID_OPERATION);
     stat = STATUS_ERROR;
     break;
@@ -9129,7 +9128,7 @@ EXPORTED smt_status_t yices_check_context_with_assumptions(context_t *ctx, const
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     set_error_code(CTX_INVALID_OPERATION);
     return STATUS_ERROR;
 
@@ -9168,7 +9167,7 @@ EXPORTED smt_status_t yices_check_context_with_assumptions(context_t *ctx, const
 
   // call check
   stat = check_context_with_assumptions(ctx, params, n, assumptions.data);
-  if (stat == STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
+  if (stat == STATUS_INTEYICES_STATUS_INTERRUPTEDRRUPTED && context_supports_cleaninterrupt(ctx)) {
     context_cleanup(ctx);
   }
 
@@ -9241,7 +9240,7 @@ EXPORTED smt_status_t yices_check_context_with_model(context_t *ctx, const param
     break;
 
   case STATUS_SEARCHING:
-  case STATUS_INTERRUPTED:
+  case YICES_STATUS_INTERRUPTED:
     set_error_code(CTX_INVALID_OPERATION);
     return STATUS_ERROR;
 
@@ -9261,7 +9260,7 @@ EXPORTED smt_status_t yices_check_context_with_model(context_t *ctx, const param
 
   // call check
   stat = check_context_with_model(ctx, params, mdl, n, t);
-  if (stat == STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
+  if (stat == YICES_STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
     context_cleanup(ctx);
   }
 
@@ -10288,7 +10287,7 @@ static bool check_delegate(const char *delegate) {
  * error code for Yices.
  */
 static const error_code_t efcode2yices_error[NUM_EF_CODES] = {
-  NO_ERROR,                     // EF_NO_ERROR
+  YICES_NO_ERROR,               // EF_NO_ERROR
   CTX_EF_ASSERTIONS_CONTAIN_UF, // EF_UNINTERPRETED_FUN
   CTX_EF_NOT_EXISTS_FORALL,     // EF_NESTED_QUANTIFIER
   CTX_EF_HIGH_ORDER_VARS,       // EF_HIGH_ORDER_UVAR
@@ -10345,7 +10344,7 @@ static smt_status_t yices_ef_check_formulas(const term_t f[], uint32_t n, smt_lo
       break;
 
     case EF_STATUS_INTERRUPTED:
-      stat = STATUS_INTERRUPTED;
+      stat = YICES_STATUS_INTERRUPTED;
       break;
 
     case EF_STATUS_SUBST_ERROR:
@@ -10687,7 +10686,7 @@ EXPORTED int32_t yices_export_formulas_to_dimacs(const term_t f[], uint32_t n, c
 #define NUM_EVAL_ERROR_CODES ((-MDL_EVAL_FORMULA_FALSE) + 1)
 
 static const error_code_t eval_error2code[NUM_EVAL_ERROR_CODES] = {
-  NO_ERROR,              // v = 0
+  YICES_NO_ERROR,        // v = 0
   EVAL_FAILED,           // v = null_value (-1)
   INTERNAL_EXCEPTION,    // v = MDL_EVAL_INTERNAL_ERROR (-2)
   EVAL_UNKNOWN_TERM,     // v = MDL_EVAL_UNKNOWN_TERM (-3)
@@ -12019,7 +12018,7 @@ int32_t _o_yices_implicant_for_formulas(model_t *mdl, uint32_t n, const term_t a
 #define NUM_GEN_ERROR_CODES ((-GEN_PROJ_ERROR_UNSUPPORTED_ARITH_TERM)+1)
 
 static const error_code_t gen_error2code[NUM_GEN_ERROR_CODES] = {
-  NO_ERROR,                  // 0
+  YICES_NO_ERROR,            // 0
   MDL_GEN_FAILED,            // NULL_TERM,
   INTERNAL_EXCEPTION,        // GEN_EVAL_INTERNAL_ERROR
   EVAL_UNKNOWN_TERM,         // GEN_EVAL_UNKNOWN_TERM

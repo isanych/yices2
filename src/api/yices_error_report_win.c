@@ -16,6 +16,7 @@
  * along with Yices.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <windows.h>
 #include <errhandlingapi.h>
 #include <processthreadsapi.h>
  
@@ -56,7 +57,7 @@ static error_report_t* thread_local_init_yices_error_report(void){
     // there own error_report_t. 
     tl_yices_error = safe_malloc(sizeof(error_report_t));
     memset(tl_yices_error, 0, sizeof(error_report_t));
-    tl_yices_error->code = NO_ERROR;
+    tl_yices_error->code = YICES_NO_ERROR;
     TlsSetValue(yices_tls_error_index, tl_yices_error);
   }
   return tl_yices_error;

@@ -18,53 +18,9 @@ else()
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fomit-frame-pointer -fno-stack-protector")
 endif()
 set(YICES_GMP gmp CACHE STRING "gmp or mpfr lib")
-find_program(GPERF gperf)
 
 find_package(PkgConfig)
 pkg_check_modules(${YICES_GMP} REQUIRED IMPORTED_TARGET ${YICES_GMP})
-
-add_custom_command(
-  OUTPUT "${CMAKE_SOURCE_DIR}/api/yices_release_version.c"
-  COMMAND "${CMAKE_COMMAND}" -P version.cmake
-  MAIN_DEPENDENCY api/yices_version_template.txt
-  DEPENDS version.cmake
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  VERBATIM)
-
-add_custom_command(
-  OUTPUT "${CMAKE_SOURCE_DIR}/frontend/yices/yices_hash_keywords.h"
-  COMMAND ${GPERF} -C -L ANSI-C -W yices_kw --output-file=frontend/yices/yices_hash_keywords.h --lookup-function-name=in_yices_kw frontend/yices/yices_keywords.txt
-  MAIN_DEPENDENCY frontend/yices/yices_keywords.txt
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  VERBATIM)
-
-add_custom_command(
-  OUTPUT "${CMAKE_SOURCE_DIR}/frontend/smt1/smt_hash_keywords.h"
-  COMMAND ${GPERF} -C -L ANSI-C -W smt_kw --output-file=frontend/smt1/smt_hash_keywords.h --lookup-function-name=in_smt_kw frontend/smt1/smt_keywords.txt
-  MAIN_DEPENDENCY frontend/smt1/smt_keywords.txt
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  VERBATIM)
-
-add_custom_command(
-  OUTPUT "${CMAKE_SOURCE_DIR}/frontend/smt2/smt2_hash_tokens.h"
-  COMMAND ${GPERF} -C -L ANSI-C -W smt2_tk -H hash_tk -E --output-file=frontend/smt2/smt2_hash_tokens.h --lookup-function-name=in_smt2_tk frontend/smt2/smt2_tokens.txt
-  MAIN_DEPENDENCY frontend/smt2/smt2_tokens.txt
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  VERBATIM)
-
-add_custom_command(
-  OUTPUT "${CMAKE_SOURCE_DIR}/frontend/smt2/smt2_hash_keywords.h"
-  COMMAND ${GPERF} -C -L ANSI-C -W smt2_kw -H hash_kw -E --output-file=frontend/smt2/smt2_hash_keywords.h --lookup-function-name=in_smt2_kw frontend/smt2/smt2_keywords.txt
-  MAIN_DEPENDENCY frontend/smt2/smt2_keywords.txt
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  VERBATIM)
-
-add_custom_command(
-  OUTPUT "${CMAKE_SOURCE_DIR}/frontend/smt2/smt2_hash_symbols.h"
-  COMMAND ${GPERF} -C -L ANSI-C -W smt2_sym -H hash_sym -E --output-file=frontend/smt2/smt2_hash_symbols.h --lookup-function-name=in_smt2_sym frontend/smt2/smt2_symbols.txt
-  MAIN_DEPENDENCY frontend/smt2/smt2_symbols.txt
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  VERBATIM)
 
 add_library(yices SHARED
 version.cmake
