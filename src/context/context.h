@@ -243,6 +243,24 @@ extern smt_status_t check_context_with_model(context_t *ctx, const param_t *para
 
 
 /*
+ * Check satisfiability under model with hint: check whether the assertions stored in ctx
+ * conjoined with the assignment that the model gives to t is satisfiable.
+ *
+ * - params is an optional structure to store heuristic parameters
+ * - if params is NULL, default parameter settings are used.
+ * - model = model to assume
+ * - t = variables to use from the model (size = n)
+ * - m = number of terms in t to be used as assumption
+ *
+ * return status: either STATUS_UNSAT, STATUS_SAT, STATUS_UNKNOWN,
+ * YICES_STATUS_INTERRUPTED
+ *
+ * If status is STATUS_UNSAT then the context and model are inconsistent
+ */
+extern smt_status_t check_context_with_model_and_hint(context_t *ctx, const param_t *params, model_t* mdl, uint32_t n, const term_t t[], uint32_t m);
+
+
+/*
  * Build a model: the context's status must be STATUS_SAT or STATUS_UNKNOWN
  * - model must be initialized (and empty)
  * - the model maps a value to every uninterpreted terms present in ctx's
@@ -474,7 +492,6 @@ extern bval_t context_bool_term_value(context_t *ctx, term_t t);
  * next call to term_table_gc).
  */
 extern void context_gc_mark(context_t *ctx);
-
 
 
 #endif /* __CONTEXT_H */

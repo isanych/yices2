@@ -2665,11 +2665,11 @@ static bool check_all_distinct(term_table_t *terms, uint32_t n, const term_t *va
   result = true;
   if (n > 1) {
 
-    if (n > terms->live_terms) {
+    if (n > live_terms(terms)) {
       /*
        * there must be duplicates
        * we check this first just to be safe
-       * since n <= terms->live_terms <= YICES_MAX_TERMS,
+       * since n <= live_terms <= YICES_MAX_TERMS,
        * we know that n * sizeof(term_t) fits in 32bits
        * (which matters when we call safe_malloc(n * sizeof(term_t)).
        */
@@ -9268,6 +9268,128 @@ EXPORTED smt_status_t yices_check_context_with_model(context_t *ctx, const param
 }
 
 
+/*
+ * Check context with model and hint
+ * - param = parameter for check sat (or NULL for default parameters)
+ * - mdl = a model
+ * - t = array of n variables or uninterpred terms
+ * - m = number of terms that are asserted to be equal to their model values,
+ *       the remaining are treated as hints
+ *
+ * This checks ctx /\ t[0] = val(mdl, t[0]) /\ .... /\ t[m-1] = val(mdl, t[m-1])
+ */
+EXPORTED smt_status_t yices_check_context_with_model_and_hint(context_t *ctx, const param_t *params, model_t* mdl, uint32_t n, const term_t t[], uint32_t m) {
+
+  param_t default_params;
+  smt_status_t stat;
+
+  if (! context_has_mcsat(ctx)) {
+    set_error_code(CTX_OPERATION_NOT_SUPPORTED);
+    return STATUS_ERROR;
+  }
+
+  if (! good_terms_for_check_with_model(n, t)) {
+    // this sets the error code already (to VARIABLE_REQUIRED)
+    // but Dejan created another error code that means the same thing here.
+    set_error_code(MCSAT_ERROR_ASSUMPTION_TERM_NOT_SUPPORTED);
+    return STATUS_ERROR;
+  }
+
+  assert(m <= n);
+
+  // cleanup
+  switch (context_status(ctx)) {
+  case STATUS_UNKNOWN:
+  case STATUS_SAT:
+    if (! context_supports_multichecks(ctx)) {
+      set_error_code(CTX_OPERATION_NOT_SUPPORTED);
+      return STATUS_ERROR;
+    }
+    context_clear(ctx);
+    break;
+
+  case STATUS_IDLE:
+    break;
+
+  case STATUS_UNSAT:
+    context_clear_unsat(ctx);
+    if (context_status(ctx) == STATUS_UNSAT) {
+      return STATUS_UNSAT;
+    }
+    break;
+
+  case STATUS_SEARCHING:
+  case YICES_STATUS_INTERRUPTED:
+    set_error_code(CTX_INVALID_OPERATION);
+    return STATUS_ERROR;
+
+  case STATUS_ERROR:
+  default:
+    set_error_code(INTERNAL_EXCEPTION);
+    return STATUS_ERROR;
+  }
+
+  assert(context_status(ctx) == STATUS_IDLE);
+
+  // set parameters
+  if (params == NULL) {
+    yices_default_params_for_context(ctx, &default_params);
+    params = &default_params;
+  }
+
+  // call check
+  stat = check_context_with_model_and_hint(ctx, params, mdl, n, t, m);
+  if (stat == YICES_STATUS_INTERRUPTED && context_supports_cleaninterrupt(ctx)) {
+    context_cleanup(ctx);
+  }
+
+  return stat;
+}
+
+/*
+ * Set a fixed variable ordering for making mcsat decisions.
+ *
+ * NOTE: This will overwrite the previously set ordering.
+ */
+EXPORTED smt_status_t yices_mcsat_set_fixed_var_order(context_t *ctx, uint32_t n, const term_t t[]) {
+
+  if (! context_has_mcsat(ctx)) {
+    set_error_code(CTX_OPERATION_NOT_SUPPORTED);
+    return STATUS_ERROR;
+  }
+
+  if (! good_terms_for_check_with_model(n, t)) {
+    set_error_code(VARIABLE_REQUIRED);
+    return STATUS_ERROR;
+  }
+
+  ivector_t *order = &ctx->mcsat_var_order;
+  ivector_copy(order, t, n);
+
+  return STATUS_IDLE;
+}
+
+/*
+ * Set an initial variable ordering for making mcsat decisions.
+ *
+ */
+EXPORTED smt_status_t yices_mcsat_set_initial_var_order(context_t *ctx, uint32_t n, const term_t t[]) {
+
+  if (! context_has_mcsat(ctx)) {
+    set_error_code(CTX_OPERATION_NOT_SUPPORTED);
+    return STATUS_ERROR;
+  }
+
+  if (! good_terms_for_check_with_model(n, t)) {
+    set_error_code(VARIABLE_REQUIRED);
+    return STATUS_ERROR;
+  }
+
+  ivector_t *order = &ctx->mcsat_initial_var_order;
+  ivector_copy(order, t, n);
+
+  return STATUS_IDLE;
+}
 
 /*
  * CHECK SAT AND COMPUTE INTERPOLANT
@@ -12269,7 +12391,7 @@ EXPORTED uint32_t yices_num_terms(void) {
 }
 
 uint32_t _o_yices_num_terms(void) {
-  return __yices_globals.terms->live_terms;
+  return live_terms(__yices_globals.terms);
 }
 
 EXPORTED uint32_t yices_num_types(void) {
@@ -12277,7 +12399,7 @@ EXPORTED uint32_t yices_num_types(void) {
 }
 
 uint32_t _o_yices_num_types(void) {
-  return __yices_globals.types->live_types;
+  return live_types(__yices_globals.types);
 }
 
 

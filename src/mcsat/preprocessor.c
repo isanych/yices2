@@ -476,7 +476,6 @@ term_t preprocessor_apply(preprocessor_t* pre, term_t t, ivector_t* out, bool is
     case ARITH_EQ_ATOM:      // equality (t == 0)
     case ARITH_BINEQ_ATOM:   // equality: (t1 == t2)  (between two arithmetic terms)
     case ARITH_GE_ATOM:      // inequality (t >= 0)
-    case BV_ARRAY:
     case BV_DIV:
     case BV_REM:
     case BV_SMOD:
@@ -511,7 +510,10 @@ term_t preprocessor_apply(preprocessor_t* pre, term_t t, ivector_t* out, bool is
 
       term_t eq_solve_var = NULL_TERM;
       if (is_assertion && is_equality && !is_boolean) {
-        if (current == t) {
+	bool is_lhs_rhs_mixed = desc->arity > 1 &&
+	  term_type_kind(pre->terms, desc->arg[0]) != term_type_kind(pre->terms, desc->arg[1]);
+	// don't rewrite if equality is between mixed terms, e.g. between int and real terms
+	if (!is_lhs_rhs_mixed && current == t) {
           eq_solve_var = preprocessor_get_eq_solved_var(pre, t);
           if (eq_solve_var == NULL_TERM) {
             term_t lhs = desc->arg[0];
@@ -582,6 +584,50 @@ term_t preprocessor_apply(preprocessor_t* pre, term_t t, ivector_t* out, bool is
           } else {
             current_pre = mk_composite(pre, current_kind, n, children.data);
           }
+        }
+      }
+
+      delete_ivector(&children);
+
+      break;
+    }
+
+    case BV_ARRAY:
+    {
+      composite_term_t* desc = get_composite(terms, current_kind, current);
+      bool children_done = true;
+      bool children_same = true;
+
+      n = desc->arity;
+
+      ivector_t children;
+      init_ivector(&children, n);
+
+      for (i = 0; i < n; ++ i) {
+        term_t child = desc->arg[i];
+        term_t child_pre = preprocessor_get(pre, child);
+        if (child_pre == NULL_TERM) {
+          children_done = false;
+          ivector_push(pre_stack, child);
+        } else {
+          if (is_arithmetic_literal(terms, child_pre)) {
+            // purify if arithmetic literal, i.e. a = 0 where a is of integer type
+            child_pre = preprocessor_purify(pre, child_pre, out);
+          }
+          if (child_pre != child) {
+            children_same = false;
+          }
+        }
+        if (children_done) {
+          ivector_push(&children, child_pre);
+        }
+      }
+
+      if (children_done) {
+        if (children_same) {
+          current_pre = current;
+        } else {
+          current_pre = mk_composite(pre, current_kind, n, children.data);
         }
       }
 

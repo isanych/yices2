@@ -93,7 +93,7 @@ extern "C" {
 
 #define __YICES_VERSION            2
 #define __YICES_VERSION_MAJOR      6
-#define __YICES_VERSION_PATCHLEVEL 4
+#define __YICES_VERSION_PATCHLEVEL 5
 
 
 /*
@@ -2860,6 +2860,7 @@ __YICES_DLLSPEC__ extern int32_t yices_set_config(ctx_config_t *config, const ch
  *   QF_ALIRA:    arrays + mixed linear arithmetic
  *
  *   QF_AUF:      arrays + uninterpreted functions
+ *   QF_BVLRA:    bitvectors + linear real arithmetic
  *   QF_AUFBV:    arrays, bitvectors, uninterpreted functions
  *   QF_AUFBVLIA: arrays, bitvectors, uninterpreted functions, and linear integer arithmetic
  *   QF_AUFBVNIA: arrays, bitvectors, uninterpreted functions, and nonlinear integer arithmetic
@@ -3217,7 +3218,7 @@ __YICES_DLLSPEC__ extern smt_status_t yices_check_context_with_assumptions(conte
  * This function checks satisfiability of the constraints in ctx conjoined with
  * a conjunction of equalities defined by t[i] and the model, namely,
  *
- *    t[0] == v_0 /\ .... /\ t[n-1] = v_{n-1}
+ *    t[0] = v_0 /\ .... /\ t[n-1] = v_{n-1}
  *
  * where v_i is the value of t[i] in mdl.
  *
@@ -3243,6 +3244,99 @@ __YICES_DLLSPEC__ extern smt_status_t yices_check_context_with_assumptions(conte
  */
 __YICES_DLLSPEC__ extern smt_status_t yices_check_context_with_model(context_t *ctx, const param_t *params,
 								     model_t *mdl, uint32_t n, const term_t t[]);
+
+/*
+ * Check satisfiability modulo a model and hints.
+ *
+ * Check whether the assertions stored in ctx conjoined with a model are satisfiable.
+ * - ctx must be a context initialized with support for MCSAT
+ *   (see yices_new_context, yices_new_config, yices_set_config).
+ * - params is an optional structure to store heuristic parameters
+ *   if params is NULL, default parameter settings are used.
+ * - mdl is a model
+ * - t is an array of n terms
+ * - the terms t[0] ... t[n-1] must all be uninterpreted terms
+ *
+ * This function checks statisfiability of the constraints in ctx
+ * conjoined with a conjunction of equalities defined by first m terms
+ * in t and their model values, namely,
+ *
+ *    t[0] = v_0 /\ .... /\ t[m-1] = v_{m-1}
+ *
+ * and the remaining n-m terms in t are provided with hints from the
+ * model, i.e.
+ *
+ *    t[m], ... , t[n-1] will be given v_{m}, ... , v_{n-1} values when deciding
+ *
+ * where v_i is the value of t[i] in mdl.
+ *
+ * NOTE: if t[i] does not have a value in mdl, then a default value is picked for v_i.
+ *
+ * If this function returns STATUS_UNSAT and the context supports
+ * model interpolation, then one can construct a model interpolant by
+ * calling function yices_get_model_interpolant.
+ *
+ * Error codes:
+ *
+ * if one of the terms t[i] is not an uninterpreted term
+ *   code = MCSAT_ERROR_ASSUMPTION_TERM_NOT_SUPPORTED
+ *
+ * If the context does not have the MCSAT solver enabled
+ *   code = CTX_OPERATION_NOT_SUPPORTED
+ *
+ * If the resulting status is STATUS_SAT and context does not support multichecks
+ *   code = CTX_OPERATION_NOT_SUPPORTED
+ *
+ *
+ * Since 2.7.0
+ */
+__YICES_DLLSPEC__ extern smt_status_t yices_check_context_with_model_and_hint(context_t *ctx,
+									      const param_t *params,
+									      model_t *mdl,
+									      uint32_t n,
+									      const term_t t[],
+									      uint32_t m);
+
+/*
+ * Set a fixed variable ordering for making mcsat decisions. MCSAT
+ * will always first decide these variables in the given order.
+ *
+ * - ctx must be a context initialized with support for MCSAT
+ *   (see yices_new_context, yices_new_config, yices_set_config).
+ * - t is an array of n terms
+ *
+ * NOTE: This will overwrite the previously set ordering.
+ *
+ * Returns STATUS_ERROR if mcsat context is not enabled, otherwise returns STATUS_IDLE
+ *
+ * Error codes:
+ *
+ * If the context does not have the MCSAT solver enabled
+ *   code = CTX_OPERATION_NOT_SUPPORTED
+ */
+__YICES_DLLSPEC__ extern smt_status_t yices_mcsat_set_fixed_var_order(context_t *ctx,
+                                                                      uint32_t n,
+								      const term_t t[]);
+
+/*
+ * Set initial variable ordering for making mcsat decisions. This is
+ * one-time ordering that is done initially in the MCSAT search.
+ *
+ * - ctx must be a context initialized with support for MCSAT
+ *   (see yices_new_context, yices_new_config, yices_set_config).
+ * - t is an array of n terms
+ *
+ *
+ * Returns STATUS_ERROR if mcsat context is not enabled, otherwise returns STATUS_IDLE
+ *
+ * Error codes:
+ *
+ * If the context does not have the MCSAT solver enabled
+ *   code = CTX_OPERATION_NOT_SUPPORTED
+ */
+__YICES_DLLSPEC__ extern smt_status_t yices_mcsat_set_initial_var_order(context_t *ctx,
+                                                                        uint32_t n,
+                                                                        const term_t t[]);
 
 /*
  * Check satisfiability and compute interpolant.

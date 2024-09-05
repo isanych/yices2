@@ -281,6 +281,7 @@ core_src_c := \
 	utils/generic_heap.c \
 	utils/hash_functions.c \
 	utils/index_vectors.c \
+	utils/indexed_table.c \
 	utils/int_array_hsets.c \
 	utils/int_array_sort2.c \
 	utils/int_array_sort.c \
@@ -436,9 +437,6 @@ extra_src_c := \
 	model/large_bvsets.c \
 	model/rb_bvsets.c \
 	model/small_bvsets.c \
-	scratch/booleq_table.c \
-	scratch/bool_vartable.c \
-	scratch/update_graph.c \
 	solvers/bv/bvsolver_printer.c \
 	solvers/cdcl/clause_pool.c \
 	solvers/cdcl/gates_printer.c \
