@@ -346,7 +346,7 @@ endif()
 
 set(SRC2 frontend/yices/yices_reval.c)
 
-add_library(yices_static STATIC ${SRC} ${SRC2}
+set(SRC3
 version.cmake
 api/yices_version_template.txt
 frontend/smt1/smt_hash_keywords.h
@@ -360,14 +360,19 @@ frontend/smt2/smt2_symbols.txt
 frontend/yices/yices_hash_keywords.h
 frontend/yices/yices_keywords.txt
 )
-target_compile_definitions(yices_static PUBLIC YICES_STATIC NOYICES_DLL)
-add_library(yices SHARED ${SRC})
-if(NOYICES_DLL)
-  target_compile_definitions(yices PRIVATE NOYICES_DLL)
-endif()
-set_target_properties(yices PROPERTIES VERSION ${YICES_VERSION} SOVERSION ${MAJOR_VERSION})
 
 set(BUILD_H "#pragma once\n")
+if(YICES_STATIC)
+  set(BUILD_H "${BUILD_H}#define YICES_STATIC\n")
+  add_library(yices STATIC ${SRC})
+  add_library(yices_static STATIC ${SRC2} ${SRC3})
+else()
+  add_library(yices SHARED ${SRC})
+  set_target_properties(yices PROPERTIES VERSION ${YICES_VERSION} SOVERSION ${MAJOR_VERSION})
+  add_library(yices_static STATIC ${SRC} ${SRC2} ${SRC3})
+  target_compile_definitions(yices_static PUBLIC YICES_STATIC NOYICES_DLL)
+endif()
+
 if(YICES_CPP)
   set_source_files_properties(${SRC} ${SRC2} PROPERTIES LANGUAGE CXX)
   set(BUILD_H "${BUILD_H}#define YICES_CPP\n")
@@ -389,18 +394,15 @@ endif()
 if(NOT BUILD_H STREQUAL "${BUILD_OLD}")
   file(WRITE include/yices_build.h "${BUILD_H}")
 endif()
-target_include_directories(yices PRIVATE "" include)
-target_include_directories(yices INTERFACE $<BUILD_INTERFACE:include> $<INSTALL_INTERFACE:include>)
-target_include_directories(yices_static PUBLIC "" include)
+target_include_directories(yices PUBLIC $<INSTALL_INTERFACE:include> PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" include)
 target_link_libraries(yices PUBLIC PkgConfig::${YICES_GMP})
-target_link_libraries(yices_static PUBLIC PkgConfig::${YICES_GMP})
-if(MSVC)
-  find_package(PThreads4W REQUIRED)
-  target_link_libraries(yices_static PRIVATE PThreads4W::PThreads4W)
-  target_link_libraries(yices PRIVATE PThreads4W::PThreads4W)
+target_link_libraries(yices PUBLIC Threads::Threads)
+target_include_directories(yices_static PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" include)
+if(YICES_STATIC)
+  target_link_libraries(yices_static PUBLIC yices)
 else()
+  target_link_libraries(yices_static PUBLIC PkgConfig::${YICES_GMP})
   target_link_libraries(yices_static PUBLIC Threads::Threads)
-  target_link_libraries(yices PUBLIC Threads::Threads)
 endif()
 
 add_bin(yices_bin frontend/yices.c)
@@ -410,7 +412,7 @@ add_bin(yices_smt frontend/yices_smt.c)
 add_bin(yices_smt2 frontend/yices_smt2.c)
 
 install(TARGETS yices EXPORT YicesTargets)
-install(TARGETS yices_smt2)
+install(TARGETS yices_bin yices_sat yices_sat_new yices_smt yices_smt2)
 install(DIRECTORY include DESTINATION ".")
 install(EXPORT YicesTargets
   FILE YicesTargets.cmake
